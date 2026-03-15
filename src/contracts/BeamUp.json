@@ -1,0 +1,96 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "from", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "to", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "TipSent",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "creator", "type": "address" },
+      { "indexed": false, "internalType": "string", "name": "ipfsCID", "type": "string" },
+      { "indexed": false, "internalType": "string", "name": "title", "type": "string" }
+    ],
+    "name": "WorkPublished",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "commissionPercent",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllWorks",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "address payable", "name": "creator", "type": "address" },
+          { "internalType": "string", "name": "ipfsCID", "type": "string" },
+          { "internalType": "string", "name": "title", "type": "string" },
+          { "internalType": "string", "name": "category", "type": "string" },
+          { "internalType": "uint256", "name": "totalTips", "type": "uint256" },
+          { "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+        ],
+        "internalType": "struct BeamUp.Work[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "platformFee",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "_ipfsCID", "type": "string" },
+      { "internalType": "string", "name": "_title", "type": "string" },
+      { "internalType": "string", "name": "_category", "type": "string" }
+    ],
+    "name": "publishWork",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "_workIndex", "type": "uint256" }
+    ],
+    "name": "tipArtist",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawFees",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

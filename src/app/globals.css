@@ -1,0 +1,49 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #050505;
+  --foreground: #ffffff;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(188, 19, 254, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 100% 0%, rgba(0, 242, 255, 0.05) 0%, transparent 30%);
+  min-height: 100vh;
+}
+
+.cyber-glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+}
+
+.cyber-border-glow {
+  position: relative;
+}
+
+.cyber-border-glow::after {
+  content: \"\";
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(45deg, #00f2ff, #bc13fe, #00f2ff);
+  z-index: -1;
+  border-radius: inherit;
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+}
+
+.cyber-border-glow:hover::after {
+  opacity: 1;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
