@@ -50,5 +50,9 @@
                             "@nomicfoundation/hardhat-ignition":  "^0.15.16",
                             "@nomicfoundation/ignition-core":  "^0.15.15"
                         },
-    "type":  "module"
+    "type":  "module",
+    "overrides":  {
+                      "react":  "$react",
+                      "react-dom":  "$react-dom"
+                  }
 }
