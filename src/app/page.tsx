@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useReadContract, useWriteContract } from 'wagmi';
 import { formatEther, parseEther } from 'viem';
 import { Rocket, Disc, LayoutGrid, Music, Video, ImageIcon, FileText, Play, X, Heart, Zap, Loader2, Sparkles } from 'lucide-react';
-import Navigation from '@/components/Navigation';
-import BeamUpABI from '@/contracts/BeamUp.json';
+import Navigation from '../components/Navigation';
+import BeamUpABI from '../contracts/BeamUp.json';
 
 const CONTRACT_ADDRESS = '0x66e45A936564B364e92bD6436Fc2D4B1934aCbCf';
 const IPFS_GATEWAYS = [
