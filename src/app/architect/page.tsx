@@ -3,40 +3,38 @@ import { useState, useEffect } from 'react';
 import { ConnectKitButton } from 'connectkit';
 import { useAccount, useReadContract, useWriteContract, useBalance } from 'wagmi';
 import { formatEther } from 'viem';
-import { Rocket, User, Mail, Globe, ExternalLink, Zap, Shield, Sparkles, Wallet, ArrowDownCircle, Loader2, Fingerprint, Disc, TrendingUp, Heart } from 'lucide-react';
+import { Rocket, User, Mail, Globe, ExternalLink, Zap, Shield, Sparkles, Wallet, ArrowDownCircle, Loader2, Fingerprint, Disc, TrendingUp, Heart, FileText, Music, Video, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import BeamUpABI from '@/contracts/BeamUp.json';
 
 const CONTRACT_ADDRESS = '0x66e45A936564B364e92bD6436Fc2D4B1934aCbCf';
+const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
 
 export default function Architect() {
   const { address, isConnected } = useAccount();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [userStats, setUserStats] = useState({ works: 0, totalTips: 0n });
+  const [userWorks, setUserWorks] = useState<any[]>([]);
+  const [totalGains, setTotalGains] = useState(0n);
 
-  // 1. Lecture du propriétaire du contrat (Admin)
   const { data: ownerAddress } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: BeamUpABI,
     functionName: 'owner',
   });
 
-  // 2. Lecture de toutes les œuvres (pour calculer les stats de l'artiste connecté)
   const { data: allWorks } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: BeamUpABI,
     functionName: 'getAllWorks',
   });
 
-  // 3. Lecture du solde du contrat (Revenus Plateforme)
   const { data: contractBalance } = useBalance({
     address: CONTRACT_ADDRESS as `0x${string}`,
   });
 
   const { writeContract, isPending } = useWriteContract();
 
-  // Logique de détection Admin et calcul des Stats Artiste
   useEffect(() => {
     if (address && ownerAddress) {
       setIsAdmin(address.toLowerCase() === (ownerAddress as string).toLowerCase());
@@ -46,7 +44,8 @@ export default function Architect() {
       const works = allWorks as any[];
       const filtered = works.filter(w => w.creator.toLowerCase() === address.toLowerCase());
       const total = filtered.reduce((acc, curr) => acc + BigInt(curr.totalTips), 0n);
-      setUserStats({ works: filtered.length, totalTips: total });
+      setUserWorks(filtered);
+      setTotalGains(total);
     }
   }, [address, ownerAddress, allWorks]);
 
@@ -62,19 +61,19 @@ export default function Architect() {
     <div className='min-h-screen bg-[#020202] text-white'>
       <Navigation />
 
-      <main className='max-w-5xl mx-auto px-4 py-12'>
+      <main className='max-w-6xl mx-auto px-4 py-12'>
         
-        {/* DASHBOARD ADMIN (Visible uniquement pour vous) */}
+        {/* DASHBOARD ADMIN */}
         {isAdmin && (
           <section className='mb-12 animate-in fade-in slide-in-from-top-4 duration-700'>
-            <div className='bg-gradient-to-r from-[#00f2ff]/20 to-[#bc13fe]/20 border border-[#00f2ff]/40 p-8 md:p-10 rounded-[40px] flex flex-col md:flex-row justify-between items-center gap-8 backdrop-blur-3xl shadow-2xl'>
+            <div className='bg-gradient-to-r from-[#00f2ff]/20 to-[#bc13fe]/20 border border-[#00f2ff]/40 p-10 rounded-[40px] flex flex-col md:flex-row justify-between items-center gap-8 backdrop-blur-3xl shadow-2xl'>
               <div className='flex items-center gap-6'>
                 <div className='p-4 bg-black/60 rounded-3xl border border-white/10'>
                   <Fingerprint className='w-8 h-8 text-[#00f2ff]' />
                 </div>
                 <div>
-                  <p className='text-[10px] uppercase tracking-[0.3em] font-black text-[#00f2ff] mb-1'>Terminal Architecte (Revenus Plateforme)</p>
-                  <h3 className='text-3xl md:text-5xl font-black font-mono tracking-tighter'>
+                  <p className='text-[10px] uppercase tracking-[0.3em] font-black text-[#00f2ff] mb-1'>Terminal Architecte</p>
+                  <h3 className='text-4xl md:text-5xl font-black font-mono tracking-tighter'>
                     {contractBalance?.formatted ? contractBalance.formatted.slice(0, 8) : '0.00'} <span className='text-sm text-gray-500'>BNB</span>
                   </h3>
                 </div>
@@ -82,82 +81,112 @@ export default function Architect() {
               <button 
                 onClick={handleWithdraw}
                 disabled={isPending || !contractBalance || parseFloat(contractBalance.formatted) === 0}
-                className='w-full md:w-auto px-10 py-5 bg-white text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-[#00f2ff] transition-all flex items-center justify-center gap-3'
+                className='w-full md:w-auto px-10 py-5 bg-white text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-[#00f2ff] transition-all flex items-center justify-center gap-3 shadow-xl'
               >
                 {isPending ? <Loader2 className='w-4 h-4 animate-spin' /> : <ArrowDownCircle className='w-4 h-4' />}
-                Retirer les Fonds
+                Encaisser les Revenus
               </button>
             </div>
           </section>
         )}
 
-        {/* DASHBOARD ARTISTE (Visible pour tous les artistes connectés) */}
-        {isConnected && !isAdmin && userStats.works > 0 && (
+        {/* STATISTIQUES ARTISTE */}
+        {isConnected && userWorks.length > 0 && (
           <section className='mb-12 animate-in fade-in zoom-in-95 duration-700'>
-            <div className='cyber-glass p-8 rounded-[40px] border border-white/10 flex flex-col md:flex-row items-center gap-12'>
+            <div className='cyber-glass p-8 rounded-[40px] border border-white/10 grid grid-cols-1 md:grid-cols-3 gap-8 items-center'>
                <div className='flex items-center gap-4'>
                   <div className='p-3 bg-[#bc13fe]/10 rounded-2xl'><Disc className='w-6 h-6 text-[#bc13fe] animate-spin-slow' /></div>
                   <div>
                     <p className='text-[9px] uppercase tracking-widest text-gray-500'>Œuvres Diffusées</p>
-                    <h4 className='text-2xl font-black'>{userStats.works}</h4>
+                    <h4 className='text-2xl font-black'>{userWorks.length}</h4>
                   </div>
                </div>
                <div className='flex items-center gap-4'>
                   <div className='p-3 bg-pink-500/10 rounded-2xl'><TrendingUp className='w-6 h-6 text-pink-500' /></div>
                   <div>
-                    <p className='text-[9px] uppercase tracking-widest text-gray-500'>Revenus Directs Reçus</p>
-                    <h4 className='text-2xl font-black text-pink-500'>{formatEther(userStats.totalTips).slice(0, 8)} <span className='text-xs'>BNB</span></h4>
+                    <p className='text-[9px] uppercase tracking-widest text-gray-500'>Gains Totaux (Directs)</p>
+                    <h4 className='text-2xl font-black text-pink-500'>{formatEther(totalGains).slice(0, 8)} <span className='text-xs'>BNB</span></h4>
                   </div>
                </div>
-               <div className='ml-auto bg-green-500/10 px-4 py-2 rounded-full border border-green-500/20'>
-                  <p className='text-[8px] font-black text-green-500 uppercase tracking-widest'>Statut : Artiste Certifié</p>
+               <div className='flex justify-center md:justify-end'>
+                  <div className='bg-green-500/10 px-6 py-3 rounded-full border border-green-500/20'>
+                    <p className='text-[10px] font-black text-green-500 uppercase tracking-widest flex items-center gap-2'><Shield className='w-3 h-3' /> Artiste Certifié</p>
+                  </div>
                </div>
             </div>
           </section>
         )}
 
-        <section className='cyber-glass p-10 md:p-20 rounded-[48px] md:rounded-[64px] border border-white/10 relative overflow-hidden'>
-          <div className='absolute -top-24 -right-24 w-96 h-96 bg-[#00f2ff]/10 blur-[120px] rounded-full' />
-          
-          <div className='flex flex-col md:flex-row gap-12 md:gap-16 items-center relative z-10'>
-            <div className='w-56 h-56 md:w-64 md:h-64 rounded-[48px] bg-gradient-to-tr from-[#bc13fe] to-[#00f2ff] p-1 shadow-2xl'>
-              <div className='w-full h-full bg-[#050505] rounded-[42px] flex items-center justify-center overflow-hidden'>
-                <User className='w-32 h-32 text-white opacity-10' />
-              </div>
-            </div>
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-12'>
+          {/* COLONNE GAUCHE : PROFIL */}
+          <aside className='lg:col-span-1'>
+            <section className='cyber-glass p-8 rounded-[48px] border border-white/10 sticky top-24'>
+              <div className='flex flex-col items-center text-center'>
+                <div className='w-40 h-40 rounded-[40px] bg-gradient-to-tr from-[#bc13fe] to-[#00f2ff] p-1 mb-6'>
+                  <div className='w-full h-full bg-[#050505] rounded-[38px] flex items-center justify-center overflow-hidden'>
+                    <User className='w-20 h-20 text-white opacity-10' />
+                  </div>
+                </div>
+                <h2 className='text-3xl font-black uppercase tracking-tighter mb-2'>David Colombo</h2>
+                <p className='text-[10px] uppercase tracking-widest text-gray-500 mb-8'>Architecte Web3</p>
+                
+                <div className='flex gap-3 mb-8'>
+                  <a href="mailto:david-colombo@outlook.fr" className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all'><Mail className='w-4 h-4 text-[#00f2ff]' /></a>
+                  <button className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all'><Globe className='w-4 h-4 text-[#bc13fe]' /></button>
+                </div>
 
-            <div className='text-center md:text-left flex-1'>
-              <div className='inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-6'>
-                <Sparkles className='w-3 h-3 text-[#00f2ff]' />
-                <span className='text-[8px] md:text-[10px] uppercase tracking-widest font-black text-gray-400'>Créateur de Beam Up</span>
+                <div className='w-full border-t border-white/5 pt-8 text-left space-y-6'>
+                  <div>
+                    <h3 className='text-[9px] uppercase font-black text-gray-500 tracking-[0.2em] mb-2'>Ma Vision</h3>
+                    <p className='text-xs leading-relaxed text-gray-400 font-light'>Redonner le pouvoir aux créateurs via la décentralisation totale.</p>
+                  </div>
+                  <button className='w-full py-4 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-[#00f2ff] transition-all flex items-center justify-center gap-2'>
+                    Portfolio <ExternalLink className='w-3 h-3' />
+                  </button>
+                </div>
               </div>
-              <h2 className='text-4xl md:text-7xl font-black tracking-tighter uppercase leading-none mb-6'>David <br /><span className='text-transparent bg-clip-text bg-gradient-to-r from-[#00f2ff] to-[#bc13fe]'>COLOMBO</span></h2>
-              
-              <div className='flex flex-wrap justify-center md:justify-start gap-4 mt-8'>
-                <a href="mailto:david-colombo@outlook.fr" className='p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all'><Mail className='w-5 h-5 md:w-6 md:h-6 text-[#00f2ff]' /></a>
-                <button className='p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all'><Globe className='w-5 h-5 md:w-6 md:h-6 text-[#bc13fe]' /></button>
-                <button className='w-full sm:w-auto px-8 py-4 bg-white text-black font-black uppercase text-[12px] tracking-[0.2em] rounded-2xl hover:bg-[#00f2ff] transition-all flex items-center justify-center gap-3'>Voir Portfolio <ExternalLink className='w-4 h-4' /></button>
-              </div>
-            </div>
-          </div>
+            </section>
+          </aside>
 
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-12 mt-20 border-t border-white/5 pt-16 text-gray-500'>
-            <div className='space-y-3'>
-              <h3 className='text-[10px] uppercase tracking-[0.3em] font-black text-[#00f2ff] flex items-center gap-2'><Zap className='w-4 h-4' /> Vision</h3>
-              <p className='text-xs leading-relaxed font-light'>Libérer l'art de la censure centralisée via la BNB Chain.</p>
-            </div>
-            <div className='space-y-3'>
-              <h3 className='text-[10px] uppercase tracking-[0.3em] font-black text-[#bc13fe] flex items-center gap-2'><Shield className='w-4 h-4' /> Sécurité</h3>
-              <p className='text-xs leading-relaxed font-light'>IPFS garantit l'immuabilité de vos créations pour l'éternité.</p>
-            </div>
-            <div className='space-y-3'>
-              <h3 className='text-[10px] uppercase tracking-[0.3em] font-black text-white flex items-center gap-2'><Rocket className='w-4 h-4' /> Protocol</h3>
-              <div className='flex flex-wrap gap-2'>
-                {['BNB Chain', 'IPFS', 'Next.js'].map(s => <span key={s} className='px-2 py-1 bg-white/5 border border-white/10 rounded text-[8px] font-bold uppercase'>{s}</span>)}
+          {/* COLONNE DROITE : HISTORIQUE DES ŒUVRES */}
+          <section className='lg:col-span-2 space-y-8'>
+            <h3 className='text-xs uppercase tracking-[0.3em] font-black text-gray-500 flex items-center gap-3 border-b border-white/5 pb-4'>
+              <LayoutGrid className='w-4 h-4' /> Mes Archives de Diffusion
+            </h3>
+
+            {userWorks.length === 0 ? (
+              <div className='py-20 text-center cyber-glass rounded-[40px] opacity-20 border border-white/5'>
+                <Disc className='w-16 h-16 mx-auto mb-4' />
+                <p className='text-[10px] uppercase tracking-[0.4em]'>Aucune archive détectée</p>
               </div>
-            </div>
-          </div>
-        </section>
+            ) : (
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                {userWorks.map((work, i) => (
+                  <div key={i} className='cyber-glass p-6 rounded-3xl border border-white/5 hover:border-white/10 transition-all group'>
+                    <div className='flex items-start justify-between mb-6'>
+                      <div className='p-3 bg-white/5 rounded-2xl'>
+                        {work.category === 'Musique' ? <Music className='w-6 h-6 text-[#bc13fe]' /> : work.category === 'Vidéo' ? <Video className='w-6 h-6 text-[#00f2ff]' /> : <FileText className='w-6 h-6 text-[#FFD700]' />}
+                      </div>
+                      <div className='text-right'>
+                        <p className='text-[8px] uppercase font-black text-pink-500 mb-1'>Revenus Générés</p>
+                        <p className='text-lg font-black font-mono'>{formatEther(work.totalTips).slice(0, 6)} <span className='text-[10px]'>BNB</span></p>
+                      </div>
+                    </div>
+                    
+                    <h4 className='text-xl font-black uppercase tracking-tight mb-4 group-hover:text-[#00f2ff] transition-colors'>{work.title}</h4>
+                    
+                    <div className='flex items-center justify-between mt-auto pt-4 border-t border-white/5'>
+                      <span className='text-[8px] font-mono text-gray-600 uppercase tracking-widest'>CID: {work.ipfsCID.slice(0, 10)}...</span>
+                      <a href={`${IPFS_GATEWAY}${work.ipfsCID}`} target="_blank" className='p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-all'>
+                        <ExternalLink className='w-3 h-3 text-gray-400' />
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       </main>
     </div>
   );
