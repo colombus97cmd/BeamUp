@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { ConnectKitButton } from 'connectkit';
 import { useAccount, useReadContract, useWriteContract, useBalance } from 'wagmi';
 import { formatEther } from 'viem';
-import { Rocket, User, Mail, Globe, ExternalLink, Zap, Shield, Sparkles, Wallet, ArrowDownCircle, Loader2, Fingerprint, Disc, TrendingUp, Heart, FileText, Music, Video, ArrowRight } from 'lucide-react';
+import { LayoutGrid, Rocket, User, Mail, Globe, ExternalLink, Zap, Shield, Sparkles, Wallet, ArrowDownCircle, Loader2, Fingerprint, Disc, TrendingUp, Heart, FileText, Music, Video, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import Navigation from '../../components/Navigation';
 import BeamUpABI from '../../contracts/BeamUp.json';
@@ -97,7 +97,7 @@ export default function Architect() {
                <div className='flex items-center gap-4'>
                   <div className='p-3 bg-[#bc13fe]/10 rounded-2xl'><Disc className='w-6 h-6 text-[#bc13fe] animate-spin-slow' /></div>
                   <div>
-                    <p className='text-[9px] uppercase tracking-widest text-gray-500'>Å’uvres DiffusÃ©es</p>
+                    <p className='text-[9px] uppercase tracking-widest text-gray-500'>Ã…â€™uvres DiffusÃƒÂ©es</p>
                     <h4 className='text-2xl font-black'>{userWorks.length}</h4>
                   </div>
                </div>
@@ -110,7 +110,7 @@ export default function Architect() {
                </div>
                <div className='flex justify-center md:justify-end'>
                   <div className='bg-green-500/10 px-6 py-3 rounded-full border border-green-500/20'>
-                    <p className='text-[10px] font-black text-green-500 uppercase tracking-widest flex items-center gap-2'><Shield className='w-3 h-3' /> Artiste CertifiÃ©</p>
+                    <p className='text-[10px] font-black text-green-500 uppercase tracking-widest flex items-center gap-2'><Shield className='w-3 h-3' /> Artiste CertifiÃƒÂ©</p>
                   </div>
                </div>
             </div>
@@ -138,7 +138,7 @@ export default function Architect() {
                 <div className='w-full border-t border-white/5 pt-8 text-left space-y-6'>
                   <div>
                     <h3 className='text-[9px] uppercase font-black text-gray-500 tracking-[0.2em] mb-2'>Ma Vision</h3>
-                    <p className='text-xs leading-relaxed text-gray-400 font-light'>Redonner le pouvoir aux crÃ©ateurs via la dÃ©centralisation totale.</p>
+                    <p className='text-xs leading-relaxed text-gray-400 font-light'>Redonner le pouvoir aux crÃƒÂ©ateurs via la dÃƒÂ©centralisation totale.</p>
                   </div>
                   <button className='w-full py-4 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-[#00f2ff] transition-all flex items-center justify-center gap-2'>
                     Portfolio <ExternalLink className='w-3 h-3' />
@@ -148,7 +148,7 @@ export default function Architect() {
             </section>
           </aside>
 
-          {/* COLONNE DROITE : HISTORIQUE DES Å’UVRES */}
+          {/* COLONNE DROITE : HISTORIQUE DES Ã…â€™UVRES */}
           <section className='lg:col-span-2 space-y-8'>
             <h3 className='text-xs uppercase tracking-[0.3em] font-black text-gray-500 flex items-center gap-3 border-b border-white/5 pb-4'>
               <LayoutGrid className='w-4 h-4' /> Mes Archives de Diffusion
@@ -157,7 +157,7 @@ export default function Architect() {
             {userWorks.length === 0 ? (
               <div className='py-20 text-center cyber-glass rounded-[40px] opacity-20 border border-white/5'>
                 <Disc className='w-16 h-16 mx-auto mb-4' />
-                <p className='text-[10px] uppercase tracking-[0.4em]'>Aucune archive dÃ©tectÃ©e</p>
+                <p className='text-[10px] uppercase tracking-[0.4em]'>Aucune archive dÃƒÂ©tectÃƒÂ©e</p>
               </div>
             ) : (
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
@@ -165,10 +165,10 @@ export default function Architect() {
                   <div key={i} className='cyber-glass p-6 rounded-3xl border border-white/5 hover:border-white/10 transition-all group'>
                     <div className='flex items-start justify-between mb-6'>
                       <div className='p-3 bg-white/5 rounded-2xl'>
-                        {work.category === 'Musique' ? <Music className='w-6 h-6 text-[#bc13fe]' /> : work.category === 'VidÃ©o' ? <Video className='w-6 h-6 text-[#00f2ff]' /> : <FileText className='w-6 h-6 text-[#FFD700]' />}
+                        {work.category === 'Musique' ? <Music className='w-6 h-6 text-[#bc13fe]' /> : work.category === 'VidÃƒÂ©o' ? <Video className='w-6 h-6 text-[#00f2ff]' /> : <FileText className='w-6 h-6 text-[#FFD700]' />}
                       </div>
                       <div className='text-right'>
-                        <p className='text-[8px] uppercase font-black text-pink-500 mb-1'>Revenus GÃ©nÃ©rÃ©s</p>
+                        <p className='text-[8px] uppercase font-black text-pink-500 mb-1'>Revenus GÃƒÂ©nÃƒÂ©rÃƒÂ©s</p>
                         <p className='text-lg font-black font-mono'>{formatEther(work.totalTips).slice(0, 6)} <span className='text-[10px]'>BNB</span></p>
                       </div>
                     </div>
