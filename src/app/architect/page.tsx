@@ -5,8 +5,8 @@ import { useAccount, useReadContract, useWriteContract, useBalance } from 'wagmi
 import { formatEther } from 'viem';
 import { Rocket, User, Mail, Globe, ExternalLink, Zap, Shield, Sparkles, Wallet, ArrowDownCircle, Loader2, Fingerprint, Disc, TrendingUp, Heart, FileText, Music, Video, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import Navigation from '../components/Navigation';
-import BeamUpABI from '../contracts/BeamUp.json';
+import Navigation from '../../components/Navigation';
+import BeamUpABI from '../../contracts/BeamUp.json';
 
 const CONTRACT_ADDRESS = '0x66e45A936564B364e92bD6436Fc2D4B1934aCbCf';
 const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';

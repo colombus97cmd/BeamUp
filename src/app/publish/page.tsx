@@ -5,9 +5,9 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagm
 import { parseEther } from 'viem';
 import { Rocket, Upload, PlusCircle, FileText, Music, Video, X, Loader2, CheckCircle2, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
-import Navigation from '../components/Navigation';
-import { uploadToIPFS } from '../services/pinata';
-import BeamUpABI from '../contracts/BeamUp.json';
+import Navigation from '../../components/Navigation';
+import { uploadToIPFS } from '../../services/pinata';
+import BeamUpABI from '../../contracts/BeamUp.json';
 
 const CONTRACT_ADDRESS = '0x66e45A936564B364e92bD6436Fc2D4B1934aCbCf';
 
