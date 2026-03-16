@@ -1,7 +1,7 @@
-ï»¿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { Web3Provider } from '@/components/Web3Provider';
+import { Web3Provider } from '../components/Web3Provider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Beam Up - Partage Web3 Artistique',
-  description: 'Stockez et partagez vos crÃ©ations de maniÃ¨re dÃ©centralisÃ©e.',
+  description: 'Stockez et partagez vos créations de manière décentralisée.',
 };
 
 export default function RootLayout({
