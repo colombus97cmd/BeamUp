@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Beam Up - Partage Web3 Artistique',
-  description: 'Stockez et partagez vos créations de manière décentralisée.',
+  description: 'Stockez et partagez vos crÃ©ations de maniÃ¨re dÃ©centralisÃ©e.',
 };
 
 export default function RootLayout({
