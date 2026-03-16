@@ -72,7 +72,7 @@ export default function Publish() {
             <div className='absolute inset-0 bg-black/90 backdrop-blur-xl z-50 flex flex-col items-center justify-center text-center p-6'>
               <BeamEnergyBall />
               <h4 className='text-[#00f2ff] text-lg md:text-xl font-black uppercase tracking-[0.2em] mt-8'>{isConfirming ? 'Confirmation...' : 'Transmission...'}</h4>
-              <p className='text-[8px] text-gray-500 mt-2 font-mono uppercase'>L'œuvre quitte le système centralisé</p>
+              <p className='text-[8px] text-gray-500 mt-2 font-mono uppercase'>L'Å“uvre quitte le systÃ¨me centralisÃ©</p>
             </div>
           )}
 
@@ -80,7 +80,7 @@ export default function Publish() {
             <div className='p-2 md:p-3 bg-[#bc13fe]/10 rounded-xl md:rounded-2xl'><PlusCircle className='w-6 h-6 md:w-8 md:h-8 text-[#bc13fe]' /></div>
             <div>
               <h2 className='text-2xl md:text-3xl font-black uppercase tracking-tight'>Studio de Diffusion</h2>
-              <p className='text-gray-500 text-[10px] md:text-xs uppercase tracking-widest'>Immortalisé sur la BNB Chain</p>
+              <p className='text-gray-500 text-[10px] md:text-xs uppercase tracking-widest'>ImmortalisÃ© sur la BNB Chain</p>
             </div>
           </div>
 
@@ -99,26 +99,26 @@ export default function Publish() {
                 {previewUrl ? (
                   <div className='w-full h-full flex flex-col items-center justify-center relative'>
                      {category === 'Musique' && <Music className='w-16 h-16 mb-4 text-[#bc13fe]' />}
-                     {category === 'Vidéo' && <Video className='w-16 h-16 mb-4 text-[#00f2ff]' />}
-                     {category === 'BD Numérique' && <FileText className='w-16 h-16 mb-4 text-[#ffd700]' />}
+                     {category === 'VidÃ©o' && <Video className='w-16 h-16 mb-4 text-[#00f2ff]' />}
+                     {category === 'BD NumÃ©rique' && <FileText className='w-16 h-16 mb-4 text-[#ffd700]' />}
                      <span className='text-[10px] font-bold truncate max-w-full'>{file?.name}</span>
                      <button onClick={(e) => { e.stopPropagation(); setFile(null); setPreviewUrl(null); }} className='absolute -top-2 -right-2 p-2 bg-red-500 text-white rounded-full shadow-lg'><X className='w-4 h-4' /></button>
                   </div>
                 ) : (
-                  <><Upload className='w-10 h-10 text-gray-500 mb-4' /><p className='text-[10px] uppercase font-black text-gray-500 tracking-widest'>Déposer Média</p></>
+                  <><Upload className='w-10 h-10 text-gray-500 mb-4' /><p className='text-[10px] uppercase font-black text-gray-500 tracking-widest'>DÃ©poser MÃ©dia</p></>
                 )}
               </div>
 
               <div className='space-y-6 md:space-y-8'>
                 <div className='space-y-2'>
-                  <label className='text-[9px] md:text-[10px] uppercase font-black text-gray-500 tracking-widest'>Titre de l'œuvre</label>
+                  <label className='text-[9px] md:text-[10px] uppercase font-black text-gray-500 tracking-widest'>Titre de l'Å“uvre</label>
                   <input value={title} onChange={(e) => setTitle(e.target.value)} className='w-full bg-white/5 border border-white/10 p-4 md:p-5 rounded-xl md:rounded-2xl focus:ring-1 focus:ring-[#00f2ff] outline-none font-bold text-sm md:text-base' placeholder='Ex: Quantum Horizon' />
                 </div>
 
                 <div className='space-y-2'>
-                  <label className='text-[9px] md:text-[10px] uppercase font-black text-gray-500 tracking-widest'>Catégorie Média</label>
+                  <label className='text-[9px] md:text-[10px] uppercase font-black text-gray-500 tracking-widest'>CatÃ©gorie MÃ©dia</label>
                   <div className='grid grid-cols-3 md:grid-cols-1 gap-2'>
-                    {['Musique', 'Vidéo', 'BD Numérique'].map(cat => (
+                    {['Musique', 'VidÃ©o', 'BD NumÃ©rique'].map(cat => (
                       <button key={cat} onClick={() => setCategory(cat)} className={`py-3 md:py-4 text-[8px] md:text-[10px] font-black uppercase rounded-xl border transition-all ${category === cat ? 'bg-white text-black border-white' : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20'}`}>{cat.split(' ')[0]}</button>
                     ))}
                   </div>
@@ -135,7 +135,7 @@ export default function Publish() {
             <div className='mt-8 md:mt-12 bg-green-500/10 border border-green-500/20 p-5 md:p-6 rounded-2xl md:rounded-[32px] flex items-center gap-4 animate-bounce'>
               <CheckCircle2 className='w-6 h-6 md:w-8 md:h-8 text-green-500 flex-shrink-0' />
               <div>
-                <p className='text-xs md:text-sm font-black text-green-500 uppercase tracking-widest'>Diffusion Confirmée !</p>
+                <p className='text-xs md:text-sm font-black text-green-500 uppercase tracking-widest'>Diffusion ConfirmÃ©e !</p>
                 <Link href="/" className='text-[9px] md:text-[10px] text-green-500/60 hover:text-green-500 underline uppercase font-bold'>Voir dans le flux</Link>
               </div>
             </div>
