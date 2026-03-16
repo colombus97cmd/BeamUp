@@ -1,41 +1,41 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@tanstack/react-query": "^5.90.21",
-    "connectkit": "^1.9.1",
-    "dotenv": "^17.3.1",
-    "lucide-react": "^0.577.0",
-    "next": "15.1.7",
-    "pinata-web3": "^0.5.4",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "viem": "^2.22.18",
-    "wagmi": "^2.14.9"
-  },
-  "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.1.7",
-    "hardhat": "^2.22.18",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5"
-  },
-  "overrides": {
-    "react": "$react",
-    "react-dom": "$react-dom",
-    "wagmi": "$wagmi"
-  }
+    "name":  "frontend",
+    "version":  "0.1.0",
+    "private":  true,
+    "type":  "module",
+    "scripts":  {
+                    "dev":  "next dev",
+                    "build":  "next build",
+                    "start":  "next start",
+                    "lint":  "eslint"
+                },
+    "dependencies":  {
+                         "@tanstack/react-query":  "^5.90.21",
+                         "connectkit":  "^1.9.1",
+                         "dotenv":  "^17.3.1",
+                         "lucide-react":  "^0.577.0",
+                         "next":  "15.1.9",
+                         "pinata-web3":  "^0.5.4",
+                         "react":  "19.0.0",
+                         "react-dom":  "19.0.0",
+                         "viem":  "^2.22.18",
+                         "wagmi":  "^2.14.9"
+                     },
+    "devDependencies":  {
+                            "@nomicfoundation/hardhat-toolbox":  "^5.0.0",
+                            "@types/node":  "^20",
+                            "@types/react":  "^19",
+                            "@types/react-dom":  "^19",
+                            "eslint":  "^9",
+                            "eslint-config-next":  "15.1.9",
+                            "hardhat":  "^2.22.18",
+                            "postcss":  "^8",
+                            "tailwindcss":  "^3.4.1",
+                            "typescript":  "^5"
+                        },
+    "overrides":  {
+                      "react":  "$react",
+                      "react-dom":  "$react-dom",
+                      "wagmi":  "$wagmi"
+                  }
 }
