@@ -132,7 +132,7 @@ export default function Architect() {
                 
                 <div className='flex gap-3 mb-8'>
                   <a href="mailto:david-colombo@outlook.fr" className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all'><Mail className='w-4 h-4 text-[#00f2ff]' /></a>
-                  <button className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all'><Globe className='w-4 h-4 text-[#bc13fe]' /></button>
+                  <a href='https://portfolio-david-colombo.netlify.app/' target='_blank' className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all'><Globe className='w-4 h-4 text-[#bc13fe]' /></a>
                 </div>
 
                 <div className='w-full border-t border-white/5 pt-8 text-left space-y-6'>
@@ -140,9 +140,7 @@ export default function Architect() {
                     <h3 className='text-[9px] uppercase font-black text-gray-500 tracking-[0.2em] mb-2'>Ma Vision</h3>
                     <p className='text-xs leading-relaxed text-gray-400 font-light'>Redonner le pouvoir aux crÃƒÂ©ateurs via la dÃƒÂ©centralisation totale.</p>
                   </div>
-                  <button className='w-full py-4 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-[#00f2ff] transition-all flex items-center justify-center gap-2'>
-                    Portfolio <ExternalLink className='w-3 h-3' />
-                  </button>
+                  <a href='https://portfolio-david-colombo.netlify.app/' target='_blank' className='w-full py-4 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-[#00f2ff] transition-all flex items-center justify-center gap-2'>Portfolio <ExternalLink className='w-3 h-3' /></a>
                 </div>
               </div>
             </section>
@@ -191,3 +189,4 @@ export default function Architect() {
     </div>
   );
 }
+
