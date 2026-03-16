@@ -7,14 +7,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
     "connectkit": "^1.9.1",
     "dotenv": "^17.3.1",
     "lucide-react": "^0.577.0",
-    "next": "15.1.11",
+    "next": "^15.5.12",
     "pinata-web3": "^0.5.4",
     "react": "19.0.0",
     "react-dom": "19.0.0",
@@ -22,21 +22,23 @@
     "wagmi": "^2.14.9"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
     "autoprefixer": "^10.4.20",
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^7.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.1.11",
-    "hardhat": "^2.22.18",
+    "eslint-config-next": "^15.1.11",
+    "hardhat": "^3.1.12",
     "postcss": "^8",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "^4.0.0",
     "typescript": "^5"
   },
   "overrides": {
-    "react": "$react",
-    "react-dom": "$react-dom",
-    "wagmi": "$wagmi"
+    "connectkit": {
+      "react": "19.0.0",
+      "react-dom": "19.0.0"
+    }
   }
 }
