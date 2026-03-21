@@ -29,6 +29,15 @@ contract BeamUp {
         _;
     }
 
+    function setPlatformFee(uint256 _newFee) public onlyOwner {
+        platformFee = _newFee;
+    }
+
+    function setCommissionPercent(uint256 _newPercent) public onlyOwner {
+        require(_newPercent <= 100);
+        commissionPercent = _newPercent;
+    }
+
     function publishWork(string memory _ipfsCID, string memory _title, string memory _category) public payable {
         require(msg.value >= platformFee);
         require(bytes(_ipfsCID).length > 0);
@@ -52,16 +61,39 @@ contract BeamUp {
         Work storage work = works[_workIndex];
         uint256 commission = (msg.value * commissionPercent) / 100;
         uint256 artistAmount = msg.value - commission;
-        work.creator.transfer(artistAmount);
+        
         work.totalTips += artistAmount;
+        
+        (bool success, ) = work.creator.call{value: artistAmount}("");
+        require(success, "Transfer failed");
+        
         emit TipSent(msg.sender, work.creator, msg.value);
     }
 
     function withdrawFees() public onlyOwner {
-        payable(owner).transfer(address(this).balance);
+        (bool success, ) = payable(owner).call{value: address(this).balance}("");
+        require(success, "Withdraw failed");
     }
 
     function getAllWorks() public view returns (Work[] memory) {
         return works;
+    }
+
+    function getWorksPage(uint256 offset, uint256 limit) public view returns (Work[] memory) {
+        if (offset >= works.length) {
+            return new Work[](0);
+        }
+        
+        uint256 end = offset + limit;
+        if (end > works.length) {
+            end = works.length;
+        }
+        
+        uint256 size = end - offset;
+        Work[] memory page = new Work[](size);
+        for (uint256 i = 0; i < size; i++) {
+            page[i] = works[offset + i];
+        }
+        return page;
     }
 }
