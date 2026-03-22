@@ -17,7 +17,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment }: SocialFe
   const containerRef = useRef<HTMLDivElement>(null);
 
   const IPFS_GATEWAYS = ['https://ipfs.io/ipfs/', 'https://cloudflare-ipfs.com/ipfs/', 'https://gateway.pinata.cloud/ipfs/'];
-  const getMediaUrl = (ipfsCid: string) => `${IPFS_GATEWAYS[0]}${ipfsCid}`;
+  const getMediaUrl = (ipfsCid: string) => `https://gateway.pinata.cloud/ipfs/${ipfsCid}`;
 
   const handleScroll = () => {
     if (containerRef.current) {
@@ -32,7 +32,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment }: SocialFe
 
   const getThemeColor = (cat: string) => {
     if (cat === 'Musique') return 'rgba(188, 19, 254, 0.4)';
-    if (cat === 'Vidéo') return 'rgba(0, 242, 255, 0.4)';
+    if (cat === 'Video' || cat === 'VidÃ©o' || cat === 'VidÃƒÂ©o' || cat === 'VidÃƒÆ’Ã‚Â©o') return 'rgba(0, 242, 255, 0.4)';
     return 'rgba(255, 215, 0, 0.4)';
   };
 
@@ -96,14 +96,16 @@ export default function SocialFeed({ works, onTip, onLike, onComment }: SocialFe
             <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-4 md:p-8">
               <div className="w-full max-w-4xl h-[75vh] md:h-[80vh] rounded-[48px] overflow-hidden relative shadow-[0_0_150px_rgba(0,0,0,1)] border border-white/10 group bg-black/40 backdrop-blur-sm">
                 
-                {work.category === 'Vidéo' ? (
-                  <video 
-                    src={getMediaUrl(work.ipfsCID)} 
-                    className="w-full h-full object-contain bg-black" 
+                {(work.category?.toLowerCase().includes('vid') || work.category === 'Video') ? (
+                  <video
+                    src={getMediaUrl(work.ipfsCID)}
+                    className="w-full h-full object-contain bg-black"
                     autoPlay={i === activeIndex && !commentWorkId}
+                    muted
                     controls
-                    loop 
+                    loop
                     playsInline
+                    preload="auto"
                   />
                 ) : work.category === 'Musique' ? (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-12 bg-gradient-to-b from-transparent via-black/80 to-transparent">
@@ -131,7 +133,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment }: SocialFe
                       <audio src={getMediaUrl(work.ipfsCID)} controls className="w-full max-w-md opacity-40 hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
-                ) : (
+                ) : (work.category?.toLowerCase().includes('mus') ? null : 
                   <img src={getMediaUrl(work.ipfsCID)} className="w-full h-full object-contain bg-black" alt={work.title} />
                 )}
                 
