@@ -7,7 +7,7 @@ import { ConnectKitProvider, getDefaultConfig } from "connectkit";
 const config = createConfig(
   getDefaultConfig({
     chains: [bsc, mainnet, polygon],
-    walletConnectProjectId: "", // Optionnel : Ajoutez votre ID WalletConnect ici
+    walletConnectProjectId: "acb01311868dd0860714b6287755fb3c", // Project ID pour le QR Code (Binance Web3, etc.)
     appName: "Beam Up",
   })
 );
