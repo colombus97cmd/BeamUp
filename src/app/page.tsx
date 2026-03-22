@@ -6,6 +6,7 @@ import { LayoutGrid, Rocket, Disc, Loader2, Zap, Play, Sparkles, Smartphone } fr
 import Navigation from '../components/Navigation';
 import SocialFeed from '../components/SocialFeed';
 import BeamUpABI from '../contracts/BeamUp.json';
+import LandingPage from '../components/LandingPage';
 
 const CONTRACT_ADDRESS = '0x0CD69B6D6c439977A0265dcA7f5B347E1b705117';
 
@@ -66,8 +67,12 @@ export default function Home() {
 
       <Navigation />
 
-      {/* View Mode Toggle */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex bg-black/60 backdrop-blur-2xl border border-white/10 p-1.5 rounded-full shadow-2xl scale-90 md:scale-100">
+      {!isConnected ? (
+        <LandingPage />
+      ) : (
+        <>
+          {/* View Mode Toggle */}
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex bg-black/60 backdrop-blur-2xl border border-white/10 p-1.5 rounded-full shadow-2xl scale-90 md:scale-100">
         <button 
           onClick={() => setViewMode('grid')}
           className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'grid' ? 'bg-white text-black' : 'text-gray-500 hover:text-white'}`}
@@ -95,9 +100,9 @@ export default function Home() {
           </div>
         ) : viewMode === 'feed' ? (
           <SocialFeed 
-            works={[...blockchainWorks].reverse()} 
+            works={[...(blockchainWorks as any[])].reverse()} 
             onTip={handleTip} 
-            onLike={handleLike} 
+            onLike={handleLike}  
             onComment={handleComment} 
           />
         ) : (
@@ -112,6 +117,8 @@ export default function Home() {
           </div>
         )}
       </main>
+        </>
+      )}
     </div>
   );
 }
