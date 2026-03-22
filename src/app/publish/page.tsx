@@ -17,6 +17,7 @@ export default function Publish() {
   const [category, setCategory] = useState('Musique');
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<'idle' | 'uploading' | 'blockchain' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
   const [cid, setCid] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,8 +39,9 @@ export default function Publish() {
         args: [resultCid, title, category],
         value: parseEther('0.0001'),
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      setErrorMessage(error?.shortMessage || error?.message || "Erreur inconnue lors de la transaction ou de l'upload IPFS.");
       setStatus('error');
     }
   };
@@ -137,6 +139,17 @@ export default function Publish() {
               <div>
                 <p className='text-xs md:text-sm font-black text-green-500 uppercase tracking-widest'>Diffusion ConfirmÃ©e !</p>
                 <Link href="/" className='text-[9px] md:text-[10px] text-green-500/60 hover:text-green-500 underline uppercase font-bold'>Voir dans le flux</Link>
+              </div>
+            </div>
+          )}
+
+          {status === 'error' && (
+            <div className='mt-8 md:mt-12 bg-red-500/10 border border-red-500/20 p-5 md:p-6 rounded-2xl md:rounded-[32px] flex items-center gap-4'>
+              <X className='w-6 h-6 md:w-8 md:h-8 text-red-500 flex-shrink-0' />
+              <div>
+                <p className='text-xs md:text-sm font-black text-red-500 uppercase tracking-widest'>Échec de la Diffusion</p>
+                <p className='text-[10px] text-red-400 mt-1 font-mono break-all'>{errorMessage}</p>
+                <button onClick={() => setStatus('idle')} className='mt-3 px-4 py-2 bg-red-500/20 text-red-300 text-[10px] rounded-lg font-bold uppercase'>Réessayer</button>
               </div>
             </div>
           )}
