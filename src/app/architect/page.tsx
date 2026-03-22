@@ -12,7 +12,7 @@ import Navigation from '../../components/Navigation';
 import { uploadToIPFS } from '../../services/pinata';
 import BeamUpABI from '../../contracts/BeamUp.json';
 
-const CONTRACT_ADDRESS = '0x987515B0321DBEC5C3CFAb1F4f91386e66018D89';
+const CONTRACT_ADDRESS = '0x0CD69B6D6c439977A0265dcA7f5B347E1b705117';
 const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
 
 export default function Architect() {

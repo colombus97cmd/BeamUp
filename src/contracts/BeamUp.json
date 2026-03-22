@@ -1,14 +1,40 @@
 [
   {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidInitialization",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotInitializing",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
-        "name": "_initialOwner",
+        "name": "owner",
         "type": "address"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
+    "name": "OwnableInvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error"
   },
   {
     "anonymous": false,
@@ -39,6 +65,19 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "version",
+        "type": "uint64"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "user",
@@ -58,6 +97,25 @@
       }
     ],
     "name": "LikeToggled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
     "type": "event"
   },
   {
@@ -227,7 +285,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct BeamUpV2.Work[]",
+        "internalType": "struct BeamUpUpgradeable.Work[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -268,7 +326,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct BeamUpV2.Profile",
+        "internalType": "struct BeamUpUpgradeable.Profile",
         "name": "",
         "type": "tuple"
       }
@@ -304,7 +362,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct BeamUpV2.Comment[]",
+        "internalType": "struct BeamUpUpgradeable.Comment[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -365,7 +423,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct BeamUpV2.Work[]",
+        "internalType": "struct BeamUpUpgradeable.Work[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -395,6 +453,19 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_initialOwner",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -481,6 +552,13 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -536,7 +614,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_newOwner",
+        "name": "newOwner",
         "type": "address"
       }
     ],

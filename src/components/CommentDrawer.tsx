@@ -4,7 +4,7 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { X, Send, MessageSquare, User, Loader2, Sparkles, Zap, ShieldCheck } from 'lucide-react';
 import BeamUpABI from '../contracts/BeamUp.json';
 
-const CONTRACT_ADDRESS = '0x987515B0321DBEC5C3CFAb1F4f91386e66018D89';
+const CONTRACT_ADDRESS = '0x0CD69B6D6c439977A0265dcA7f5B347E1b705117';
 
 interface CommentDrawerProps {
   workId: number;
