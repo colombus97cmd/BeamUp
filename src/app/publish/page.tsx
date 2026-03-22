@@ -5,6 +5,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagm
 import { parseEther } from 'viem';
 import { Rocket, Upload, PlusCircle, FileText, Music, Video, X, Loader2, CheckCircle2, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Navigation from '../../components/Navigation';
 import { uploadToIPFS } from '../../services/pinata';
 import BeamUpABI from '../../contracts/BeamUp.json';
@@ -13,6 +14,7 @@ const CONTRACT_ADDRESS = '0x0CD69B6D6c439977A0265dcA7f5B347E1b705117';
 
 export default function Publish() {
   const { isConnected } = useAccount();
+  const router = useRouter();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Musique');
   const [file, setFile] = useState<File | null>(null);
@@ -26,6 +28,14 @@ export default function Publish() {
 
   const { writeContract, data: hash } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+
+  useEffect(() => {
+    if (isConfirmed) {
+      setTimeout(() => {
+        router.push('/');
+      }, 2500);
+    }
+  }, [isConfirmed, router]);
 
   const handlePublish = async () => {
     if ((!file && !manualCid) || !title) return;
