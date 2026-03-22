@@ -19,6 +19,7 @@ export default function Publish() {
   const [status, setStatus] = useState<'idle' | 'uploading' | 'blockchain' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [manualCid, setManualCid] = useState('');
   const [cid, setCid] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -27,18 +28,22 @@ export default function Publish() {
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
   const handlePublish = async () => {
-    if (!file || !title) return;
+    if ((!file && !manualCid) || !title) return;
     setStatus('uploading');
     setUploadProgress(0);
     try {
-      const resultCid = await uploadToIPFS(file, (percent) => setUploadProgress(percent));
-      setCid(resultCid);
+      let finalCid = manualCid;
+      if (file) {
+        finalCid = await uploadToIPFS(file, (percent) => setUploadProgress(percent));
+        setCid(finalCid);
+      }
+      
       setStatus('blockchain');
       writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
         abi: BeamUpABI,
         functionName: 'publishWork',
-        args: [resultCid, title, category],
+        args: [finalCid, title, category],
         value: parseEther('0.0001'),
       });
     } catch (error: any) {
@@ -120,6 +125,17 @@ export default function Publish() {
                 ) : (
                   <><Upload className='w-10 h-10 text-gray-500 mb-4' /><p className='text-[10px] uppercase font-black text-gray-500 tracking-widest'>DÃ©poser MÃ©dia</p></>
                 )}
+                {!file && (
+                  <div className='flex items-center gap-4 mt-4 relative'>
+                    <div className='absolute inset-0 bg-gradient-to-r from-[#00f2ff]/20 to-[#bc13fe]/20 blur-xl opacity-50 z-0'/>
+                    <input 
+                      value={manualCid} 
+                      onChange={(e) => setManualCid(e.target.value)} 
+                      className='w-full bg-black/60 border border-[#00f2ff]/40 p-4 rounded-xl relative z-10 focus:ring-1 focus:ring-[#bc13fe] outline-none font-mono text-xs text-[#00f2ff] placeholder-gray-600' 
+                      placeholder='Ou coller un CID IPFS (ex: QmfKdW...)' 
+                    />
+                  </div>
+                )}
               </div>
 
               <div className='space-y-6 md:space-y-8'>
@@ -137,7 +153,7 @@ export default function Publish() {
                   </div>
                 </div>
 
-                <button onClick={handlePublish} disabled={!file || !title || status === 'uploading'} className='w-full py-5 md:py-6 bg-gradient-to-r from-[#00f2ff] to-[#bc13fe] text-black font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-2xl md:rounded-[24px] hover:shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4'>
+                <button onClick={handlePublish} disabled={(!file && !manualCid) || !title || status === 'uploading'} className='w-full py-5 md:py-6 bg-gradient-to-r from-[#00f2ff] to-[#bc13fe] text-black font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-2xl md:rounded-[24px] hover:shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4'>
                   <Rocket className='w-4 h-4 md:w-5 md:h-5' /> Diffuser (0.0001 BNB)
                 </button>
               </div>
