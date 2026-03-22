@@ -16,7 +16,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment }: SocialFe
   const [commentWorkId, setCommentWorkId] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const IPFS_GATEWAYS = ['https://gateway.pinata.cloud/ipfs/', 'https://ipfs.io/ipfs/'];
+  const IPFS_GATEWAYS = ['https://ipfs.io/ipfs/', 'https://cloudflare-ipfs.com/ipfs/', 'https://gateway.pinata.cloud/ipfs/'];
   const getMediaUrl = (ipfsCid: string) => `${IPFS_GATEWAYS[0]}${ipfsCid}`;
 
   const handleScroll = () => {
