@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useRef, useEffect } from 'react';
 import { Heart, MessageCircle, Zap, Play, Pause, Music, Video, ImageIcon, Share2, User, Sparkles, Disc } from 'lucide-react';
 import { formatEther } from 'viem';
@@ -101,8 +101,8 @@ export default function SocialFeed({ works, onTip, onLike, onComment }: SocialFe
                     src={getMediaUrl(work.ipfsCID)} 
                     className="w-full h-full object-contain bg-black" 
                     autoPlay={i === activeIndex && !commentWorkId}
+                    controls
                     loop 
-                    muted 
                     playsInline
                   />
                 ) : work.category === 'Musique' ? (
