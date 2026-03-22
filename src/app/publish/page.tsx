@@ -18,6 +18,7 @@ export default function Publish() {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<'idle' | 'uploading' | 'blockchain' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [cid, setCid] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,8 +29,9 @@ export default function Publish() {
   const handlePublish = async () => {
     if (!file || !title) return;
     setStatus('uploading');
+    setUploadProgress(0);
     try {
-      const resultCid = await uploadToIPFS(file);
+      const resultCid = await uploadToIPFS(file, (percent) => setUploadProgress(percent));
       setCid(resultCid);
       setStatus('blockchain');
       writeContract({
@@ -73,8 +75,17 @@ export default function Publish() {
           {(status === 'uploading' || status === 'blockchain' || isConfirming) && (
             <div className='absolute inset-0 bg-black/90 backdrop-blur-xl z-50 flex flex-col items-center justify-center text-center p-6'>
               <BeamEnergyBall />
-              <h4 className='text-[#00f2ff] text-lg md:text-xl font-black uppercase tracking-[0.2em] mt-8'>{isConfirming ? 'Confirmation...' : 'Transmission...'}</h4>
-              <p className='text-[8px] text-gray-500 mt-2 font-mono uppercase'>L'Å“uvre quitte le systÃ¨me centralisÃ©</p>
+              <h4 className='text-[#00f2ff] text-lg md:text-xl font-black uppercase tracking-[0.2em] mt-8'>
+                {status === 'uploading' ? `Envoi en cours... ${uploadProgress}%` : isConfirming ? 'Confirmation...' : 'Transmission...'}
+              </h4>
+              
+              {status === 'uploading' && (
+                <div className='w-full max-w-sm mt-4 bg-white/5 rounded-full h-2 overflow-hidden border border-white/10'>
+                  <div className='h-full bg-gradient-to-r from-[#00f2ff] to-[#bc13fe] transition-all duration-300' style={{ width: `${uploadProgress}%` }} />
+                </div>
+              )}
+
+              <p className='text-[8px] text-gray-500 mt-4 font-mono uppercase'>L'Œuvre quitte le système centralisé</p>
             </div>
           )}
 
