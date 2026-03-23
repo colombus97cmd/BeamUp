@@ -202,7 +202,7 @@ export default function Architect() {
 
                 <div className='w-full border-t border-white/5 pt-8 flex gap-3 justify-center'>
                   <a href={`https://portfolio-2026-alpha-nine.vercel.app/`} target='_blank' className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all'><Globe className='w-4 h-4 text-[#bc13fe]' /></a>
-                  <a href='#' className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all'><Mail className='w-4 h-4 text-[#00f2ff]' /></a>
+                  <a href='https://portfolio-2026-alpha-nine.vercel.app/contact.html' target='_blank' className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all'><Mail className='w-4 h-4 text-[#00f2ff]' /></a>
                 </div>
               </div>
             </section>
