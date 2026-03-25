@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ConnectKitButton } from 'connectkit';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseEther } from 'viem';
-import { Rocket, Upload, PlusCircle, FileText, Music, Video, X, Loader2, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Rocket, Upload, PlusCircle, FileText, Music, Video, X, Loader2, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navigation from '../../components/Navigation';
@@ -24,6 +24,8 @@ export default function Publish() {
   const [manualCid, setManualCid] = useState('');
   const [cid, setCid] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
+  const [price, setPrice] = useState('0.1');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { writeContract, data: hash } = useWriteContract();
@@ -53,7 +55,7 @@ export default function Publish() {
         address: CONTRACT_ADDRESS as `0x${string}`,
         abi: BeamUpABI,
         functionName: 'publishWork',
-        args: [finalCid, title, category],
+        args: [finalCid, title, category, isPremium, parseEther(price || '0')],
         value: parseEther('0.0001'),
       });
     } catch (error: any) {
@@ -161,6 +163,43 @@ export default function Publish() {
                       <button key={cat} onClick={() => setCategory(cat)} className={`py-3 md:py-4 text-[8px] md:text-[10px] font-black uppercase rounded-xl border transition-all ${category === cat ? 'bg-white text-black border-white' : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20'}`}>{cat.split(' ')[0]}</button>
                     ))}
                   </div>
+                </div>
+
+                <div className='space-y-4 pt-4 border-t border-white/5'>
+                  <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-3'>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all ${isPremium ? 'bg-amber-500/20 border-amber-500/40 text-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.2)]' : 'bg-white/5 border-white/10 text-gray-500'}`}>
+                        <Sparkles className='w-5 h-5' />
+                      </div>
+                      <div>
+                        <p className='text-[10px] font-black uppercase tracking-widest'>Option Premium</p>
+                        <p className='text-[8px] text-gray-600 uppercase font-mono'>Accès payant pour les visiteurs</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setIsPremium(!isPremium)}
+                      className={`w-12 h-6 rounded-full relative transition-all duration-500 ${isPremium ? 'bg-amber-500' : 'bg-gray-800'}`}
+                    >
+                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-500 ${isPremium ? 'left-7' : 'left-1'}`} />
+                    </button>
+                  </div>
+
+                  {isPremium && (
+                    <div className='animate-in slide-in-from-top-2 duration-300'>
+                      <label className='text-[9px] uppercase font-black text-amber-500/60 tracking-widest mb-2 block'>Prix de l'œuvre (BNB)</label>
+                      <div className='relative'>
+                        <input 
+                          type='number' 
+                          step='0.001'
+                          value={price} 
+                          onChange={(e) => setPrice(e.target.value)} 
+                          className='w-full bg-amber-500/5 border border-amber-500/20 p-4 rounded-xl focus:ring-1 focus:ring-amber-500 outline-none font-bold text-sm text-amber-500 placeholder-amber-900/40' 
+                          placeholder='0.1' 
+                        />
+                        <span className='absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-amber-500/40'>BNB</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <button onClick={handlePublish} disabled={(!file && !manualCid) || !title || status === 'uploading'} className='w-full py-5 md:py-6 bg-gradient-to-r from-[#00f2ff] to-[#bc13fe] text-black font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-2xl md:rounded-[24px] hover:shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4'>

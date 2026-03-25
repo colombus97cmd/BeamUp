@@ -21,24 +21,46 @@ export default function Home() {
     functionName: 'getAllWorks',
   });
 
-  const handleTip = (index: number) => {
+  const { data: premiumInfo } = useReadContract({
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: BeamUpABI,
+    functionName: 'getPremiumBatch',
+    args: [blockchainWorks ? (blockchainWorks as any[]).map((_, i) => BigInt(i)) : []],
+    account: useAccount().address,
+  });
+
+  const handleTip = (id: number) => {
     writeContract({
       address: CONTRACT_ADDRESS as `0x${string}`,
       abi: BeamUpABI,
       functionName: 'tipArtist',
-      args: [BigInt(index)],
+      args: [BigInt(id)],
       value: parseEther('0.001'),
     });
   };
 
-  const handleLike = (index: number) => {
-    console.log("Like work:", index);
-    // TODO: Connect to toggleLike when contract V2 is deployed
+  const handleBuy = (id: number, price: bigint) => {
+    writeContract({
+      address: CONTRACT_ADDRESS as `0x${string}`,
+      abi: BeamUpABI,
+      functionName: 'buyWork',
+      args: [BigInt(id)],
+      value: price,
+    });
   };
 
-  const handleComment = (index: number) => {
-    console.log("Comment work:", index);
-    // TODO: Add comment modal/interaction
+  const handleLike = (id: number) => {
+    writeContract({
+      address: CONTRACT_ADDRESS as `0x${string}`,
+      abi: BeamUpABI,
+      functionName: 'toggleLike',
+      args: [BigInt(id)],
+    });
+  };
+
+  const handleComment = (id: number) => {
+    // This is handled via CommentDrawer now
+    console.log("Comment work ID:", id);
   };
 
   const BeamEnergyBall = () => (
@@ -48,6 +70,17 @@ export default function Home() {
       <div className="absolute bottom-0 w-4 h-4 bg-white rounded-full blur-[2px] animate-beam-up shadow-[0_0_15px_#00f2ff]" />
     </div>
   );
+
+  const processedWorks = ((blockchainWorks as any[]) || []).map((work, i) => {
+    const pInfo = premiumInfo as any;
+    return {
+      ...work,
+      id: i,
+      isPremium: pInfo?.[0]?.[i] ?? false,
+      price: pInfo?.[1]?.[i] ?? BigInt(0),
+      hasPaid: pInfo?.[2]?.[i] ?? false,
+    };
+  }).reverse();
 
   return (
     <div className='min-h-screen bg-[#020202] text-white selection:bg-[#00f2ff] selection:text-black'>    
@@ -93,17 +126,18 @@ export default function Home() {
             <BeamEnergyBall />
             <p className='text-[10px] uppercase tracking-[0.4em] mt-8 text-gray-600'>Scan Orbital...</p>
           </div>     
-        ) : ((blockchainWorks as any[]) || []).length === 0 ? (
+        ) : processedWorks.length === 0 ? (
           <div className='flex flex-col items-center justify-center h-full min-h-[60vh] opacity-20'>
             <Disc className='w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 animate-spin-slow' />
             <p className='text-xs uppercase tracking-[0.4em]'>Silence Intergalactique</p>
           </div>
         ) : viewMode === 'feed' ? (
           <SocialFeed 
-            works={[...(blockchainWorks as any[])].reverse()} 
+            works={processedWorks} 
             onTip={handleTip} 
             onLike={handleLike}  
             onComment={handleComment} 
+            onBuy={handleBuy}
           />
         ) : (
           <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-10'>   
