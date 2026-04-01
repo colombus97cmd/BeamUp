@@ -1,40 +1,14 @@
 [
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_initialOwner",
+        "type": "address"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "constructor"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidInitialization",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NotInitializing",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnableInvalidOwner",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "OwnableUnauthorizedAccount",
-    "type": "error"
   },
   {
     "anonymous": false,
@@ -65,19 +39,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint64",
-        "name": "version",
-        "type": "uint64"
-      }
-    ],
-    "name": "Initialized",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
         "internalType": "address",
         "name": "user",
@@ -97,25 +58,6 @@
       }
     ],
     "name": "LikeToggled",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "previousOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnershipTransferred",
     "type": "event"
   },
   {
@@ -194,6 +136,18 @@
         "internalType": "string",
         "name": "title",
         "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "isPremium",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
       }
     ],
     "name": "WorkPublished",
@@ -217,11 +171,11 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "price",
         "type": "uint256"
       }
     ],
-    "name": "WorkPurchased",
+    "name": "WorkUnlocked",
     "type": "event"
   },
   {
@@ -253,6 +207,19 @@
     "name": "addComment",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_workId",
+        "type": "uint256"
+      }
+    ],
+    "name": "buyWork",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -308,11 +275,55 @@
             "internalType": "uint256",
             "name": "likesCount",
             "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "isPremium",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "price",
+            "type": "uint256"
           }
         ],
-        "internalType": "struct BeamUpUpgradeable.Work[]",
+        "internalType": "struct BeamUpV2.Work[]",
         "name": "",
         "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "_workIds",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getPremiumBatch",
+    "outputs": [
+      {
+        "internalType": "bool[]",
+        "name": "premium",
+        "type": "bool[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "prices",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "bool[]",
+        "name": "paid",
+        "type": "bool[]"
       }
     ],
     "stateMutability": "view",
@@ -351,7 +362,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct BeamUpUpgradeable.Profile",
+        "internalType": "struct BeamUpV2.Profile",
         "name": "",
         "type": "tuple"
       }
@@ -387,7 +398,7 @@
             "type": "uint256"
           }
         ],
-        "internalType": "struct BeamUpUpgradeable.Comment[]",
+        "internalType": "struct BeamUpV2.Comment[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -446,11 +457,45 @@
             "internalType": "uint256",
             "name": "likesCount",
             "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "isPremium",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "price",
+            "type": "uint256"
           }
         ],
-        "internalType": "struct BeamUpUpgradeable.Work[]",
+        "internalType": "struct BeamUpV2.Work[]",
         "name": "",
         "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "hasBought",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -483,115 +528,46 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
+        "components": [
+          {
+            "internalType": "address payable",
+            "name": "creator",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "ipfsCID",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "category",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "totalTips",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct BeamUpV2.MigrationWork[]",
+        "name": "_oldWorks",
+        "type": "tuple[]"
       }
     ],
-    "name": "hasPaid",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "_ids",
-        "type": "uint256[]"
-      }
-    ],
-    "name": "getPremiumBatch",
-    "outputs": [
-      {
-        "internalType": "bool[]",
-        "name": "premiumStatus",
-        "type": "bool[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "prices",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "bool[]",
-        "name": "paidStatus",
-        "type": "bool[]"
-      },
-      {
-        "internalType": "address[]",
-        "name": "creators",
-        "type": "address[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_initialOwner",
-        "type": "address"
-      }
-    ],
-    "name": "initialize",
+    "name": "migrateOldWorks",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_workId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_user",
-        "type": "address"
-      }
-    ],
-    "name": "isAccessible",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "isPremium",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -688,13 +664,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -749,40 +718,8 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "workPrice",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_workId",
-        "type": "uint256"
-      }
-    ],
-    "name": "buyWork",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
-        "name": "newOwner",
+        "name": "_newOwner",
         "type": "address"
       }
     ],
@@ -898,6 +835,16 @@
       {
         "internalType": "uint256",
         "name": "likesCount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "isPremium",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "price",
         "type": "uint256"
       }
     ],

@@ -8,12 +8,14 @@ import SocialFeed from '../components/SocialFeed';
 import BeamUpABI from '../contracts/BeamUp.json';
 import LandingPage from '../components/LandingPage';
 
-const CONTRACT_ADDRESS = '0x0CD69B6D6c439977A0265dcA7f5B347E1b705117';
+const CONTRACT_ADDRESS = '0x92c1D8eCE7962634cF337d763994Af1490605dA4';
 
 export default function Home() {
   const [viewMode, setViewMode] = useState<'grid' | 'feed'>('feed');
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const { writeContract } = useWriteContract();
+
+  const safeAddress = address || '0x0000000000000000000000000000000000000000';
 
   const { data: blockchainWorks, isLoading: isGalleryLoading } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
@@ -25,8 +27,7 @@ export default function Home() {
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: BeamUpABI,
     functionName: 'getPremiumBatch',
-    args: [blockchainWorks ? (blockchainWorks as any[]).map((_, i) => BigInt(i)) : []],
-    account: useAccount().address,
+    args: [blockchainWorks ? (blockchainWorks as any[]).map((_, i) => BigInt(i)) : [], safeAddress],
   });
 
   const handleTip = (id: number) => {

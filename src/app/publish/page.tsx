@@ -10,7 +10,7 @@ import Navigation from '../../components/Navigation';
 import { uploadToIPFS } from '../../services/pinata';
 import BeamUpABI from '../../contracts/BeamUp.json';
 
-const CONTRACT_ADDRESS = '0x0CD69B6D6c439977A0265dcA7f5B347E1b705117';
+const CONTRACT_ADDRESS = '0x92c1D8eCE7962634cF337d763994Af1490605dA4';
 
 export default function Publish() {
   const { isConnected } = useAccount();
