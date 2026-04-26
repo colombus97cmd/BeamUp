@@ -13,6 +13,14 @@ const nextConfig = {
     // Ignore les erreurs de linting pendant le build
     ignoreDuringBuilds: true,
   },
+  webpack: (config: any) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      '@react-native-async-storage/async-storage': false,
+      'pino-pretty': false,
+    };
+    return config;
+  },
 };
 
 export default nextConfig;
