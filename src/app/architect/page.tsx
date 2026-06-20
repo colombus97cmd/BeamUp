@@ -57,6 +57,8 @@ export default function Architect() {
   // Profile State
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
+  const [websiteLink, setWebsiteLink] = useState('');
+  const [contactLink, setContactLink] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -104,7 +106,17 @@ export default function Architect() {
     if (profileData && (profileData as any).exists) {
       const p = profileData as any;
       setUsername(p.username);
-      setBio(p.bio);
+      const bioStr = p.bio || '';
+      if (bioStr.includes('||')) {
+        const parts = bioStr.split('||');
+        setBio(parts[0] || '');
+        setWebsiteLink(parts[1] || '');
+        setContactLink(parts[2] || '');
+      } else {
+        setBio(bioStr);
+        setWebsiteLink('');
+        setContactLink('');
+      }
       setAvatarPreview(`${IPFS_GATEWAY}${p.avatarCID}`);
     }
   }, [address, ownerAddress, allWorks, profileData]);
@@ -118,11 +130,14 @@ export default function Architect() {
         finalAvatarCID = await uploadToIPFS(avatarFile);
       }
 
+      // Combine bio, website, and contact with || separator
+      const combinedBio = `${bio}||${websiteLink}||${contactLink}`;
+
       writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
         abi: BeamUpABI,
         functionName: 'updateProfile',
-        args: [username, finalAvatarCID, bio],
+        args: [username, finalAvatarCID, combinedBio],
       });
       
       setIsEditing(false);
@@ -210,6 +225,18 @@ export default function Architect() {
                       placeholder="Votre vision Web3..."
                       className='w-full bg-white/5 border border-white/10 p-3 rounded-xl text-xs text-gray-400 outline-none focus:border-[#bc13fe] h-24 resize-none'
                     />
+                    <input 
+                      value={websiteLink} 
+                      onChange={(e) => setWebsiteLink(e.target.value)}
+                      placeholder="Site internet / Portfolio (ex: https://...)"
+                      className='w-full bg-white/5 border border-white/10 p-3 rounded-xl text-xs outline-none focus:border-[#00f2ff]'
+                    />
+                    <input 
+                      value={contactLink} 
+                      onChange={(e) => setContactLink(e.target.value)}
+                      placeholder="Contact / Réseau (ex: https://...)"
+                      className='w-full bg-white/5 border border-white/10 p-3 rounded-xl text-xs outline-none focus:border-[#bc13fe]'
+                    />
                     <div className='flex gap-2'>
                       <button onClick={handleUpdateProfile} className='flex-1 py-3 bg-[#00f2ff] text-black font-black uppercase text-[9px] rounded-xl flex items-center justify-center gap-2'>
                         {isUploading ? <Loader2 className='w-3 h-3 animate-spin' /> : <Save className='w-3 h-3' />} Sauver
@@ -233,10 +260,33 @@ export default function Architect() {
                   </>
                 )}
 
-                <div className='w-full border-t border-white/5 pt-8 flex gap-3 justify-center'>
-                  <a href={`https://portfolio-2026-alpha-nine.vercel.app/`} target='_blank' className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all'><Globe className='w-4 h-4 text-[#bc13fe]' /></a>
-                  <a href='https://portfolio-2026-alpha-nine.vercel.app/contact.html' target='_blank' className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all'><Mail className='w-4 h-4 text-[#00f2ff]' /></a>
-                </div>
+                {/* Social / Portfolio Links */}
+                {(websiteLink || contactLink || isAdmin) && (
+                  <div className='w-full border-t border-white/5 pt-8 flex gap-3 justify-center'>
+                    {(websiteLink || isAdmin) && (
+                      <a 
+                        href={websiteLink || (isAdmin ? "https://portfolio-2026-colombod.vercel.app/" : "#")} 
+                        target='_blank' 
+                        rel="noopener noreferrer" 
+                        className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all'
+                        title="Site web / Portfolio"
+                      >
+                        <Globe className='w-4 h-4 text-[#bc13fe]' />
+                      </a>
+                    )}
+                    {(contactLink || isAdmin) && (
+                      <a 
+                        href={contactLink || (isAdmin ? "https://portfolio-2026-colombod.vercel.app/contact.html" : "#")} 
+                        target='_blank' 
+                        rel="noopener noreferrer" 
+                        className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all'
+                        title="Contact / Réseau social"
+                      >
+                        <Mail className='w-4 h-4 text-[#00f2ff]' />
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             </section>
           </aside>
