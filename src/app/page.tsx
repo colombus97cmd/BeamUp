@@ -84,9 +84,8 @@ export default function Home() {
   };
 
   const getViewCount = (id: number) => {
-    const baseViews = (id * 147 + 1023) % 450 + 45;
     const stats = analytics[id];
-    return (stats?.views || 0) + baseViews;
+    return stats?.views || 0;
   };
 
   const { isConnected, address } = useAccount();

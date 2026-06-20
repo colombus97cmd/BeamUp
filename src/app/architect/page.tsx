@@ -27,6 +27,7 @@ export default function Architect() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const CONTRACT_ADDRESS = CONTRACT_ADDRESSES[chainId] || CONTRACT_ADDRESSES[DEFAULT_CHAIN];
+  const currencySymbol = chainId === 137 ? 'POL' : chainId === 20 ? 'ELA' : chainId === 42161 ? 'ETH' : 'BNB';
 
   const getWorkStats = (id: number) => {
     if (typeof window !== 'undefined') {
@@ -35,25 +36,15 @@ export default function Architect() {
         const parsed = JSON.parse(saved);
         if (parsed[id]) {
           const stats = parsed[id];
-          const baseViews = (id * 147 + 1023) % 450 + 45;
-          const actualViews = stats.views + baseViews;
-          
-          const baseCompleted = Math.round(actualViews * 0.64);
-          const baseInProgress = Math.round(actualViews * 0.22);
-          
           return {
-            views: actualViews,
-            completed: stats.completed > 0 ? stats.completed + baseCompleted : baseCompleted,
-            inProgress: stats.inProgress > 0 ? stats.inProgress + baseInProgress : baseInProgress,
+            views: stats.views || 0,
+            completed: stats.completed || 0,
+            inProgress: stats.inProgress || 0,
           };
         }
       }
     }
-    
-    const baseViews = (id * 147 + 1023) % 450 + 45;
-    const completed = Math.round(baseViews * 0.64);
-    const inProgress = Math.round(baseViews * 0.22);
-    return { views: baseViews, completed, inProgress };
+    return { views: 0, completed: 0, inProgress: 0 };
   };
 
   const [isAdmin, setIsAdmin] = useState(false);
@@ -101,7 +92,7 @@ export default function Architect() {
     }
 
     if (address && allWorks) {
-      const works = allWorks as any[];
+      const works = (allWorks as any[]).map((w, index) => ({ ...w, workId: index }));
       const filtered = works.filter(w => w.creator.toLowerCase() === address.toLowerCase());
       const total = filtered.reduce((acc, curr) => acc + BigInt(curr.totalTips), 0n);
       setUserWorks(filtered);
@@ -162,7 +153,7 @@ export default function Architect() {
                 <Fingerprint className='w-6 h-6 text-[#00f2ff]' />
                 <div>
                   <p className='text-[8px] uppercase tracking-widest font-black text-[#00f2ff]'>Terminal Architecte</p>
-                  <h3 className='text-2xl font-black font-mono'>{contractBalance?.formatted || '0.00'} BNB</h3>
+                  <h3 className='text-2xl font-black font-mono'>{contractBalance?.formatted || '0.00'} {currencySymbol}</h3>
                 </div>
               </div>
               <button onClick={handleWithdraw} className='px-8 py-3 bg-white text-black font-black uppercase text-[9px] rounded-xl hover:bg-[#00f2ff] transition-all'>Encaisser</button>
@@ -226,9 +217,10 @@ export default function Architect() {
                   </div>
                 ) : (
                   <>
-                    <h2 className='text-3xl font-black uppercase tracking-tighter mb-2'>{username || "Architecte Anonyme"}</h2>    
-                    <p className='text-[10px] uppercase tracking-widest text-gray-500 mb-6'>{address?.slice(0,6)}...{address?.slice(-4)}</p>
-                    <p className='text-xs leading-relaxed text-gray-400 font-light mb-8'>{bio || "Aucune vision définie pour cet architecte."}</p>
+                    <h2 className='text-3xl font-black uppercase tracking-tighter mb-2'>{username || (isAdmin ? "Architecte Anonyme" : "Artiste Anonyme")}</h2>    
+                    <p className='text-[10px] uppercase tracking-widest text-[#00f2ff] font-black mb-1'>{isAdmin ? "Architecte de la DApp" : "Artiste de la DApp"}</p>
+                    <p className='text-[9px] uppercase tracking-widest text-gray-500 mb-6'>{address?.slice(0,6)}...{address?.slice(-4)}</p>
+                    <p className='text-xs leading-relaxed text-gray-400 font-light mb-8'>{bio || (isAdmin ? "Aucune vision définie pour cet architecte." : "Aucune biographie définie pour cet artiste.")}</p>
                     
                     <button 
                       onClick={() => setIsEditing(true)}
@@ -252,7 +244,7 @@ export default function Architect() {
             <div className='grid grid-cols-2 gap-4'>
               <div className='cyber-glass p-6 rounded-3xl border border-white/5'>
                 <p className='text-[8px] uppercase tracking-widest text-gray-500 mb-2'>Gains (Directs)</p>
-                <h4 className='text-2xl font-black text-[#bc13fe]'>{formatEther(totalGains).slice(0, 6)} BNB</h4>
+                <h4 className='text-2xl font-black text-[#bc13fe]'>{formatEther(totalGains).slice(0, 6)} {currencySymbol}</h4>
               </div>
               <div className='cyber-glass p-6 rounded-3xl border border-white/5'>
                 <p className='text-[8px] uppercase tracking-widest text-gray-500 mb-2'>Œuvres</p>
@@ -272,7 +264,7 @@ export default function Architect() {
             ) : (
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 {userWorks.map((work, i) => {
-                  const stats = getWorkStats(i);
+                  const stats = getWorkStats(work.workId);
                   const completionRate = stats.views > 0 ? Math.round((stats.completed / stats.views) * 100) : 0;
                   return (
                     <div key={i} className='cyber-glass p-6 rounded-3xl border border-white/5 group flex flex-col justify-between'>
@@ -313,7 +305,7 @@ export default function Architect() {
                       </div>
 
                       <div className='flex justify-between items-end border-t border-white/5 pt-4'>
-                         <p className='text-[10px] font-mono text-gray-600'>{formatEther(work.totalTips).slice(0,6)} BNB</p>
+                         <p className='text-[10px] font-mono text-gray-600'>{formatEther(work.totalTips).slice(0,6)} {currencySymbol}</p>
                          <Link href="/" className='p-2 bg-white/5 rounded-lg hover:bg-[#00f2ff]/20'><ExternalLink className='w-3 h-3' /></Link>
                       </div>
                     </div>
