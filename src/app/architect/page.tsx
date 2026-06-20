@@ -64,7 +64,7 @@ export default function Architect() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: profileData } = useReadContract({
+  const { data: profileData, refetch: refetchProfile } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: BeamUpABI,
     functionName: 'getProfile',
@@ -89,6 +89,13 @@ export default function Architect() {
 
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+
+  useEffect(() => {
+    if (isConfirmed) {
+      refetchProfile();
+      setIsEditing(false);
+    }
+  }, [isConfirmed, refetchProfile]);
 
   useEffect(() => {
     if (address && ownerAddress) {
@@ -139,11 +146,8 @@ export default function Architect() {
         functionName: 'updateProfile',
         args: [username, finalAvatarCID, combinedBio],
       });
-      
-      setIsEditing(false);
     } catch (error) {
       console.error("Profile update failed:", error);
-    } finally {
       setIsUploading(false);
     }
   };
@@ -238,10 +242,23 @@ export default function Architect() {
                       className='w-full bg-white/5 border border-white/10 p-3 rounded-xl text-xs outline-none focus:border-[#bc13fe]'
                     />
                     <div className='flex gap-2'>
-                      <button onClick={handleUpdateProfile} className='flex-1 py-3 bg-[#00f2ff] text-black font-black uppercase text-[9px] rounded-xl flex items-center justify-center gap-2'>
-                        {isUploading ? <Loader2 className='w-3 h-3 animate-spin' /> : <Save className='w-3 h-3' />} Sauver
+                      <button 
+                        onClick={handleUpdateProfile} 
+                        disabled={isUploading || isPending || isConfirming}
+                        className='flex-1 py-3 bg-[#00f2ff] text-black font-black uppercase text-[9px] rounded-xl flex items-center justify-center gap-2 disabled:opacity-50'
+                      >
+                        {isUploading || isPending || isConfirming ? (
+                          <>
+                            <Loader2 className='w-3 h-3 animate-spin' /> 
+                            {isConfirming ? 'Confirmation...' : isPending ? 'Signature...' : 'Upload...'}
+                          </>
+                        ) : (
+                          <>
+                            <Save className='w-3 h-3' /> Sauver
+                          </>
+                        )}
                       </button>
-                      <button onClick={() => setIsEditing(false)} className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-red-500/20'><X className='w-3 h-3' /></button>
+                      <button onClick={() => setIsEditing(false)} disabled={isUploading || isPending || isConfirming} className='p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-red-500/20 disabled:opacity-50'><X className='w-3 h-3' /></button>
                     </div>
                   </div>
                 ) : (
