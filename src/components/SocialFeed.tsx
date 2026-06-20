@@ -22,6 +22,10 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
   const containerRef = useRef<HTMLDivElement>(null);
   const { address } = useAccount();
 
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const audioRefs = useRef<(HTMLAudioElement | null)[]>([]);
+  const lastPlayedWorkId = useRef<number | null>(null);
+
   const getMediaUrl = (ipfsCid: string) => `https://gateway.pinata.cloud/ipfs/${ipfsCid}`;
 
   const handleScroll = () => {
@@ -35,11 +39,55 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
     }
   };
 
+  const handleMediaPlay = (id: number) => {
+    if (lastPlayedWorkId.current !== id) {
+      lastPlayedWorkId.current = id;
+      onView(id);
+    }
+  };
+
+  const handleFullscreenChange = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    const video = e.currentTarget;
+    const isFullscreen = document.fullscreenElement === video || 
+                         (video as any).webkitDisplayingFullscreen;
+    if (!isFullscreen) {
+      video.pause();
+    }
+  };
+
   useEffect(() => {
     if (works[activeIndex]) {
-      onView(works[activeIndex].id);
+      const activeWork = works[activeIndex];
+      const isMedia = activeWork.category === 'Musique' || activeWork.category?.toLowerCase().includes('vid') || activeWork.category === 'Video';
+      // Only auto-trigger view on active card for static documents (Webtoons/Images)
+      if (!isMedia) {
+        onView(activeWork.id);
+      }
     }
   }, [activeIndex, works, onView]);
+
+  useEffect(() => {
+    // Reset play session tracker when activeIndex changes
+    lastPlayedWorkId.current = null;
+
+    // Pause all video/audio that are NOT the activeIndex
+    videoRefs.current.forEach((video, idx) => {
+      if (video && idx !== activeIndex) {
+        video.pause();
+      }
+    });
+    audioRefs.current.forEach((audio, idx) => {
+      if (audio && idx !== activeIndex) {
+        audio.pause();
+      }
+    });
+
+    if (commentWorkId !== null) {
+      // Pause active media if comment drawer opens
+      if (videoRefs.current[activeIndex]) videoRefs.current[activeIndex]?.pause();
+      if (audioRefs.current[activeIndex]) audioRefs.current[activeIndex]?.pause();
+    }
+  }, [activeIndex, commentWorkId]);
 
   useEffect(() => {
     let viewTimer: NodeJS.Timeout;
@@ -186,14 +234,17 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                         </div>
                       ) : (work.category?.toLowerCase().includes('vid') || work.category === 'Video') ? (
                         <video
+                          ref={(el) => { videoRefs.current[i] = el; }}
                           src={getMediaUrl(work.ipfsCID)}
                           className="w-full h-full object-contain bg-black"
-                          autoPlay={i === activeIndex && !commentWorkId}
-                          muted
+                          autoPlay={false}
                           controls
                           loop
                           playsInline
                           preload="auto"
+                          onPlay={() => handleMediaPlay(work.id)}
+                          onFullscreenChange={handleFullscreenChange}
+                          {...({ onWebkitEndFullscreen: handleFullscreenChange } as any)}
                         />
                       ) : work.category === 'Musique' ? (
                         <div className="w-full h-full flex flex-col items-center justify-center gap-12 bg-gradient-to-b from-transparent via-black/80 to-transparent">
@@ -216,7 +267,13 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                           </div>
                           <div className="text-center space-y-6">
                             <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white animate-in zoom-in duration-700 drop-shadow-[0_0_20px_rgba(188,19,254,0.5)]">{work.title}</h3>
-                            <audio src={getMediaUrl(work.ipfsCID)} controls className="w-full max-w-md opacity-40 hover:opacity-100 transition-opacity" />
+                            <audio 
+                              ref={(el) => { audioRefs.current[i] = el; }}
+                              src={getMediaUrl(work.ipfsCID)} 
+                              controls 
+                              className="w-full max-w-md opacity-40 hover:opacity-100 transition-opacity"
+                              onPlay={() => handleMediaPlay(work.id)}
+                            />
                           </div>
                         </div>
                       ) : (

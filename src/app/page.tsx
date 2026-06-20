@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useReadContract, useWriteContract, useAccount, useChainId } from 'wagmi';
 import { formatEther, parseEther } from 'viem';
 import { LayoutGrid, Rocket, Disc, Loader2, Zap, Play, Sparkles, Smartphone, Eye } from 'lucide-react';
@@ -20,67 +20,71 @@ const DEFAULT_CHAIN = 56;
 
 export default function Home() {
   const [viewMode, setViewMode] = useState<'grid' | 'feed' | 'crowdfunding'>('feed');
-  const [analytics, setAnalytics] = useState<Record<number, { views: number; completed: number; inProgress: number }>>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('beam_analytics_v1');
-      return saved ? JSON.parse(saved) : {};
-    }
-    return {};
-  });
+  const [analytics, setAnalytics] = useState<Record<number, { views: number; completed: number; inProgress: number }>>({});
 
-  const trackView = (id: number) => {
-    setAnalytics(prev => {
-      const current = prev[id] || { views: 0, completed: 0, inProgress: 0 };
-      const updated = {
-        ...prev,
-        [id]: {
-          ...current,
-          views: current.views + 1
-        }
-      };
-      localStorage.setItem('beam_analytics_v1', JSON.stringify(updated));
-      return updated;
-    });
+  useEffect(() => {
+    fetch('/api/views')
+      .then(res => res.json())
+      .then(data => {
+        setAnalytics(data);
+      })
+      .catch(err => console.error("Error fetching views:", err));
+  }, []);
+
+  const trackView = async (id: number) => {
+    try {
+      const res = await fetch('/api/views', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workId: id, type: 'view' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAnalytics(prev => ({
+          ...prev,
+          [id]: data.stats
+        }));
+      }
+    } catch (err) {
+      console.error("Error tracking view:", err);
+    }
   };
 
-  const trackProgress = (id: number, progress: number) => {
-    setAnalytics(prev => {
-      const current = prev[id] || { views: 0, completed: 0, inProgress: 0 };
-      
-      let completedIncrement = 0;
-      let inProgressIncrement = 0;
+  const trackProgress = async (id: number, progress: number) => {
+    let type: 'completed' | 'inProgress' | null = null;
+    const sessionKeyInProgress = `beam_tracked_ip_${id}`;
+    const sessionKeyCompleted = `beam_tracked_cp_${id}`;
 
-      const sessionKeyInProgress = `beam_tracked_ip_${id}`;
-      const sessionKeyCompleted = `beam_tracked_cp_${id}`;
-
-      if (progress >= 10 && progress < 90) {
-        if (typeof window !== 'undefined' && !sessionStorage.getItem(sessionKeyInProgress) && !sessionStorage.getItem(sessionKeyCompleted)) {
-          sessionStorage.setItem(sessionKeyInProgress, 'true');
-          inProgressIncrement = 1;
-        }
-      } else if (progress >= 90) {
-        if (typeof window !== 'undefined' && !sessionStorage.getItem(sessionKeyCompleted)) {
-          sessionStorage.setItem(sessionKeyCompleted, 'true');
-          completedIncrement = 1;
-          if (sessionStorage.getItem(sessionKeyInProgress)) {
-            inProgressIncrement = -1;
-          }
-        }
+    if (progress >= 10 && progress < 90) {
+      if (typeof window !== 'undefined' && !sessionStorage.getItem(sessionKeyInProgress) && !sessionStorage.getItem(sessionKeyCompleted)) {
+        sessionStorage.setItem(sessionKeyInProgress, 'true');
+        type = 'inProgress';
       }
+    } else if (progress >= 90) {
+      if (typeof window !== 'undefined' && !sessionStorage.getItem(sessionKeyCompleted)) {
+        sessionStorage.setItem(sessionKeyCompleted, 'true');
+        type = 'completed';
+      }
+    }
 
-      if (completedIncrement === 0 && inProgressIncrement === 0) return prev;
+    if (!type) return;
 
-      const updated = {
-        ...prev,
-        [id]: {
-          ...current,
-          completed: Math.max(0, current.completed + completedIncrement),
-          inProgress: Math.max(0, current.inProgress + inProgressIncrement)
-        }
-      };
-      localStorage.setItem('beam_analytics_v1', JSON.stringify(updated));
-      return updated;
-    });
+    try {
+      const res = await fetch('/api/views', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workId: id, type }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAnalytics(prev => ({
+          ...prev,
+          [id]: data.stats
+        }));
+      }
+    } catch (err) {
+      console.error("Error tracking progress:", err);
+    }
   };
 
   const getViewCount = (id: number) => {
