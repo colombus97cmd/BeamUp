@@ -15,6 +15,16 @@ const config = {
       url: "https://bsc-dataseed.binance.org/",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
+    elastos: {
+      url: "https://api.elastos.io/esc",
+      chainId: 20,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    },
+    elastosTestnet: {
+      url: "https://api-testnet.elastos.io/esc",
+      chainId: 21,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    },
   },
 };
 

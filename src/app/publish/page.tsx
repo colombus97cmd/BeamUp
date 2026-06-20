@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { ConnectKitButton } from 'connectkit';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { parseEther } from 'viem';
 import { Rocket, Upload, PlusCircle, FileText, Music, Video, X, Loader2, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
 import Link from 'next/link';
@@ -10,10 +10,20 @@ import Navigation from '../../components/Navigation';
 import { uploadToIPFS } from '../../services/pinata';
 import BeamUpABI from '../../contracts/BeamUp.json';
 
-const CONTRACT_ADDRESS = '0x92c1D8eCE7962634cF337d763994Af1490605dA4';
+const CONTRACT_ADDRESSES: Record<number, `0x${string}`> = {
+  56: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',   // BSC Mainnet
+  20: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',   // Elastos ESC
+  137: '0x6a2BC463fd7e1b6E6769023F8CD41835e347C317',  // Polygon Mainnet
+  42161: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',// Arbitrum One
+};
+const DEFAULT_CHAIN = 56;
 
 export default function Publish() {
   const { isConnected } = useAccount();
+  const chainId = useChainId();
+  const CONTRACT_ADDRESS = CONTRACT_ADDRESSES[chainId] || CONTRACT_ADDRESSES[DEFAULT_CHAIN];
+  const currencySymbol = chainId === 137 ? 'POL' : chainId === 20 ? 'ELA' : chainId === 42161 ? 'ETH' : 'BNB';
+  const chainName = chainId === 137 ? 'Polygon' : chainId === 20 ? 'Elastos' : chainId === 42161 ? 'Arbitrum' : 'BNB Chain';
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Musique');
@@ -110,7 +120,7 @@ export default function Publish() {
             <div className='p-2 md:p-3 bg-[#bc13fe]/10 rounded-xl md:rounded-2xl'><PlusCircle className='w-6 h-6 md:w-8 md:h-8 text-[#bc13fe]' /></div>
             <div>
               <h2 className='text-2xl md:text-3xl font-black uppercase tracking-tight'>Studio de Diffusion</h2>
-              <p className='text-gray-500 text-[10px] md:text-xs uppercase tracking-widest'>ImmortalisÃƒÂ© sur la BNB Chain</p>
+              <p className='text-gray-500 text-[10px] md:text-xs uppercase tracking-widest'>Immortalisé sur {chainName}</p>
             </div>
           </div>
 
@@ -186,7 +196,7 @@ export default function Publish() {
 
                   {isPremium && (
                     <div className='animate-in slide-in-from-top-2 duration-300'>
-                      <label className='text-[9px] uppercase font-black text-amber-500/60 tracking-widest mb-2 block'>Prix de l'œuvre (BNB)</label>
+                      <label className='text-[9px] uppercase font-black text-amber-500/60 tracking-widest mb-2 block'>Prix de l'œuvre ({currencySymbol})</label>
                       <div className='relative'>
                         <input 
                           type='number' 
@@ -196,14 +206,14 @@ export default function Publish() {
                           className='w-full bg-amber-500/5 border border-amber-500/20 p-4 rounded-xl focus:ring-1 focus:ring-amber-500 outline-none font-bold text-sm text-amber-500 placeholder-amber-900/40' 
                           placeholder='0.1' 
                         />
-                        <span className='absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-amber-500/40'>BNB</span>
+                        <span className='absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-amber-500/40'>{currencySymbol}</span>
                       </div>
                     </div>
                   )}
                 </div>
 
                 <button onClick={handlePublish} disabled={(!file && !manualCid) || !title || status === 'uploading'} className='w-full py-5 md:py-6 bg-gradient-to-r from-[#00f2ff] to-[#bc13fe] text-black font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-2xl md:rounded-[24px] hover:shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4'>
-                  <Rocket className='w-4 h-4 md:w-5 md:h-5' /> Diffuser (0.0001 BNB)
+                  <Rocket className='w-4 h-4 md:w-5 md:h-5' /> Diffuser (0.0001 {currencySymbol})
                 </button>
               </div>
             </div>

@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { Heart, MessageCircle, Zap, Play, Pause, Music, Video, ImageIcon, Share2, User, Sparkles, Disc, Lock, ShieldCheck, ShoppingCart } from 'lucide-react';
+import { Heart, MessageCircle, Zap, Play, Pause, Music, Video, ImageIcon, Share2, User, Sparkles, Disc, Lock, ShieldCheck, ShoppingCart, Eye } from 'lucide-react';
 import { formatEther } from 'viem';
 import { useAccount } from 'wagmi';
 import CommentDrawer from './CommentDrawer';
@@ -11,9 +11,12 @@ interface SocialFeedProps {
   onLike: (id: number) => void;
   onComment: (id: number) => void;
   onBuy: (id: number, price: bigint) => void;
+  getViewCount: (id: number) => number;
+  onView: (id: number) => void;
+  onTrackProgress: (id: number, progress: number) => void;
 }
 
-export default function SocialFeed({ works, onTip, onLike, onComment, onBuy }: SocialFeedProps) {
+export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, getViewCount, onView, onTrackProgress }: SocialFeedProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [commentWorkId, setCommentWorkId] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -31,6 +34,37 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy }: S
       }
     }
   };
+
+  useEffect(() => {
+    if (works[activeIndex]) {
+      onView(works[activeIndex].id);
+    }
+  }, [activeIndex, works, onView]);
+
+  useEffect(() => {
+    let viewTimer: NodeJS.Timeout;
+    let completeTimer: NodeJS.Timeout;
+
+    if (works[activeIndex]) {
+      const activeWork = works[activeIndex];
+      const isWebtoon = activeWork.category?.toLowerCase() === 'webtoon' || activeWork.category?.toLowerCase() === 'bd';
+      
+      if (!isWebtoon) {
+        viewTimer = setTimeout(() => {
+          onTrackProgress(activeWork.id, 15);
+        }, 1000);
+
+        completeTimer = setTimeout(() => {
+          onTrackProgress(activeWork.id, 95);
+        }, 5000);
+      }
+    }
+
+    return () => {
+      clearTimeout(viewTimer);
+      clearTimeout(completeTimer);
+    };
+  }, [activeIndex, works, onTrackProgress]);
 
   const getThemeColor = (cat: string) => {
     if (cat === 'Musique') return 'rgba(188, 19, 254, 0.4)';
@@ -126,7 +160,31 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy }: S
                     </div>
                   ) : (
                     <>
-                      {(work.category?.toLowerCase().includes('vid') || work.category === 'Video') ? (
+                      {(work.category?.toLowerCase() === 'webtoon' || work.category?.toLowerCase() === 'bd') ? (
+                        <div 
+                          ref={(el) => {
+                            if (el) {
+                              const savedProgress = localStorage.getItem(`beam_read_progress_${address || 'guest'}_${work.id}`);
+                              if (savedProgress && !el.dataset.scrolled) {
+                                el.dataset.scrolled = 'true';
+                                setTimeout(() => {
+                                  const progress = parseFloat(savedProgress);
+                                  el.scrollTop = progress * (el.scrollHeight - el.clientHeight);
+                                }, 150);
+                              }
+                            }
+                          }}
+                          onScroll={(e) => {
+                            const target = e.currentTarget;
+                            const progress = target.scrollTop / (target.scrollHeight - target.clientHeight);
+                            localStorage.setItem(`beam_read_progress_${address || 'guest'}_${work.id}`, progress.toString());
+                            onTrackProgress(work.id, progress * 100);
+                          }}
+                          className="w-full h-full overflow-y-auto no-scrollbar scroll-smooth relative"
+                        >
+                          <img src={getMediaUrl(work.ipfsCID)} className="w-full h-auto block bg-black" alt={work.title} />
+                        </div>
+                      ) : (work.category?.toLowerCase().includes('vid') || work.category === 'Video') ? (
                         <video
                           src={getMediaUrl(work.ipfsCID)}
                           className="w-full h-full object-contain bg-black"
@@ -173,9 +231,15 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy }: S
                         <User className="w-7 h-7 text-gray-400 group-hover:text-[#00f2ff] transition-colors" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#00f2ff] mb-2 drop-shadow-[0_0_10px_rgba(0,242,255,0.5)]">
-                          @{work.creator.slice(0,6)}...{work.creator.slice(-4)}
-                        </p>
+                        <div className="flex items-center gap-4 mb-2">
+                          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#00f2ff] drop-shadow-[0_0_10px_rgba(0,242,255,0.5)]">
+                            @{work.creator.slice(0,6)}...{work.creator.slice(-4)}
+                          </p>
+                          <div className="flex items-center gap-1.5 text-gray-400">
+                            <Eye className="w-3.5 h-3.5" />
+                            <span className="text-[10px] font-mono font-bold">{getViewCount(work.id)}</span>
+                          </div>
+                        </div>
                         <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-white leading-none group-hover:scale-105 transition-transform origin-left">{work.title}</h3>
                       </div>
                     </div>

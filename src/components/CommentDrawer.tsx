@@ -1,10 +1,16 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { X, Send, MessageSquare, User, Loader2, Sparkles, Zap, ShieldCheck } from 'lucide-react';
 import BeamUpABI from '../contracts/BeamUp.json';
 
-const CONTRACT_ADDRESS = '0x0CD69B6D6c439977A0265dcA7f5B347E1b705117';
+const CONTRACT_ADDRESSES: Record<number, `0x${string}`> = {
+  56: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',   // BSC Mainnet
+  20: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',   // Elastos ESC
+  137: '0x6a2BC463fd7e1b6E6769023F8CD41835e347C317',  // Polygon Mainnet
+  42161: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',// Arbitrum One
+};
+const DEFAULT_CHAIN = 56;
 
 interface CommentDrawerProps {
   workId: number;
@@ -14,6 +20,8 @@ interface CommentDrawerProps {
 
 export default function CommentDrawer({ workId, isOpen, onClose }: CommentDrawerProps) {
   const { address } = useAccount();
+  const chainId = useChainId();
+  const CONTRACT_ADDRESS = CONTRACT_ADDRESSES[chainId] || CONTRACT_ADDRESSES[DEFAULT_CHAIN];
   const [commentText, setCommentText] = useState('');
   
   const { data: comments, refetch } = useReadContract({
