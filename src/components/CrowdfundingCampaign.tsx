@@ -14,6 +14,29 @@ export default function CrowdfundingCampaign() {
   const [customAmount, setCustomAmount] = useState<string>('');
   const [web3Status, setWeb3Status] = useState<'idle' | 'success' | 'error'>('idle');
 
+  const [campaignStats, setCampaignStats] = useState<{ totalRaised: number; contributorsCount: number; donatedAddresses: string[] }>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('beam_campaign_stats_v2');
+      return saved ? JSON.parse(saved) : { totalRaised: 0, contributorsCount: 0, donatedAddresses: [] };
+    }
+    return { totalRaised: 0, contributorsCount: 0, donatedAddresses: [] };
+  });
+
+  const getExchangeRate = (symbol: string) => {
+    if (symbol === 'BNB') return 550;
+    if (symbol === 'POL') return 0.65;
+    if (symbol === 'ELA') return 2.5;
+    if (symbol === 'ETH') return 3000;
+    return 1;
+  };
+
+  const targetDate = new Date('2026-07-31T00:00:00Z');
+  const currentDate = new Date();
+  const diffTime = targetDate.getTime() - currentDate.getTime();
+  const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
+  const progressPercent = Math.min(100, Math.round((campaignStats.totalRaised / 85000) * 100));
+
   // Multi-chain config for donations
   const CHAIN_INFO: Record<number, { name: string; symbol: string; min: string; recipient: `0x${string}` }> = {
     56: { name: 'BSC Mainnet', symbol: 'BNB', min: '0.01', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5' },
@@ -89,6 +112,27 @@ export default function CrowdfundingCampaign() {
       }, {
         onSuccess: () => {
           setWeb3Status('success');
+          
+          let donationEuro = 0;
+          if (selectedTier !== null) {
+            const tier = pledgeTiers.find(t => t.id === selectedTier);
+            if (tier) donationEuro = tier.priceEuro;
+          } else {
+            donationEuro = Math.round(Number(amount) * getExchangeRate(activeChain.symbol));
+          }
+
+          setCampaignStats(prev => {
+            const isNewContributor = !prev.donatedAddresses.includes(address || '');
+            const updatedAddresses = isNewContributor && address ? [...prev.donatedAddresses, address] : prev.donatedAddresses;
+            const updatedStats = {
+              totalRaised: prev.totalRaised + donationEuro,
+              contributorsCount: prev.contributorsCount + (isNewContributor ? 1 : 0),
+              donatedAddresses: updatedAddresses
+            };
+            localStorage.setItem('beam_campaign_stats_v2', JSON.stringify(updatedStats));
+            return updatedStats;
+          });
+
           setTimeout(() => setWeb3Status('idle'), 5000);
         },
         onError: (err) => {
@@ -139,21 +183,20 @@ export default function CrowdfundingCampaign() {
             
             {/* Multi-layered progress bar */}
             <div className="h-4 w-full bg-white/5 rounded-full overflow-hidden relative mb-6">
-              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#bc13fe] to-[#00f2ff] rounded-full" style={{ width: '42%' }} />
-              <div className="absolute top-0 left-[42%] h-full bg-[#00f2ff] opacity-20 animate-pulse" style={{ width: '8%' }} />
+              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#bc13fe] to-[#00f2ff] rounded-full" style={{ width: `${progressPercent}%` }} />
             </div>
 
             <div className="grid grid-cols-3 gap-4 text-left mb-8">
               <div>
-                <h3 className="text-3xl md:text-5xl font-black tracking-tight text-white">35 700 €</h3>
-                <p className="text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1">Engagés (42%)</p>
+                <h3 className="text-3xl md:text-5xl font-black tracking-tight text-white">{campaignStats.totalRaised.toLocaleString()} €</h3>
+                <p className="text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1">Engagés ({progressPercent}%)</p>
               </div>
               <div>
-                <h3 className="text-3xl md:text-5xl font-black tracking-tight text-white">284</h3>
+                <h3 className="text-3xl md:text-5xl font-black tracking-tight text-white">{campaignStats.contributorsCount}</h3>
                 <p className="text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1">Contributeurs</p>
               </div>
               <div>
-                <h3 className="text-3xl md:text-5xl font-black tracking-tight text-[#00f2ff]">28</h3>
+                <h3 className="text-3xl md:text-5xl font-black tracking-tight text-[#00f2ff]">{daysRemaining}</h3>
                 <p className="text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1">Jours restants</p>
               </div>
             </div>
