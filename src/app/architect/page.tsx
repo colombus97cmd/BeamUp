@@ -29,22 +29,24 @@ export default function Architect() {
   const CONTRACT_ADDRESS = CONTRACT_ADDRESSES[chainId] || CONTRACT_ADDRESSES[DEFAULT_CHAIN];
   const currencySymbol = chainId === 137 ? 'POL' : chainId === 20 ? 'ELA' : chainId === 42161 ? 'ETH' : 'BNB';
 
+  const [analytics, setAnalytics] = useState<Record<number, { views: number; completed: number; inProgress: number }>>({});
+
+  useEffect(() => {
+    fetch('/api/views')
+      .then(res => res.json())
+      .then(data => {
+        setAnalytics(data);
+      })
+      .catch(err => console.error("Error fetching views:", err));
+  }, []);
+
   const getWorkStats = (id: number) => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('beam_analytics_v1');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed[id]) {
-          const stats = parsed[id];
-          return {
-            views: stats.views || 0,
-            completed: stats.completed || 0,
-            inProgress: stats.inProgress || 0,
-          };
-        }
-      }
-    }
-    return { views: 0, completed: 0, inProgress: 0 };
+    const stats = analytics[id];
+    return {
+      views: stats?.views || 0,
+      completed: stats?.completed || 0,
+      inProgress: stats?.inProgress || 0,
+    };
   };
 
   const [isAdmin, setIsAdmin] = useState(false);
