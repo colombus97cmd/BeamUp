@@ -30,11 +30,6 @@ export default function CrowdfundingCampaign() {
     return 1;
   };
 
-  const targetDate = new Date('2026-07-31T00:00:00Z');
-  const currentDate = new Date();
-  const diffTime = targetDate.getTime() - currentDate.getTime();
-  const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-
   const progressPercent = Math.min(100, Math.round((campaignStats.totalRaised / 85000) * 100));
 
   // Multi-chain config for donations
@@ -196,8 +191,8 @@ export default function CrowdfundingCampaign() {
                 <p className="text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1">Contributeurs</p>
               </div>
               <div>
-                <h3 className="text-3xl md:text-5xl font-black tracking-tight text-[#00f2ff]">{daysRemaining}</h3>
-                <p className="text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1">Jours restants</p>
+                <h3 className="text-3xl md:text-5xl font-black tracking-tight text-[#00f2ff]">∞</h3>
+                <p className="text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1">Campagne Permanente</p>
               </div>
             </div>
           </div>
