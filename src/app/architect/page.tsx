@@ -11,6 +11,7 @@ import Link from 'next/link';
 import Navigation from '../../components/Navigation';
 import { uploadToIPFS } from '../../services/pinata';
 import BeamUpABI from '../../contracts/BeamUp.json';
+import { getFormat } from '../../config/formats';
 import { getContractAddress, getCurrencySymbol } from '../../config/contracts';
 
 
@@ -334,7 +335,7 @@ export default function Architect() {
                       <div>
                         <div className='flex items-center gap-4 mb-4'>
                            <div className='p-2 bg-white/5 rounded-lg'>
-                              {work.category === 'Musique' ? <Music className='w-4 h-4 text-[#bc13fe]' /> : work.category === 'Webtoon' || work.category === 'BD' ? <FileText className='w-4 h-4 text-amber-500' /> : <Video className='w-4 h-4 text-[#00f2ff]' />}
+                              {(() => { const F = getFormat(work.category); const Icon = F.icon; return <Icon className='w-4 h-4' style={{ color: F.hex }} />; })()}
                            </div>
                            <h4 className='text-lg font-black uppercase truncate flex-1'>{work.title}</h4>
                         </div>

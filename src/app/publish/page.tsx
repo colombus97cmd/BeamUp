@@ -3,13 +3,14 @@ import { useState, useRef, useEffect } from 'react';
 import { ConnectKitButton } from 'connectkit';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId, useSignMessage } from 'wagmi';
 import { parseEther } from 'viem';
-import { Rocket, Upload, PlusCircle, FileText, Music, Video, X, Loader2, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
+import { Rocket, Upload, PlusCircle, X, CheckCircle2, ShieldCheck, Sparkles, Coins } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navigation from '../../components/Navigation';
 import { uploadToIPFS } from '../../services/pinata';
 import BeamUpABI from '../../contracts/BeamUp.json';
 import { getContractAddress, getCurrencySymbol, getChainName } from '../../config/contracts';
+import { FORMATS, getFormat } from '../../config/formats';
 
 
 export default function Publish() {
@@ -108,7 +109,7 @@ export default function Publish() {
                 </div>
               )}
 
-              <p className='text-[8px] text-gray-500 mt-4 font-mono uppercase'>L'Å’uvre quitte le systÃ¨me centralisÃ©</p>
+              <p className='text-[8px] text-gray-500 mt-4 font-mono uppercase'>Votre œuvre part sur IPFS puis on-chain</p>
             </div>
           )}
 
@@ -116,7 +117,7 @@ export default function Publish() {
             <div className='p-2 md:p-3 bg-[#bc13fe]/10 rounded-xl md:rounded-2xl'><PlusCircle className='w-6 h-6 md:w-8 md:h-8 text-[#bc13fe]' /></div>
             <div>
               <h2 className='text-2xl md:text-3xl font-black uppercase tracking-tight'>Studio de Diffusion</h2>
-              <p className='text-gray-500 text-[10px] md:text-xs uppercase tracking-widest'>Immortalisé sur {chainName}</p>
+              <p className='text-gray-500 text-[10px] md:text-xs uppercase tracking-widest'>Publié on-chain sur {chainName}</p>
             </div>
           </div>
 
@@ -124,6 +125,18 @@ export default function Publish() {
             <div className='py-16 md:py-20 text-center border-2 border-dashed border-white/5 rounded-3xl md:rounded-[32px]'>
               <ShieldCheck className='w-12 h-12 md:w-16 md:h-16 mx-auto mb-6 text-gray-700' />
               <p className='text-gray-500 text-xs md:text-sm uppercase tracking-widest font-black'>Connectez votre Wallet pour diffuser</p>
+              <p className='text-gray-500 text-xs mt-3 mb-8 max-w-sm mx-auto'>Votre wallet sert d'identité de créateur : c'est là que vous recevrez 95 % de vos revenus.</p>
+              <div className='flex justify-center mb-10'><ConnectKitButton /></div>
+              <div className='flex flex-wrap justify-center gap-2 px-4'>
+                {FORMATS.map(fmt => {
+                  const Icon = fmt.icon;
+                  return (
+                    <span key={fmt.id} className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-wider text-gray-300'>
+                      <Icon className='w-3.5 h-3.5' style={{ color: fmt.hex }} /> {fmt.label}
+                    </span>
+                  );
+                })}
+              </div>
             </div>
           ) : (
             <div className='flex flex-col md:grid md:grid-cols-2 gap-8 md:gap-12'>
@@ -131,17 +144,15 @@ export default function Publish() {
                 onClick={() => !file && fileInputRef.current?.click()}
                 className={`aspect-square md:aspect-auto md:h-full min-h-[250px] rounded-2xl md:rounded-[32px] border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center p-6 ${file ? 'border-[#bc13fe]/40 bg-[#bc13fe]/5' : 'border-white/10 hover:border-[#00f2ff]/40'}`}
               >
-                <input type='file' ref={fileInputRef} onChange={(e) => { if (e.target.files?.[0]) { setFile(e.target.files[0]); setPreviewUrl(URL.createObjectURL(e.target.files[0])); } }} hidden />
+                <input type='file' accept={getFormat(category).accept} ref={fileInputRef} onChange={(e) => { if (e.target.files?.[0]) { setFile(e.target.files[0]); setPreviewUrl(URL.createObjectURL(e.target.files[0])); } }} hidden />
                 {previewUrl ? (
                   <div className='w-full h-full flex flex-col items-center justify-center relative'>
-                     {category === 'Musique' && <Music className='w-16 h-16 mb-4 text-[#bc13fe]' />}
-                     {(category === 'Video' || category === 'Vidéo' || category === 'VidÃƒÂ©o') && <Video className='w-16 h-16 mb-4 text-[#00f2ff]' />}
-                     {(category === 'Comic' || category === 'BD NumÃƒÂ©rique' || category === 'BD') && <FileText className='w-16 h-16 mb-4 text-[#ffd700]' />}
+                     {(() => { const F = getFormat(category); const Icon = F.icon; return <Icon className='w-16 h-16 mb-4' style={{ color: F.hex }} />; })()}
                      <span className='text-[10px] font-bold truncate max-w-full'>{file?.name}</span>
                      <button onClick={(e) => { e.stopPropagation(); setFile(null); setPreviewUrl(null); }} className='absolute -top-2 -right-2 p-2 bg-red-500 text-white rounded-full shadow-lg'><X className='w-4 h-4' /></button>
                   </div>
                 ) : (
-                  <><Upload className='w-10 h-10 text-gray-500 mb-4' /><p className='text-[10px] uppercase font-black text-gray-500 tracking-widest'>DÃƒÂ©poser MÃƒÂ©dia</p></>
+                  <><Upload className='w-10 h-10 text-gray-500 mb-4' /><p className='text-[10px] uppercase font-black text-gray-500 tracking-widest'>Déposer votre {getFormat(category).label.toLowerCase()}</p></>
                 )}
                 {!file && (
                   <div className='flex items-center gap-4 mt-4 relative'>
@@ -158,17 +169,31 @@ export default function Publish() {
 
               <div className='space-y-6 md:space-y-8'>
                 <div className='space-y-2'>
-                  <label className='text-[9px] md:text-[10px] uppercase font-black text-gray-500 tracking-widest'>Titre de l'Ã…â€œuvre</label>
+                  <label className='text-[9px] md:text-[10px] uppercase font-black text-gray-500 tracking-widest'>Titre de l'œuvre</label>
                   <input value={title} onChange={(e) => setTitle(e.target.value)} className='w-full bg-white/5 border border-white/10 p-4 md:p-5 rounded-xl md:rounded-2xl focus:ring-1 focus:ring-[#00f2ff] outline-none font-bold text-sm md:text-base' placeholder='Ex: Quantum Horizon' />
                 </div>
 
                 <div className='space-y-2'>
-                  <label className='text-[9px] md:text-[10px] uppercase font-black text-gray-500 tracking-widest'>CatÃƒÂ©gorie MÃƒÂ©dia</label>
-                  <div className='grid grid-cols-3 md:grid-cols-1 gap-2'>
-                    {['Musique', 'Video', 'Comic'].map(cat => (
-                      <button key={cat} onClick={() => setCategory(cat)} className={`py-3 md:py-4 text-[8px] md:text-[10px] font-black uppercase rounded-xl border transition-all ${category === cat ? 'bg-white text-black border-white' : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20'}`}>{cat.split(' ')[0]}</button>
-                    ))}
+                  <label className='text-[9px] md:text-[10px] uppercase font-black text-gray-500 tracking-widest'>Format de l'œuvre</label>
+                  <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
+                    {FORMATS.map(fmt => {
+                      const Icon = fmt.icon;
+                      const active = category === fmt.id;
+                      return (
+                        <button
+                          key={fmt.id}
+                          type='button'
+                          onClick={() => { setCategory(fmt.id); setFile(null); setPreviewUrl(null); }}
+                          className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border transition-all ${active ? 'bg-white/10' : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20'}`}
+                          style={active ? { borderColor: fmt.hex, boxShadow: `0 0 18px ${fmt.glow}` } : undefined}
+                        >
+                          <Icon className='w-5 h-5' style={{ color: active ? fmt.hex : undefined }} />
+                          <span className={`text-[9px] font-black uppercase tracking-wider text-center leading-tight ${active ? 'text-white' : ''}`}>{fmt.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
+                  <p className='text-[10px] text-gray-500'>{getFormat(category).tagline}</p>
                 </div>
 
                 <div className='space-y-4 pt-4 border-t border-white/5'>
@@ -179,7 +204,7 @@ export default function Publish() {
                       </div>
                       <div>
                         <p className='text-[10px] font-black uppercase tracking-widest'>Option Premium</p>
-                        <p className='text-[8px] text-gray-600 uppercase font-mono'>Accès payant pour les visiteurs</p>
+                        <p className='text-[8px] text-gray-600 uppercase font-mono'>Les fans paient pour lire, écouter ou regarder</p>
                       </div>
                     </div>
                     <button 
@@ -204,8 +229,18 @@ export default function Publish() {
                         />
                         <span className='absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-amber-500/40'>{currencySymbol}</span>
                       </div>
+                      <p className='text-[9px] text-gray-500 mt-2 leading-relaxed'>
+                        L&apos;accès premium est filtré par l&apos;interface : le fichier reste techniquement lisible via son lien IPFS. Le chiffrement des œuvres premium est prévu.
+                      </p>
                     </div>
                   )}
+                </div>
+
+                <div className='flex items-start gap-3 p-4 rounded-xl bg-[#00f2ff]/5 border border-[#00f2ff]/15'>
+                  <Coins className='w-4 h-4 text-[#00f2ff] mt-0.5 flex-shrink-0' />
+                  <p className='text-[10px] text-gray-300 leading-relaxed'>
+                    Vous recevez <span className='text-white font-black'>95 %</span> de chaque pourboire et de chaque achat, directement dans votre wallet, sans délai de paiement.
+                  </p>
                 </div>
 
                 <button onClick={handlePublish} disabled={(!file && !manualCid) || !title || status === 'uploading'} className='w-full py-5 md:py-6 bg-gradient-to-r from-[#00f2ff] to-[#bc13fe] text-black font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-2xl md:rounded-[24px] hover:shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4'>
@@ -219,7 +254,7 @@ export default function Publish() {
             <div className='mt-8 md:mt-12 bg-green-500/10 border border-green-500/20 p-5 md:p-6 rounded-2xl md:rounded-[32px] flex items-center gap-4 animate-bounce'>
               <CheckCircle2 className='w-6 h-6 md:w-8 md:h-8 text-green-500 flex-shrink-0' />
               <div>
-                <p className='text-xs md:text-sm font-black text-green-500 uppercase tracking-widest'>Diffusion ConfirmÃƒÂ©e !</p>
+                <p className='text-xs md:text-sm font-black text-green-500 uppercase tracking-widest'>Diffusion confirmée !</p>
                 <Link href="/" className='text-[9px] md:text-[10px] text-green-500/60 hover:text-green-500 underline uppercase font-bold'>Voir dans le flux</Link>
               </div>
             </div>
@@ -229,9 +264,9 @@ export default function Publish() {
             <div className='mt-8 md:mt-12 bg-red-500/10 border border-red-500/20 p-5 md:p-6 rounded-2xl md:rounded-[32px] flex items-center gap-4'>
               <X className='w-6 h-6 md:w-8 md:h-8 text-red-500 flex-shrink-0' />
               <div>
-                <p className='text-xs md:text-sm font-black text-red-500 uppercase tracking-widest'>Ã‰chec de la Diffusion</p>
+                <p className='text-xs md:text-sm font-black text-red-500 uppercase tracking-widest'>Échec de la diffusion</p>
                 <p className='text-[10px] text-red-400 mt-1 font-mono break-all'>{errorMessage}</p>
-                <button onClick={() => setStatus('idle')} className='mt-3 px-4 py-2 bg-red-500/20 text-red-300 text-[10px] rounded-lg font-bold uppercase'>RÃ©essayer</button>
+                <button onClick={() => setStatus('idle')} className='mt-3 px-4 py-2 bg-red-500/20 text-red-300 text-[10px] rounded-lg font-bold uppercase'>Réessayer</button>
               </div>
             </div>
           )}

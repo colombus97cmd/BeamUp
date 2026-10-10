@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { Heart, MessageCircle, Zap, Play, Pause, Music, Video, ImageIcon, Share2, User, Sparkles, Disc, Lock, ShieldCheck, ShoppingCart, Eye } from 'lucide-react';
+import { getFormat } from '../config/formats';
 import { formatEther } from 'viem';
 import { useAccount } from 'wagmi';
 import CommentDrawer from './CommentDrawer';
@@ -58,7 +59,8 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
   useEffect(() => {
     if (works[activeIndex]) {
       const activeWork = works[activeIndex];
-      const isMedia = activeWork.category === 'Musique' || activeWork.category?.toLowerCase().includes('vid') || activeWork.category === 'Video';
+      const kind = getFormat(activeWork.category).kind;
+      const isMedia = kind === 'audio' || kind === 'video';
       // Only auto-trigger view on active card for static documents (Webtoons/Images)
       if (!isMedia) {
         onView(activeWork.id);
@@ -95,7 +97,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
 
     if (works[activeIndex]) {
       const activeWork = works[activeIndex];
-      const isWebtoon = activeWork.category?.toLowerCase() === 'webtoon' || activeWork.category?.toLowerCase() === 'bd';
+      const isWebtoon = getFormat(activeWork.category).kind === 'scroll';
       
       if (!isWebtoon) {
         viewTimer = setTimeout(() => {
@@ -114,11 +116,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
     };
   }, [activeIndex, works, onTrackProgress]);
 
-  const getThemeColor = (cat: string) => {
-    if (cat === 'Musique') return 'rgba(188, 19, 254, 0.4)';
-    if (cat === 'Video' || cat === 'Vidéo') return 'rgba(0, 242, 255, 0.4)';
-    return 'rgba(255, 215, 0, 0.4)';
-  };
+  const getThemeColor = (cat: string) => getFormat(cat).glow;
 
   return (
     <div className="relative h-full w-full bg-[#020202] overflow-hidden">
@@ -208,7 +206,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                     </div>
                   ) : (
                     <>
-                      {(work.category?.toLowerCase() === 'webtoon' || work.category?.toLowerCase() === 'bd') ? (
+                      {getFormat(work.category).kind === 'scroll' ? (
                         <div 
                           ref={(el) => {
                             if (el) {
@@ -232,7 +230,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                         >
                           <img src={getMediaUrl(work.ipfsCID)} className="w-full h-auto block bg-black" alt={work.title} />
                         </div>
-                      ) : (work.category?.toLowerCase().includes('vid') || work.category === 'Video') ? (
+                      ) : getFormat(work.category).kind === 'video' ? (
                         <video
                           ref={(el) => { videoRefs.current[i] = el; }}
                           src={getMediaUrl(work.ipfsCID)}
@@ -246,7 +244,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                           onFullscreenChange={handleFullscreenChange}
                           {...({ onWebkitEndFullscreen: handleFullscreenChange } as any)}
                         />
-                      ) : work.category === 'Musique' ? (
+                      ) : getFormat(work.category).kind === 'audio' ? (
                         <div className="w-full h-full flex flex-col items-center justify-center gap-12 bg-gradient-to-b from-transparent via-black/80 to-transparent">
                           <div className="relative w-64 h-64 group-hover:scale-105 transition-all duration-1000">
                             <div 
