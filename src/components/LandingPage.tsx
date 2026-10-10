@@ -169,8 +169,8 @@ export default function LandingPage() {
 
       {/* TRUST */}
       <section className="relative z-10 py-12 md:py-16 px-4 md:px-10 max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="md:col-span-3 mb-2">
+        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="sm:col-span-2 md:col-span-4 mb-2">
             <div className="flex items-center gap-2 mb-3">
               <ShieldCheck className="w-5 h-5 text-[#00f2ff]" />
               <h2 className="font-black uppercase text-sm tracking-wider">Transparent on-chain</h2>

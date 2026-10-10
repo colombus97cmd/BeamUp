@@ -23,6 +23,7 @@ export default function CrowdfundingCampaign() {
     56: { name: 'BSC Mainnet', symbol: 'BNB', min: '0.01', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5', explorer: 'https://bscscan.com' },
     137: { name: 'Polygon', symbol: 'POL', min: '5.0', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5', explorer: 'https://polygonscan.com' },
     1: { name: 'Ethereum', symbol: 'ETH', min: '0.001', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5', explorer: 'https://etherscan.io' },
+    42161: { name: 'Arbitrum', symbol: 'ETH', min: '0.001', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5', explorer: 'https://arbiscan.io' },
   };
 
   const activeChain = CHAIN_INFO[chainId] || CHAIN_INFO[56]; // fallback to BSC
@@ -155,7 +156,7 @@ export default function CrowdfundingCampaign() {
                       rel="noopener noreferrer"
                       className="text-[10px] uppercase tracking-widest font-black px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[#00f2ff] hover:bg-white/10"
                     >
-                      Voir les dons {c.symbol} ↗
+                      Dons sur {c.name} ↗
                     </a>
                   ))}
                 </div>
