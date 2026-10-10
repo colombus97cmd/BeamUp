@@ -4,14 +4,10 @@ import Link from 'next/link';
 import { ConnectKitButton } from 'connectkit';
 import { ArrowRight, Sparkles, Upload, Heart, Wallet, ShieldCheck, Layers, ExternalLink, Play } from 'lucide-react';
 import { FORMATS } from '../config/formats';
-import { CONTRACT_ADDRESSES } from '../config/contracts';
+import { CONTRACT_ADDRESSES, getChainName, getExplorer } from '../config/contracts';
 
 const CREATOR_SHARE = 0.95;
 
-const EXPLORERS: Record<number, { name: string; url: string }> = {
-  56: { name: 'BNB Chain', url: 'https://bscscan.com/address/' },
-  137: { name: 'Polygon', url: 'https://polygonscan.com/address/' },
-};
 
 export default function LandingPage() {
   const [fans, setFans] = useState(200);
@@ -103,7 +99,7 @@ export default function LandingPage() {
             <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-8">Comment vous êtes payé</h2>
             <ol className="space-y-5">
               {[
-                { icon: Upload, title: 'Vous publiez', text: "Votre fichier est stocké sur IPFS et enregistré on-chain à votre nom. Frais de publication : 0,0001 BNB ou POL." },
+                { icon: Upload, title: 'Vous publiez', text: "Votre fichier est stocké sur IPFS et enregistré on-chain à votre nom. Frais de publication : 0,0001 BNB, POL ou ETH." },
                 { icon: Heart, title: 'Vos fans soutiennent', text: "Pourboire pendant l'écoute ou la lecture, ou achat de vos œuvres premium au prix que vous fixez." },
                 { icon: Wallet, title: 'Vous encaissez', text: "95 % arrivent dans votre wallet dans la même transaction. Pas de seuil, pas de délai de paiement." },
               ].map((step, i) => {
@@ -174,7 +170,7 @@ export default function LandingPage() {
       {/* TRUST */}
       <section className="relative z-10 py-12 md:py-16 px-4 md:px-10 max-w-6xl mx-auto">
         <div className="grid md:grid-cols-3 gap-4">
-          <div className="md:col-span-1">
+          <div className="md:col-span-3 mb-2">
             <div className="flex items-center gap-2 mb-3">
               <ShieldCheck className="w-5 h-5 text-[#00f2ff]" />
               <h2 className="font-black uppercase text-sm tracking-wider">Transparent on-chain</h2>
@@ -184,8 +180,7 @@ export default function LandingPage() {
             </p>
           </div>
           {Object.entries(CONTRACT_ADDRESSES).map(([chainId, addr]) => {
-            const ex = EXPLORERS[Number(chainId)];
-            if (!ex) return null;
+            const ex = { name: getChainName(Number(chainId)), url: `${getExplorer(Number(chainId))}/address/` };
             return (
               <a
                 key={chainId}

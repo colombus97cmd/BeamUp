@@ -27,8 +27,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "BeamUp | Propulsez l'Art Web3",
-  description: "Soutenez les Créateurs en Temps Réel. Découvrez des œuvres et rémunérez directement vos artistes préférés on-chain, sur BNB Chain et Polygon.",
-  keywords: ["Web3", "Art", "NFT", "Dapp", "BNB Chain", "Polygon", "Créateurs", "Rémunération"],
+  description: "Soutenez les Créateurs en Temps Réel. Découvrez des œuvres et rémunérez directement vos artistes préférés on-chain, sur BNB Chain, Polygon et Ethereum.",
+  keywords: ["Web3", "Art", "NFT", "Dapp", "BNB Chain", "Polygon", "Ethereum", "Créateurs", "Rémunération"],
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "BeamUp | Propulsez l'Art Web3",
-    description: "Soutenez les Créateurs en Temps Réel. Découvrez des œuvres exclusives et rémunérez vos artistes préférés sur BNB Chain et Polygon.",
+    description: "Soutenez les Créateurs en Temps Réel. Découvrez des œuvres exclusives et rémunérez vos artistes préférés sur BNB Chain, Polygon et Ethereum.",
     url: "https://beam-up.vercel.app",
     siteName: "BeamUp",
     images: [

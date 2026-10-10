@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ShieldCheck, ExternalLink, Wallet, Upload, Heart, Construction, Github, Linkedin, Youtube, Palette, Globe, Mail } from 'lucide-react';
 import Navigation from '../../components/Navigation';
-import { CONTRACT_ADDRESSES } from '../../config/contracts';
+import { CONTRACT_ADDRESSES, getChainName, getExplorer } from '../../config/contracts';
 import { FORMATS } from '../../config/formats';
 
 export const metadata: Metadata = {
@@ -22,10 +22,6 @@ const SOCIALS = [
   { name: 'Contact', href: `${PORTFOLIO}contact.html`, icon: Mail },
 ];
 
-const EXPLORERS: Record<number, { name: string; url: string }> = {
-  56: { name: 'BNB Chain', url: 'https://bscscan.com/address/' },
-  137: { name: 'Polygon', url: 'https://polygonscan.com/address/' },
-};
 
 export default function About() {
   return (
@@ -58,7 +54,7 @@ export default function About() {
           <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-6">Comment ça marche</h2>
           <div className="grid md:grid-cols-3 gap-4">
             {[
-              { icon: Upload, title: 'Publication', text: "Le créateur dépose son œuvre. Frais de publication : 0,0001 BNB ou POL." },
+              { icon: Upload, title: 'Publication', text: "Le créateur dépose son œuvre. Frais de publication : 0,0001 BNB, POL ou ETH." },
               { icon: Heart, title: 'Soutien', text: 'Les fans envoient un pourboire ou achètent une œuvre premium au prix fixé par le créateur.' },
               { icon: Wallet, title: 'Paiement', text: '95 % vont au créateur dans la même transaction. 5 % de commission financent la plateforme.' },
             ].map((s) => {
@@ -85,8 +81,7 @@ export default function About() {
           </p>
           <div className="grid md:grid-cols-2 gap-3">
             {Object.entries(CONTRACT_ADDRESSES).map(([chainId, addr]) => {
-              const ex = EXPLORERS[Number(chainId)];
-              if (!ex) return null;
+              const ex = { name: getChainName(Number(chainId)), url: `${getExplorer(Number(chainId))}/address/` };
               return (
                 <a
                   key={chainId}

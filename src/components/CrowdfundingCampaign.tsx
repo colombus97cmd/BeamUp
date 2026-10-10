@@ -22,6 +22,7 @@ export default function CrowdfundingCampaign() {
   const CHAIN_INFO: Record<number, { name: string; symbol: string; min: string; recipient: `0x${string}`; explorer: string }> = {
     56: { name: 'BSC Mainnet', symbol: 'BNB', min: '0.01', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5', explorer: 'https://bscscan.com' },
     137: { name: 'Polygon', symbol: 'POL', min: '5.0', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5', explorer: 'https://polygonscan.com' },
+    1: { name: 'Ethereum', symbol: 'ETH', min: '0.001', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5', explorer: 'https://etherscan.io' },
   };
 
   const activeChain = CHAIN_INFO[chainId] || CHAIN_INFO[56]; // fallback to BSC
@@ -31,8 +32,8 @@ export default function CrowdfundingCampaign() {
       id: 1,
       name: "Disciple d'Afridi",
       priceEuro: 10,
-      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.018 BNB' : '15 POL',
-      cryptoValue: activeChain.symbol === 'BNB' ? '0.018' : '15',
+      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.018 BNB' : activeChain.symbol === 'ETH' ? '0.003 ETH' : '15 POL',
+      cryptoValue: activeChain.symbol === 'BNB' ? '0.018' : activeChain.symbol === 'ETH' ? '0.003' : '15',
       description: "Accès numérique anticipé au Tome 1 du Webtoon 'The Long Way Of...' sur la DApp Beam Up + un rôle Discord exclusif 'Ash Land' pour participer aux votes du lore.",
       items: ["Accès Webtoon anticipé", "Rôle Discord Exclusif", "Nom dans les crédits de l'œuvre"],
       badge: "Digital"
@@ -41,8 +42,8 @@ export default function CrowdfundingCampaign() {
       id: 2,
       name: "Lecteur d'Ash Land",
       priceEuro: 30,
-      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.055 BNB' : '45 POL',
-      cryptoValue: activeChain.symbol === 'BNB' ? '0.055' : '45',
+      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.055 BNB' : activeChain.symbol === 'ETH' ? '0.009 ETH' : '45 POL',
+      cryptoValue: activeChain.symbol === 'BNB' ? '0.055' : activeChain.symbol === 'ETH' ? '0.009' : '45',
       description: "La version physique exclusive du Tome 1 du Webtoon imprimé sur du papier recyclé labellisé, livré dans un emballage biodégradable en fibre de coco conçu localement par le FabLab.",
       items: ["Version physique du Tome 1", "Packaging éco-conçu en coco", "Tous les avantages du Tiers 1"],
       badge: "Physique Eco-conçu"
@@ -51,8 +52,8 @@ export default function CrowdfundingCampaign() {
       id: 3,
       name: "Gardien du Souffle",
       priceEuro: 75,
-      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.14 BNB' : '110 POL',
-      cryptoValue: activeChain.symbol === 'BNB' ? '0.14' : '110',
+      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.14 BNB' : activeChain.symbol === 'ETH' ? '0.022 ETH' : '110 POL',
+      cryptoValue: activeChain.symbol === 'BNB' ? '0.14' : activeChain.symbol === 'ETH' ? '0.022' : '110',
       description: "Une figurine d'art exclusive de Hyrio ou d'Amira (7cm) fabriquée en Guadeloupe par notre FabLab en impression 3D végétale à base de fibre de coco brute recyclée. Comprend également un NFT d'accès Premium.",
       items: ["Figurine 3D coco végétale", "NFT d'accès Premium Beam Up", "Tous les avantages précédents"],
       badge: "Art & Web3",
@@ -62,8 +63,8 @@ export default function CrowdfundingCampaign() {
       id: 4,
       name: "Bâtisseur d'Utopia",
       priceEuro: 250,
-      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.45 BNB' : '360 POL',
-      cryptoValue: activeChain.symbol === 'BNB' ? '0.45' : '360',
+      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.45 BNB' : activeChain.symbol === 'ETH' ? '0.075 ETH' : '360 POL',
+      cryptoValue: activeChain.symbol === 'BNB' ? '0.45' : activeChain.symbol === 'ETH' ? '0.075' : '360',
       description: "Gravez votre nom dans l'histoire. Votre visage ou avatar sera dessiné et intégré comme personnage secondaire ou figurant dans une planche clé de l'année 2238. Livré avec un certificat physique gravé sur bois.",
       items: ["Intégration dans le Webtoon", "Certificat en bois gravé", "Visite virtuelle de la Ferme", "Tous les avantages précédents"],
       badge: "Prestige Lore"
