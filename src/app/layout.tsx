@@ -4,6 +4,7 @@ import './globals.css';
 import { Web3Provider } from '../components/Web3Provider';
 import ServiceWorkerRegistration from '../components/ServiceWorkerRegistration';
 import PWAInstallPrompt from '../components/PWAInstallPrompt';
+import ConstructionBanner from '../components/ConstructionBanner';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -79,6 +80,7 @@ export default function RootLayout({
         <Web3Provider>
           {children}
           <PWAInstallPrompt />
+          <ConstructionBanner />
         </Web3Provider>
       </body>
     </html>

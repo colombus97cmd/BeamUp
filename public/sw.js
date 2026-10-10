@@ -1,5 +1,5 @@
 // BeamUp Service Worker — PWA Offline Support
-const CACHE_NAME = 'beamup-v1';
+const CACHE_NAME = 'beamup-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -71,9 +71,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For static assets — cache-first
+  // For static assets — cache-first, only for files renamed at each build (/_next/static)
+  // and images. Other JS/CSS goes network-first so visitors always get updates.
   if (
-    url.pathname.match(/\.(png|jpg|jpeg|svg|gif|webp|ico|css|js|woff2?)$/)
+    url.pathname.startsWith('/_next/static/') ||
+    url.pathname.match(/\.(png|jpg|jpeg|svg|gif|webp|ico|woff2?)$/)
   ) {
     event.respondWith(
       caches.match(request).then(
