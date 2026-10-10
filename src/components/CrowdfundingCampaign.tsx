@@ -14,30 +14,14 @@ export default function CrowdfundingCampaign() {
   const [customAmount, setCustomAmount] = useState<string>('');
   const [web3Status, setWeb3Status] = useState<'idle' | 'success' | 'error'>('idle');
 
-  const [campaignStats, setCampaignStats] = useState<{ totalRaised: number; contributorsCount: number; donatedAddresses: string[] }>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('beam_campaign_stats_v2');
-      return saved ? JSON.parse(saved) : { totalRaised: 0, contributorsCount: 0, donatedAddresses: [] };
-    }
-    return { totalRaised: 0, contributorsCount: 0, donatedAddresses: [] };
-  });
-
-  const getExchangeRate = (symbol: string) => {
-    if (symbol === 'BNB') return 550;
-    if (symbol === 'POL') return 0.65;
-    if (symbol === 'ELA') return 2.5;
-    if (symbol === 'ETH') return 3000;
-    return 1;
-  };
-
-  const progressPercent = Math.min(100, Math.round((campaignStats.totalRaised / 85000) * 100));
+  const [lastTxHash, setLastTxHash] = useState<string | null>(null);
 
   // Multi-chain config for donations
-  const CHAIN_INFO: Record<number, { name: string; symbol: string; min: string; recipient: `0x${string}` }> = {
-    56: { name: 'BSC Mainnet', symbol: 'BNB', min: '0.01', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5' },
-    20: { name: 'Elastos ESC', symbol: 'ELA', min: '1.0', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5' },
-    137: { name: 'Polygon', symbol: 'POL', min: '5.0', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5' },
-    42161: { name: 'Arbitrum', symbol: 'ETH', min: '0.001', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5' },
+  // Les montants collectés ne sont plus calculés dans le navigateur (localStorage) : chaque visiteur
+  // voyait un compteur différent. Les dons sont consultables publiquement sur l'explorateur.
+  const CHAIN_INFO: Record<number, { name: string; symbol: string; min: string; recipient: `0x${string}`; explorer: string }> = {
+    56: { name: 'BSC Mainnet', symbol: 'BNB', min: '0.01', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5', explorer: 'https://bscscan.com' },
+    137: { name: 'Polygon', symbol: 'POL', min: '5.0', recipient: '0x493FEf1Dbd3989A5bb8b467Ef0a787669053F0B5', explorer: 'https://polygonscan.com' },
   };
 
   const activeChain = CHAIN_INFO[chainId] || CHAIN_INFO[56]; // fallback to BSC
@@ -47,8 +31,8 @@ export default function CrowdfundingCampaign() {
       id: 1,
       name: "Disciple d'Afridi",
       priceEuro: 10,
-      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.018 BNB' : activeChain.symbol === 'ELA' ? '4 ELA' : activeChain.symbol === 'POL' ? '15 POL' : '0.003 ETH',
-      cryptoValue: activeChain.symbol === 'BNB' ? '0.018' : activeChain.symbol === 'ELA' ? '4' : activeChain.symbol === 'POL' ? '15' : '0.003',
+      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.018 BNB' : '15 POL',
+      cryptoValue: activeChain.symbol === 'BNB' ? '0.018' : '15',
       description: "Accès numérique anticipé au Tome 1 du Webtoon 'The Long Way Of...' sur la DApp Beam Up + un rôle Discord exclusif 'Ash Land' pour participer aux votes du lore.",
       items: ["Accès Webtoon anticipé", "Rôle Discord Exclusif", "Nom dans les crédits de l'œuvre"],
       badge: "Digital"
@@ -57,8 +41,8 @@ export default function CrowdfundingCampaign() {
       id: 2,
       name: "Lecteur d'Ash Land",
       priceEuro: 30,
-      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.055 BNB' : activeChain.symbol === 'ELA' ? '12 ELA' : activeChain.symbol === 'POL' ? '45 POL' : '0.009 ETH',
-      cryptoValue: activeChain.symbol === 'BNB' ? '0.055' : activeChain.symbol === 'ELA' ? '12' : activeChain.symbol === 'POL' ? '45' : '0.009',
+      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.055 BNB' : '45 POL',
+      cryptoValue: activeChain.symbol === 'BNB' ? '0.055' : '45',
       description: "La version physique exclusive du Tome 1 du Webtoon imprimé sur du papier recyclé labellisé, livré dans un emballage biodégradable en fibre de coco conçu localement par le FabLab.",
       items: ["Version physique du Tome 1", "Packaging éco-conçu en coco", "Tous les avantages du Tiers 1"],
       badge: "Physique Eco-conçu"
@@ -67,8 +51,8 @@ export default function CrowdfundingCampaign() {
       id: 3,
       name: "Gardien du Souffle",
       priceEuro: 75,
-      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.14 BNB' : activeChain.symbol === 'ELA' ? '30 ELA' : activeChain.symbol === 'POL' ? '110 POL' : '0.022 ETH',
-      cryptoValue: activeChain.symbol === 'BNB' ? '0.14' : activeChain.symbol === 'ELA' ? '30' : activeChain.symbol === 'POL' ? '110' : '0.022',
+      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.14 BNB' : '110 POL',
+      cryptoValue: activeChain.symbol === 'BNB' ? '0.14' : '110',
       description: "Une figurine d'art exclusive de Hyrio ou d'Amira (7cm) fabriquée en Guadeloupe par notre FabLab en impression 3D végétale à base de fibre de coco brute recyclée. Comprend également un NFT d'accès Premium.",
       items: ["Figurine 3D coco végétale", "NFT d'accès Premium Beam Up", "Tous les avantages précédents"],
       badge: "Art & Web3",
@@ -78,8 +62,8 @@ export default function CrowdfundingCampaign() {
       id: 4,
       name: "Bâtisseur d'Utopia",
       priceEuro: 250,
-      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.45 BNB' : activeChain.symbol === 'ELA' ? '100 ELA' : activeChain.symbol === 'POL' ? '360 POL' : '0.075 ETH',
-      cryptoValue: activeChain.symbol === 'BNB' ? '0.45' : activeChain.symbol === 'ELA' ? '100' : activeChain.symbol === 'POL' ? '360' : '0.075',
+      cryptoEquivalent: activeChain.symbol === 'BNB' ? '0.45 BNB' : '360 POL',
+      cryptoValue: activeChain.symbol === 'BNB' ? '0.45' : '360',
       description: "Gravez votre nom dans l'histoire. Votre visage ou avatar sera dessiné et intégré comme personnage secondaire ou figurant dans une planche clé de l'année 2238. Livré avec un certificat physique gravé sur bois.",
       items: ["Intégration dans le Webtoon", "Certificat en bois gravé", "Visite virtuelle de la Ferme", "Tous les avantages précédents"],
       badge: "Prestige Lore"
@@ -105,30 +89,10 @@ export default function CrowdfundingCampaign() {
         to: activeChain.recipient,
         value: parseEther(amount),
       }, {
-        onSuccess: () => {
+        onSuccess: (hash) => {
           setWeb3Status('success');
-          
-          let donationEuro = 0;
-          if (selectedTier !== null) {
-            const tier = pledgeTiers.find(t => t.id === selectedTier);
-            if (tier) donationEuro = tier.priceEuro;
-          } else {
-            donationEuro = Math.round(Number(amount) * getExchangeRate(activeChain.symbol));
-          }
-
-          setCampaignStats(prev => {
-            const isNewContributor = !prev.donatedAddresses.includes(address || '');
-            const updatedAddresses = isNewContributor && address ? [...prev.donatedAddresses, address] : prev.donatedAddresses;
-            const updatedStats = {
-              totalRaised: prev.totalRaised + donationEuro,
-              contributorsCount: prev.contributorsCount + (isNewContributor ? 1 : 0),
-              donatedAddresses: updatedAddresses
-            };
-            localStorage.setItem('beam_campaign_stats_v2', JSON.stringify(updatedStats));
-            return updatedStats;
-          });
-
-          setTimeout(() => setWeb3Status('idle'), 5000);
+          setLastTxHash(hash);
+          setTimeout(() => setWeb3Status('idle'), 8000);
         },
         onError: (err) => {
           console.error(err);
@@ -176,19 +140,24 @@ export default function CrowdfundingCampaign() {
               <span className="text-xs text-amber-500 font-bold uppercase tracking-wider">Objectif Global : 85 000 €</span>
             </div>
             
-            {/* Multi-layered progress bar */}
-            <div className="h-4 w-full bg-white/5 rounded-full overflow-hidden relative mb-6">
-              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#bc13fe] to-[#00f2ff] rounded-full" style={{ width: `${progressPercent}%` }} />
-            </div>
-
             <div className="grid grid-cols-3 gap-4 text-left mb-8">
-              <div>
-                <h3 className="text-3xl md:text-5xl font-black tracking-tight text-white">{campaignStats.totalRaised.toLocaleString()} €</h3>
-                <p className="text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1">Engagés ({progressPercent}%)</p>
-              </div>
-              <div>
-                <h3 className="text-3xl md:text-5xl font-black tracking-tight text-white">{campaignStats.contributorsCount}</h3>
-                <p className="text-[8px] uppercase tracking-widest text-gray-500 font-bold mt-1">Contributeurs</p>
+              <div className="col-span-2">
+                <p className="text-sm text-gray-300 leading-relaxed mb-3">
+                  Tous les dons sont publics et vérifiables on-chain, à l&apos;adresse de la campagne :
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {Object.values(CHAIN_INFO).map((c) => (
+                    <a
+                      key={c.name}
+                      href={`${c.explorer}/address/${c.recipient}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] uppercase tracking-widest font-black px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[#00f2ff] hover:bg-white/10"
+                    >
+                      Voir les dons {c.symbol} ↗
+                    </a>
+                  ))}
+                </div>
               </div>
               <div>
                 <h3 className="text-3xl md:text-5xl font-black tracking-tight text-[#00f2ff]">∞</h3>
@@ -280,7 +249,12 @@ export default function CrowdfundingCampaign() {
             {/* Web3 status messages */}
             {web3Status === 'success' && (
               <div className="flex items-center gap-2 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-400 text-[10px] uppercase font-black tracking-wider justify-center">
-                <Check className="w-4 h-4" /> Don envoyé avec succès ! Merci.
+                <Check className="w-4 h-4" /> Don envoyé ! Merci.
+                {lastTxHash && (
+                  <a href={`${activeChain.explorer}/tx/${lastTxHash}`} target="_blank" rel="noopener noreferrer" className="underline">
+                    Voir la transaction ↗
+                  </a>
+                )}
               </div>
             )}
             {web3Status === 'error' && (

@@ -24,7 +24,7 @@ export default function LandingPage() {
         </h1>
 
         <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 font-medium">
-          Découvrez des œuvres exclusives et rémunérez vos artistes préférés instantanément, sans intermédiaire. Une galerie où les fans financent directement l'art de demain.
+          Découvrez des œuvres exclusives et rémunérez vos artistes préférés instantanément : 95 % de chaque soutien leur est versé directement. Une galerie où les fans financent directement l'art de demain.
         </p>
 
         <ConnectKitButton.Custom>
@@ -66,7 +66,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-xl font-black uppercase mb-3">Œuvres Exclusives</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Pour les fans : Accédez à une galerie d'art 100% sur la blockchain. Apportez votre soutien direct et forgez une relation privilégiée avec les créateurs que vous aimez vraiment.
+              Pour les fans : Accédez à une galerie dont chaque publication est enregistrée on-chain. Apportez votre soutien direct et forgez une relation privilégiée avec les créateurs que vous aimez vraiment.
             </p>
           </div>
 
@@ -75,9 +75,9 @@ export default function LandingPage() {
             <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-6 border border-white/20 group-hover:scale-110 transition-transform">
               <ShieldCheck className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-xl font-black uppercase mb-3">100% Décentralisé</h3>
+            <h3 className="text-xl font-black uppercase mb-3">Transparent On-Chain</h3>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Sécurité absolue. Personne ne peut censurer votre art ni bloquer vos fonds. BeamUp est un protocole open-source immuable, déployé pour l'éternité sur la Binance Smart Chain.
+              Chaque publication, soutien et achat passe par un contrat public sur BNB Chain et Polygon. Les paiements vont directement dans le wallet de l'artiste, après une commission plateforme de 5 %.
             </p>
           </div>
 

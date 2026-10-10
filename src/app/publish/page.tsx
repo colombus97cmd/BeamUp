@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { ConnectKitButton } from 'connectkit';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId, useSignMessage } from 'wagmi';
 import { parseEther } from 'viem';
 import { Rocket, Upload, PlusCircle, FileText, Music, Video, X, Loader2, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
 import Link from 'next/link';
@@ -9,21 +9,16 @@ import { useRouter } from 'next/navigation';
 import Navigation from '../../components/Navigation';
 import { uploadToIPFS } from '../../services/pinata';
 import BeamUpABI from '../../contracts/BeamUp.json';
+import { getContractAddress, getCurrencySymbol, getChainName } from '../../config/contracts';
 
-const CONTRACT_ADDRESSES: Record<number, `0x${string}`> = {
-  56: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',   // BSC Mainnet
-  20: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',   // Elastos ESC
-  137: '0x6a2BC463fd7e1b6E6769023F8CD41835e347C317',  // Polygon Mainnet
-  42161: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',// Arbitrum One
-};
-const DEFAULT_CHAIN = 56;
 
 export default function Publish() {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const chainId = useChainId();
-  const CONTRACT_ADDRESS = CONTRACT_ADDRESSES[chainId] || CONTRACT_ADDRESSES[DEFAULT_CHAIN];
-  const currencySymbol = chainId === 137 ? 'POL' : chainId === 20 ? 'ELA' : chainId === 42161 ? 'ETH' : 'BNB';
-  const chainName = chainId === 137 ? 'Polygon' : chainId === 20 ? 'Elastos' : chainId === 42161 ? 'Arbitrum' : 'BNB Chain';
+  const CONTRACT_ADDRESS = getContractAddress(chainId);
+  const currencySymbol = getCurrencySymbol(chainId);
+  const chainName = getChainName(chainId);
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Musique');
@@ -56,7 +51,8 @@ export default function Publish() {
     try {
       let finalCid = manualCid;
       if (file) {
-        finalCid = await uploadToIPFS(file, (percent) => setUploadProgress(percent));
+        if (!address) throw new Error("Connectez votre wallet pour publier.");
+        finalCid = await uploadToIPFS(file, address, signMessageAsync, (percent) => setUploadProgress(percent));
         setCid(finalCid);
       }
       
@@ -103,7 +99,7 @@ export default function Publish() {
             <div className='absolute inset-0 bg-black/90 backdrop-blur-xl z-50 flex flex-col items-center justify-center text-center p-6'>
               <BeamEnergyBall />
               <h4 className='text-[#00f2ff] text-lg md:text-xl font-black uppercase tracking-[0.2em] mt-8'>
-                {status === 'uploading' ? `Envoi en cours... ${uploadProgress}%` : isConfirming ? 'Confirmation...' : 'Transmission...'}
+                {status === 'uploading' ? (uploadProgress === 0 ? 'Signez dans votre wallet...' : `Envoi en cours... ${uploadProgress}%`) : isConfirming ? 'Confirmation...' : 'Transmission...'}
               </h4>
               
               {status === 'uploading' && (

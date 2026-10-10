@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useAccount, useReadContract, useWriteContract, useBalance, useWaitForTransactionReceipt, useChainId } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useBalance, useWaitForTransactionReceipt, useChainId, useSignMessage } from 'wagmi';
 import { formatEther } from 'viem';
 import { 
   LayoutGrid, User, Mail, Globe, ExternalLink, Zap, Shield, Sparkles, 
@@ -11,23 +11,17 @@ import Link from 'next/link';
 import Navigation from '../../components/Navigation';
 import { uploadToIPFS } from '../../services/pinata';
 import BeamUpABI from '../../contracts/BeamUp.json';
+import { getContractAddress, getCurrencySymbol } from '../../config/contracts';
 
-// Multi-chain contract addresses
-const CONTRACT_ADDRESSES: Record<number, `0x${string}`> = {
-  56: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',   // BSC Mainnet
-  20: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',   // Elastos ESC
-  137: '0x6a2BC463fd7e1b6E6769023F8CD41835e347C317',  // Polygon Mainnet
-  42161: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',// Arbitrum One
-};
-const DEFAULT_CHAIN = 56;
 
 const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
 
 export default function Architect() {
   const { address, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const chainId = useChainId();
-  const CONTRACT_ADDRESS = CONTRACT_ADDRESSES[chainId] || CONTRACT_ADDRESSES[DEFAULT_CHAIN];
-  const currencySymbol = chainId === 137 ? 'POL' : chainId === 20 ? 'ELA' : chainId === 42161 ? 'ETH' : 'BNB';
+  const CONTRACT_ADDRESS = getContractAddress(chainId);
+  const currencySymbol = getCurrencySymbol(chainId);
 
   const [analytics, setAnalytics] = useState<Record<number, { views: number; completed: number; inProgress: number }>>({});
 
@@ -133,8 +127,8 @@ export default function Architect() {
     try {
       let finalAvatarCID = (profileData as any)?.avatarCID || "";
       
-      if (avatarFile) {
-        finalAvatarCID = await uploadToIPFS(avatarFile);
+      if (avatarFile && address) {
+        finalAvatarCID = await uploadToIPFS(avatarFile, address, signMessageAsync);
       }
 
       // Combine bio, website, and contact with || separator

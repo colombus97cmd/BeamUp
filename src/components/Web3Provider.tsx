@@ -1,39 +1,14 @@
 "use client";
-import { WagmiProvider, createConfig, http } from "wagmi";
-import { bsc, polygon, arbitrum } from "wagmi/chains";
+import { WagmiProvider, createConfig } from "wagmi";
+import { bsc, polygon } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConnectKitProvider, getDefaultConfig } from "connectkit";
-import { defineChain } from "viem";
 
-// Elastos Smart Chain (ESC) — EVM Compatible, secured by Bitcoin hashpower
-export const elastos = defineChain({
-  id: 20,
-  name: "Elastos Smart Chain",
-  nativeCurrency: { name: "Elastos", symbol: "ELA", decimals: 18 },
-  rpcUrls: {
-    default: { http: ["https://api.elastos.io/esc"] },
-  },
-  blockExplorers: {
-    default: { name: "ESC Explorer", url: "https://esc.elastos.io" },
-  },
-});
-
-export const elastosTestnet = defineChain({
-  id: 21,
-  name: "Elastos Smart Chain Testnet",
-  nativeCurrency: { name: "Elastos (Test)", symbol: "tELA", decimals: 18 },
-  rpcUrls: {
-    default: { http: ["https://api-testnet.elastos.io/esc"] },
-  },
-  blockExplorers: {
-    default: { name: "ESC Testnet Explorer", url: "https://esc-testnet.elastos.io" },
-  },
-  testnet: true,
-});
-
+// Seuls les réseaux où le contrat BeamUpV2 est réellement déployé (voir src/config/contracts.ts).
+// Elastos et Arbitrum ont été retirés : aucune adresse de contrat n'y existe, les fonds envoyés seraient perdus.
 const config = createConfig(
   getDefaultConfig({
-    chains: [bsc, elastos, polygon, arbitrum],
+    chains: [bsc, polygon],
     walletConnectProjectId: "acb01311868dd0860714b6287755fb3c", // Project ID pour le QR Code (Binance Web3, etc.)
     appName: "Beam Up",
   })

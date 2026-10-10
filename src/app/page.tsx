@@ -6,17 +6,10 @@ import { LayoutGrid, Rocket, Disc, Loader2, Zap, Play, Sparkles, Smartphone, Eye
 import Navigation from '../components/Navigation';
 import SocialFeed from '../components/SocialFeed';
 import BeamUpABI from '../contracts/BeamUp.json';
+import { getContractAddress } from '../config/contracts';
 import LandingPage from '../components/LandingPage';
 import CrowdfundingCampaign from '../components/CrowdfundingCampaign';
 
-// Multi-chain contract addresses
-const CONTRACT_ADDRESSES: Record<number, `0x${string}`> = {
-  56: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',   // BSC Mainnet
-  20: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',   // Elastos ESC
-  137: '0x6a2BC463fd7e1b6E6769023F8CD41835e347C317',  // Polygon Mainnet
-  42161: '0x92c1D8eCE7962634cF337d763994Af1490605dA4',// Arbitrum One
-};
-const DEFAULT_CHAIN = 56;
 
 export default function Home() {
   const [viewMode, setViewMode] = useState<'grid' | 'feed' | 'crowdfunding'>('feed');
@@ -95,7 +88,7 @@ export default function Home() {
   const { isConnected, address } = useAccount();
   const { writeContract } = useWriteContract();
   const chainId = useChainId();
-  const CONTRACT_ADDRESS = CONTRACT_ADDRESSES[chainId] || CONTRACT_ADDRESSES[DEFAULT_CHAIN];
+  const CONTRACT_ADDRESS = getContractAddress(chainId);
 
   const safeAddress = address || '0x0000000000000000000000000000000000000000';
 

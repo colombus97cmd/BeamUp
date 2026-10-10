@@ -26,8 +26,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "BeamUp | Propulsez l'Art Web3",
-  description: "Soutenez les Créateurs en Temps Réel. Découvrez des œuvres exclusives et rémunérez vos artistes préférés sans intermédiaire sur la Binance Smart Chain et l'Elastos Smart Chain, sécurisée par Bitcoin.",
-  keywords: ["Web3", "Art", "NFT", "Dapp", "Binance Smart Chain", "Elastos", "ESC", "ELA", "Bitcoin Security", "Créateurs", "Rémunération"],
+  description: "Soutenez les Créateurs en Temps Réel. Découvrez des œuvres et rémunérez directement vos artistes préférés on-chain, sur BNB Chain et Polygon.",
+  keywords: ["Web3", "Art", "NFT", "Dapp", "BNB Chain", "Polygon", "Créateurs", "Rémunération"],
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "BeamUp | Propulsez l'Art Web3",
-    description: "Soutenez les Créateurs en Temps Réel. Découvrez des œuvres exclusives et rémunérez vos artistes préférés sur la BNB Smart Chain et l'Elastos Smart Chain.",
+    description: "Soutenez les Créateurs en Temps Réel. Découvrez des œuvres exclusives et rémunérez vos artistes préférés sur BNB Chain et Polygon.",
     url: "https://beam-up.vercel.app",
     siteName: "BeamUp",
     images: [
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "BeamUp | Propulsez l'Art Web3",
-    description: "Soutenez les Créateurs en Temps Réel et accédez à des œuvres exclusives sans intermédiaires.",
+    description: "Soutenez les Créateurs en Temps Réel et rémunérez-les directement on-chain.",
     images: ["/og-image.png"],
   },
   icons: {
