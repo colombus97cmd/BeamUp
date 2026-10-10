@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { ConnectKitButton } from 'connectkit';
-import { Rocket, Menu, X, LayoutGrid, PlusCircle, User } from 'lucide-react';
+import { Rocket, Menu, X, LayoutGrid, PlusCircle, User, Info } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -13,6 +13,7 @@ export default function Navigation() {
     { name: 'Flux', href: '/', icon: <LayoutGrid className="w-4 h-4" /> },
     { name: 'Studio', href: '/publish', icon: <PlusCircle className="w-4 h-4" /> },
     { name: 'Architecte', href: '/architect', icon: <User className="w-4 h-4" /> },
+    { name: 'À propos', href: '/about', icon: <Info className="w-4 h-4" /> },
   ];
 
   return (
