@@ -1,6 +1,6 @@
-import { askJSON, hasClaude } from './claude';
+import { askJSON, hasClaude, FAST_MODEL } from './claude';
 
-// Agent modérateur de BeamUp.
+// Agent modérateur de BeamUp (modèle Haiku 5.5 : classement rapide et peu coûteux).
 // Philosophie : le moins de censure possible. Tout point de vue n'engage que la personne qui l'exprime.
 // On garantit seulement une ambiance sans jugement à l'égard de l'art d'autrui, et le respect de la loi.
 // Ce texte est à la fois la consigne de l'agent et la charte publiée sur /charte : les garder identiques.
@@ -76,6 +76,7 @@ export async function moderateText(text: string, context = 'commentaire sur une 
     schema: VERDICT_SCHEMA,
     effort: 'low',
     maxTokens: 4000,
+    model: FAST_MODEL,
   });
 }
 
@@ -94,6 +95,7 @@ export async function moderateBatch(texts: string[]): Promise<Verdict[]> {
       additionalProperties: false,
     },
     effort: 'low',
+    model: FAST_MODEL,
   });
   const byIndex = new Map(results.map((r) => [r.index, r]));
   return texts.map((_, i) => {

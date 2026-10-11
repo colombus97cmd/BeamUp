@@ -2,9 +2,12 @@ import Anthropic from '@anthropic-ai/sdk';
 
 // Appel à Claude qui renvoie un JSON conforme à un schéma (sorties structurées).
 // Clé : ANTHROPIC_API_KEY (variable d'environnement Vercel, jamais côté navigateur).
-// Repli serveur : si le modèle décline une demande, l'API la relance sur le modèle de secours recommandé.
+// Repli serveur (Opus) : si le modèle décline une demande, l'API la relance sur le modèle de secours recommandé.
+// Haiku 5.5, bien moins cher, sert aux tâches simples et fréquentes (classement des commentaires) ;
+// il n'a pas de repli serveur.
 
 const MODEL = 'claude-opus-5-5';
+export const FAST_MODEL = 'claude-haiku-5-5';
 
 let client: Anthropic | null = null;
 const getClient = () => (client ??= new Anthropic());
@@ -19,12 +22,13 @@ export async function askJSON<T>(opts: {
   schema: Record<string, unknown>;
   effort: 'low' | 'medium' | 'high';
   maxTokens?: number;
+  model?: typeof MODEL | typeof FAST_MODEL;
 }): Promise<T> {
+  const model = opts.model ?? MODEL;
   const response = await getClient().beta.messages.create({
-    model: MODEL,
+    model,
     max_tokens: opts.maxTokens ?? 16000,
-    betas: ['server-side-fallback-2026-07-01'],
-    fallbacks: 'default',
+    ...(model === MODEL ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const } : {}),
     output_config: { effort: opts.effort, format: { type: 'json_schema', schema: opts.schema } },
     system: opts.system,
     messages: [{ role: 'user', content: opts.prompt }],
