@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createPublicClient, http, formatUnits } from 'viem';
+import { formatUnits } from 'viem';
+import { getServerClient } from '../../../../../lib/rpc';
 import { bsc, polygon, mainnet, arbitrum } from 'viem/chains';
 import BeamUpABI from '../../../../../contracts/BeamUpV3.json';
 import { CONTRACT_ADDRESSES, getPaymentInfo, getChainName } from '../../../../../config/contracts';
@@ -29,7 +30,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ cha
   }
 
   try {
-    const client = createPublicClient({ chain: CHAINS[chainId], transport: http() });
+    const client = getServerClient(chainId);
     const work: any = await client.readContract({
       address: CONTRACT_ADDRESSES[chainId],
       abi: BeamUpABI,

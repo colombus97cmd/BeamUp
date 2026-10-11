@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createPublicClient, http, isAddress } from 'viem';
+import { isAddress } from 'viem';
+import { getServerClient } from '../../../lib/rpc';
 import { bsc, polygon, mainnet, arbitrum } from 'viem/chains';
 import { buildUploadMessage } from '../../../services/uploadMessage';
 
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     }
 
     // Accepte aussi les smart wallets (Coinbase Smart Wallet, Safe…) via ERC-1271 / ERC-6492.
-    const valid = await createPublicClient({ chain, transport: http() }).verifyMessage({
+    const valid = await getServerClient(chain.id).verifyMessage({
       address: address as `0x${string}`,
       message: buildUploadMessage(address, timestamp),
       signature: signature as `0x${string}`,

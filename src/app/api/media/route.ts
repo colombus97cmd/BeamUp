@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createPublicClient, http, isAddress } from 'viem';
+import { isAddress } from 'viem';
+import { getServerClient } from '../../../lib/rpc';
 import { bsc, polygon, mainnet, arbitrum } from 'viem/chains';
 import BeamUpABI from '../../../contracts/BeamUpV3.json';
 import { CONTRACT_ADDRESSES } from '../../../config/contracts';
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
   }
   // publicClient.verifyMessage accepte aussi les smart wallets (Coinbase Smart Wallet, Safe…),
   // dont la signature est vérifiée par leur contrat (ERC-1271 / ERC-6492).
-  const client = createPublicClient({ chain, transport: http() });
+  const client = getServerClient(Number(chainId));
   const valid = typeof signature === 'string' && (await client.verifyMessage({
     address: address as `0x${string}`,
     message: buildMediaSessionMessage(address, timestamp),
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
     const lookup = await fetch(`https://api.pinata.cloud/v3/files/private?cid=${encodeURIComponent(cid)}&limit=1`, {
       headers: { Authorization: `Bearer ${jwt}` },
       cache: 'no-store',
+      signal: AbortSignal.timeout(10_000),
     });
     const found = lookup.ok ? (await lookup.json())?.data?.files?.length > 0 : false;
 
@@ -62,6 +64,7 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: { Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: `https://${gateway}/files/${cid}`, expires: LINK_SECONDS, date: Math.floor(Date.now() / 1000), method: 'GET' }),
+      signal: AbortSignal.timeout(10_000),
     });
     if (!linkRes.ok) {
       console.error('Erreur lien Pinata :', linkRes.status, await linkRes.text());

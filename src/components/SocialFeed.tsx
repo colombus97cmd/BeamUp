@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Heart, MessageCircle, Zap, Play, Pause, Music, Video, ImageIcon, Share2, User, Sparkles, Disc, Lock, ShieldCheck, ShoppingCart, Eye } from 'lucide-react';
 import { getFormat } from '../config/formats';
 import { useAccount, useChainId, useSignMessage } from 'wagmi';
-import { requestPremiumMedia } from '../services/mediaAccess';
+import { requestPremiumMedia, type MediaStep } from '../services/mediaAccess';
 import CommentDrawer from './CommentDrawer';
 
 interface SocialFeedProps {
@@ -35,13 +35,15 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
   const [premiumUrls, setPremiumUrls] = useState<Record<number, string>>({});
   const [openingId, setOpeningId] = useState<number | null>(null);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  const [openingStep, setOpeningStep] = useState<MediaStep>('sign');
 
   const openPremium = async (id: number) => {
     if (!address) return;
     setOpeningId(id);
     setMediaError(null);
     try {
-      const url = await requestPremiumMedia(chainId, id, address, signMessageAsync);
+      setOpeningStep('sign');
+      const url = await requestPremiumMedia(chainId, id, address, signMessageAsync, setOpeningStep);
       setPremiumUrls((prev) => ({ ...prev, [id]: url }));
     } catch (e: any) {
       setMediaError(e?.shortMessage || e?.message || "Impossible d'ouvrir l'œuvre");
@@ -227,13 +229,35 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                       <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest max-w-xs">
                         Vous détenez l'accès. Signez une fois avec votre wallet (gratuit) pour ouvrir vos œuvres premium.
                       </p>
-                      <button
-                        onClick={() => openPremium(work.id)}
-                        disabled={openingId === work.id}
-                        className="px-10 py-5 bg-gradient-to-r from-amber-500 to-amber-700 text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
-                      >
-                        <Play className="w-4 h-4" /> {openingId === work.id ? 'Vérification…' : "Ouvrir l'œuvre"}
-                      </button>
+                      {openingId === work.id ? (
+                        <div className="w-full max-w-xs space-y-3 text-left">
+                          {([
+                            ['sign', 'Signature dans votre wallet'],
+                            ['verify', "Vérification du NFT sur la blockchain"],
+                            ['ready', "Préparation de la lecture"],
+                          ] as [MediaStep, string][]).map(([step, label], idx) => {
+                            const order: MediaStep[] = ['sign', 'verify', 'ready'];
+                            const current = order.indexOf(openingStep);
+                            const state = idx < current ? 'done' : idx === current ? 'active' : 'todo';
+                            return (
+                              <div key={step} className="flex items-center gap-3">
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black ${state === 'done' ? 'bg-emerald-500 text-black' : state === 'active' ? 'border-2 border-amber-500 border-t-transparent animate-spin' : 'border border-white/20'}`}>
+                                  {state === 'done' ? '✓' : ''}
+                                </span>
+                                <span className={`text-[11px] font-bold ${state === 'todo' ? 'text-gray-600' : 'text-gray-200'}`}>{label}</span>
+                              </div>
+                            );
+                          })}
+                          {openingStep === 'sign' && <p className="text-[10px] text-gray-500 pt-1">Ouvrez votre wallet pour valider la signature (gratuite).</p>}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => openPremium(work.id)}
+                          className="px-10 py-5 bg-gradient-to-r from-amber-500 to-amber-700 text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                        >
+                          <Play className="w-4 h-4" /> {mediaError ? 'Réessayer' : "Ouvrir l'œuvre"}
+                        </button>
+                      )}
                       {mediaError && openingId === null && <p className="text-xs text-red-400 max-w-xs">{mediaError}</p>}
                     </div>
                   ) : (
