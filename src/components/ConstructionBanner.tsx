@@ -69,7 +69,7 @@ export default function ConstructionBanner() {
           <div className="flex-1 min-w-0">
             <p className="text-xs font-black uppercase tracking-widest text-yellow-400 mb-1">Site en construction</p>
             <p className="text-[11px] text-gray-300 leading-relaxed">
-              BeamUp évolue chaque semaine. Publication, pourboires et NFT d’accès fonctionnent déjà ; le chiffrement des œuvres premium arrive bientôt.
+              BeamUp évolue chaque semaine. Publication, pourboires, NFT d’accès et œuvres premium protégées fonctionnent déjà ; d’autres nouveautés arrivent.
             </p>
           </div>
           <button
