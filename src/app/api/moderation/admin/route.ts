@@ -6,7 +6,7 @@ import { hide, unhide, logDecision, LOG_KEY } from '../../../../lib/moderationSt
 
 // Administration de la modération (en-tête x-admin-secret) :
 //  GET  → les 100 dernières décisions du journal ;
-//  POST { action: 'hide' | 'unhide', chainId, workId, index, reason } → l'administrateur a le dernier mot.
+//  POST { action: 'hide' | 'unhide', chainId, workId, index, reason, illegal? } (illegal : texte original non consultable) → l'administrateur a le dernier mot.
 
 export async function GET(req: Request) {
   if (!isAdmin(req)) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   if (!SUPPORTED_CHAIN_IDS.includes(chainId) || ![workId, index].every((n) => Number.isInteger(n) && n >= 0)) {
     return NextResponse.json({ error: 'Paramètres invalides' }, { status: 400 });
   }
-  if (body.action === 'hide') await hide(chainId, workId, index, { reason: String(body.reason || 'Contraire à la charte'), by: 'admin' });
+  if (body.action === 'hide') await hide(chainId, workId, index, { reason: String(body.reason || 'Contraire à la charte'), by: 'admin', revealable: body.illegal !== true });
   else if (body.action === 'unhide') await unhide(chainId, workId, index);
   else return NextResponse.json({ error: 'Action inconnue' }, { status: 400 });
   await logDecision({ type: 'admin', action: body.action, chainId, workId, index, reason: body.reason || '', by: adminIdentity(req) });

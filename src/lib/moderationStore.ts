@@ -11,7 +11,8 @@ export const cursorKey = (chainId: number, workId: number) => `beam:v1:mod:curso
 export const LOG_KEY = 'beam:v1:mod:log';
 const LOG_SIZE = 1000;
 
-export interface Hidden { reason: string; by: 'agent' | 'admin' | 'signalement'; at: string }
+/** revealable : le texte original peut être consulté au survol (faux pour un contenu illégal, que la loi impose de rendre inaccessible). */
+export interface Hidden { reason: string; by: 'agent' | 'admin' | 'signalement'; at: string; revealable?: boolean }
 
 export async function hiddenComments(chainId: number, workId: number): Promise<Record<string, Hidden>> {
   const [flat] = await redis([['HGETALL', hiddenKey(chainId, workId)]]);

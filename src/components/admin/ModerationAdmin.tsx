@@ -6,13 +6,13 @@ const TONE: Record<string, 'gray' | 'yellow' | 'red' | 'green'> = { ok: 'green',
 
 export default function ModerationAdmin({ data, reload }: { data: Data; reload: () => void }) {
   const log: any[] = data.moderationLog || [];
-  const act = (e: any, action: 'hide' | 'unhide') =>
-    api('/api/moderation/admin', 'POST', { action, chainId: e.chainId, workId: e.workId, index: e.index, reason: e.reason }).then(reload);
+  const act = (e: any, action: 'hide' | 'unhide', illegal = false) =>
+    api('/api/moderation/admin', 'POST', { action, chainId: e.chainId, workId: e.workId, index: e.index, reason: e.reason, illegal }).then(reload);
 
   return (
     <Card title="Journal de modération (50 dernières entrées)">
       <p className="text-xs text-gray-500 mb-4 leading-relaxed">
-        Les commentaires sont sur la blockchain : « masquer » les cache seulement sur BeamUp. Vous avez le dernier mot sur chaque décision de l&apos;agent.
+        Les commentaires sont sur la blockchain : « masquer » les cache seulement sur BeamUp, le texte original restant consultable au survol ; « masquer (illégal) » le rend inaccessible. Vous avez le dernier mot sur chaque décision de l&apos;agent.
       </p>
       {log.length === 0 ? <p className="text-sm text-gray-500">Rien à signaler.</p> : (
         <ul className="space-y-3">
@@ -33,6 +33,7 @@ export default function ModerationAdmin({ data, reload }: { data: Data; reload: 
                 <div className="flex gap-2">
                   <ActionButton onClick={() => act(e, 'unhide')}>Rétablir</ActionButton>
                   <ActionButton variant="danger" onClick={() => act(e, 'hide')}>Masquer</ActionButton>
+                  <ActionButton variant="danger" confirm="Contenu illégal : le texte original ne sera plus consultable par les lecteurs. Confirmer ?" onClick={() => act(e, 'hide', true)}>Masquer (illégal)</ActionButton>
                 </div>
               )}
             </li>

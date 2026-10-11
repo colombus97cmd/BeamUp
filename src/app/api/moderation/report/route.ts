@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   if (!comment) return NextResponse.json({ error: 'Commentaire introuvable.' }, { status: 404 });
 
   const verdict = await moderateText(comment.text).catch(() => null);
-  if (verdict?.decision === 'masquer') await hide(chainId, workId, index, { reason: verdict.reason, by: 'signalement' });
+  if (verdict?.decision === 'masquer') await hide(chainId, workId, index, { reason: verdict.reason, by: 'signalement', revealable: !verdict.illegal });
   await logDecision({ type: 'signalement', chainId, workId, index, author: comment.author, text: comment.text, motive, decision: verdict?.decision ?? 'erreur', reason: verdict?.reason ?? '' });
   await mailAdmin(
     `[BeamUp] Signalement — œuvre ${workId}, commentaire ${index}`,

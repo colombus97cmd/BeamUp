@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
 import { useActiveChainId } from '../hooks/useActiveChainId';
-import { X, Send, MessageSquare, User, Loader2, Sparkles, Zap, ShieldCheck, Flag, EyeOff } from 'lucide-react';
+import { X, Send, MessageSquare, User, Loader2, Sparkles, Zap, ShieldCheck, Flag } from 'lucide-react';
+import HiddenComment from './HiddenComment';
 import Link from 'next/link';
 import BeamUpABI from '../contracts/BeamUpV3.json';
 import { getContractAddress } from '../config/contracts';
@@ -40,7 +41,7 @@ export default function CommentDrawer({ workId, isOpen, onClose, chainId: workCh
   // Modération : conseil de l'agent avant l'envoi, commentaires masqués, signalements.
   const [advice, setAdvice] = useState<Advice | null>(null);
   const [checking, setChecking] = useState(false);
-  const [hidden, setHidden] = useState<Record<string, string>>({});
+  const [hidden, setHidden] = useState<Record<string, { reason: string; revealable: boolean }>>({});
   const [reported, setReported] = useState<Record<number, boolean>>({});
 
   const loadHidden = () => {
@@ -182,10 +183,7 @@ export default function CommentDrawer({ workId, isOpen, onClose, chainId: workCh
                   </div>
                   <div className="bg-white/5 p-4 rounded-2xl rounded-tl-none border border-white/5 group-hover:border-white/10 transition-all">
                     {hidden[i] ? (
-                      <p className="text-[11px] text-gray-500 italic flex items-start gap-2">
-                        <EyeOff className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                        <span>Commentaire masqué par la modération : {hidden[i]} <Link href="/charte" className="underline hover:text-gray-300">Charte</Link></span>
-                      </p>
+                      <HiddenComment reason={hidden[i].reason} revealable={hidden[i].revealable} text={c.text} />
                     ) : (
                       <p className="text-xs text-gray-300 leading-relaxed font-medium">{c.text}</p>
                     )}

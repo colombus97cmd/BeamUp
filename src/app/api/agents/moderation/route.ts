@@ -41,7 +41,7 @@ export async function GET(req: Request) {
         for (let i = 0; i < comments.length; i++) {
           const v = verdicts[i];
           if (v.decision === 'masquer') {
-            await hide(chainId, workId, offset + i, { reason: v.reason, by: 'agent' });
+            await hide(chainId, workId, offset + i, { reason: v.reason, by: 'agent', revealable: !v.illegal });
             hiddenNow.push(`réseau ${chainId}, œuvre ${workId}, n° ${offset + i} : « ${comments[i].text.slice(0, 120)} » — ${v.reason}`);
           }
           if (v.decision !== 'ok') {
