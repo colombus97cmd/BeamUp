@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createPublicClient, http, verifyMessage, isAddress } from 'viem';
+import { createPublicClient, http, isAddress } from 'viem';
 import { bsc, polygon, mainnet, arbitrum } from 'viem/chains';
 import BeamUpABI from '../../../contracts/BeamUpV3.json';
 import { CONTRACT_ADDRESSES } from '../../../config/contracts';
@@ -26,7 +26,10 @@ export async function POST(request: Request) {
   if (typeof timestamp !== 'number' || Date.now() - timestamp > SESSION_MAX_AGE_MS || timestamp > Date.now() + 60_000) {
     return NextResponse.json({ error: 'Session expirée, veuillez signer à nouveau' }, { status: 401 });
   }
-  const valid = typeof signature === 'string' && (await verifyMessage({
+  // publicClient.verifyMessage accepte aussi les smart wallets (Coinbase Smart Wallet, Safe…),
+  // dont la signature est vérifiée par leur contrat (ERC-1271 / ERC-6492).
+  const client = createPublicClient({ chain, transport: http() });
+  const valid = typeof signature === 'string' && (await client.verifyMessage({
     address: address as `0x${string}`,
     message: buildMediaSessionMessage(address, timestamp),
     signature: signature as `0x${string}`,
@@ -38,7 +41,6 @@ export async function POST(request: Request) {
   if (!jwt) return NextResponse.json({ error: 'Lecture indisponible' }, { status: 500 });
 
   try {
-    const client = createPublicClient({ chain, transport: http() });
     const contract = CONTRACT_ADDRESSES[Number(chainId)];
     const [allowed, work] = await Promise.all([
       client.readContract({ address: contract, abi: BeamUpABI, functionName: 'hasAccess', args: [BigInt(workId), address] }),

@@ -130,7 +130,7 @@ export default function Architect() {
       let finalAvatarCID = (profileData as any)?.avatarCID || "";
       
       if (avatarFile && address) {
-        finalAvatarCID = await uploadToIPFS(avatarFile, address, signMessageAsync);
+        finalAvatarCID = await uploadToIPFS(avatarFile, address, signMessageAsync, undefined, { chainId });
       }
 
       // Combine bio, website, and contact with || separator

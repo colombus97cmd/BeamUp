@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { verifyMessage, isAddress } from 'viem';
+import { createPublicClient, http, isAddress } from 'viem';
+import { bsc, polygon, mainnet, arbitrum } from 'viem/chains';
 import { buildUploadMessage } from '../../../services/uploadMessage';
 
 // Délivre une clé Pinata temporaire (1 seul upload) à un utilisateur qui a signé
@@ -10,11 +11,13 @@ import { buildUploadMessage } from '../../../services/uploadMessage';
 // temporaire, ce qui évite la limite de taille des fonctions serverless (vidéos).
 
 const SIGNATURE_MAX_AGE_MS = 5 * 60 * 1000;
+const CHAINS = { 56: bsc, 137: polygon, 1: mainnet, 42161: arbitrum } as const;
 const MAX_PRIVATE_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2 Go
 
 export async function POST(request: Request) {
   try {
-    const { address, timestamp, signature, private: isPrivate } = await request.json();
+    const { address, timestamp, signature, private: isPrivate, chainId } = await request.json();
+    const chain = CHAINS[Number(chainId) as keyof typeof CHAINS] || bsc;
 
     if (typeof address !== 'string' || !isAddress(address)) {
       return NextResponse.json({ error: "Adresse de wallet invalide" }, { status: 400 });
@@ -26,7 +29,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Signature manquante" }, { status: 401 });
     }
 
-    const valid = await verifyMessage({
+    // Accepte aussi les smart wallets (Coinbase Smart Wallet, Safe…) via ERC-1271 / ERC-6492.
+    const valid = await createPublicClient({ chain, transport: http() }).verifyMessage({
       address: address as `0x${string}`,
       message: buildUploadMessage(address, timestamp),
       signature: signature as `0x${string}`,

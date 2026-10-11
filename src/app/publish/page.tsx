@@ -59,7 +59,7 @@ export default function Publish() {
       let finalCid = manualCid;
       if (file) {
         if (!address) throw new Error("Connectez votre wallet pour publier.");
-        finalCid = await uploadToIPFS(file, address, signMessageAsync, (percent) => setUploadProgress(percent), { private: isPremium });
+        finalCid = await uploadToIPFS(file, address, signMessageAsync, (percent) => setUploadProgress(percent), { private: isPremium, chainId });
         setCid(finalCid);
       }
       

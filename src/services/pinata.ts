@@ -5,20 +5,22 @@ type SignMessage = (args: { message: string }) => Promise<`0x${string}`>;
 interface UploadOptions {
   /** Œuvre premium : envoi sur le réseau IPFS privé de Pinata (non lisible par un lien public). */
   private?: boolean;
+  /** Réseau du wallet, pour vérifier la signature des smart wallets. */
+  chainId?: number;
 }
 
 // 1. L'utilisateur signe un message avec son wallet (aucun frais, aucune transaction).
 // 2. Le serveur vérifie la signature et renvoie soit une clé Pinata valable pour un seul upload,
 //    soit (œuvre premium) une URL d'envoi signée vers le réseau privé.
 // 3. Le fichier part directement du navigateur vers Pinata.
-const authorizeUpload = async (address: string, signMessage: SignMessage, isPrivate: boolean): Promise<{ jwt?: string; uploadUrl?: string }> => {
+const authorizeUpload = async (address: string, signMessage: SignMessage, isPrivate: boolean, chainId?: number): Promise<{ jwt?: string; uploadUrl?: string }> => {
   const timestamp = Date.now();
   const signature = await signMessage({ message: buildUploadMessage(address, timestamp) });
 
   const res = await fetch('/api/upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ address, timestamp, signature, private: isPrivate }),
+    body: JSON.stringify({ address, timestamp, signature, private: isPrivate, chainId }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || (!data.jwt && !data.uploadUrl)) {
@@ -60,7 +62,7 @@ export const uploadToIPFS = async (
   onProgress?: (percent: number) => void,
   options: UploadOptions = {}
 ): Promise<string> => {
-  const auth = await authorizeUpload(address, signMessage, !!options.private);
+  const auth = await authorizeUpload(address, signMessage, !!options.private, options.chainId);
   const formData = new FormData();
   formData.append('file', file);
 

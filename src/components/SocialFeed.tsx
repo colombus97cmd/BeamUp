@@ -234,7 +234,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                       >
                         <Play className="w-4 h-4" /> {openingId === work.id ? 'Vérification…' : "Ouvrir l'œuvre"}
                       </button>
-                      {mediaError && openingId === null && <p className="text-[10px] text-red-400">{mediaError}</p>}
+                      {mediaError && openingId === null && <p className="text-xs text-red-400 max-w-xs">{mediaError}</p>}
                     </div>
                   ) : (
                     <>
