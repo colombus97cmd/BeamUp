@@ -4,6 +4,7 @@ import { Heart, MessageCircle, Zap, Play, Share2, User, Lock, ShieldCheck, Shopp
 import AudioPlayer from './AudioPlayer';
 import { setMediaSession } from '../lib/mediaSession';
 import { getFormat } from '../config/formats';
+import GameFrame from './GameFrame';
 import { useAccount, useSignMessage } from 'wagmi';
 import { useActiveChainId } from '../hooks/useActiveChainId';
 import { requestPremiumMedia, type MediaStep } from '../services/mediaAccess';
@@ -55,6 +56,29 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
       setPremiumUrls((prev) => ({ ...prev, [id]: url }));
     } catch (e: any) {
       setMediaError(e?.shortMessage || e?.message || "Impossible d'ouvrir l'œuvre");
+    } finally {
+      setOpeningId(null);
+    }
+  };
+
+  // Jeu gratuit : lien de jeu délivré par /api/games/play (jeu approuvé uniquement). Les jeux premium passent par openPremium.
+  const [gameErrors, setGameErrors] = useState<Record<number, string>>({});
+  const openFreeGame = async (id: number) => {
+    const work = works.find((w: any) => w.id === id);
+    setOpeningId(id);
+    setGameErrors((e) => ({ ...e, [id]: '' }));
+    try {
+      const res = await fetch('/api/games/play', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chainId: work?.chainId ?? chainId, workId: work?.workId ?? id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) throw new Error(data.error || `Jeu indisponible (${res.status})`);
+      setPremiumUrls((prev) => ({ ...prev, [id]: data.url }));
+      countView(id);
+    } catch (e: any) {
+      setGameErrors((errs) => ({ ...errs, [id]: e.message }));
     } finally {
       setOpeningId(null);
     }
@@ -287,7 +311,16 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                     </div>
                   ) : (
                     <>
-                      {getFormat(work.category).kind === 'scroll' ? (
+                      {getFormat(work.category).kind === 'game' ? (
+                        <GameFrame
+                          title={work.title}
+                          color={getFormat(work.category).hex}
+                          url={premiumUrls[work.id]}
+                          loading={openingId === work.id}
+                          error={openingId === null && gameErrors[work.id] ? gameErrors[work.id] : null}
+                          onPlay={() => openFreeGame(work.id)}
+                        />
+                      ) : getFormat(work.category).kind === 'scroll' ? (
                         <div 
                           ref={(el) => {
                             if (el) {

@@ -5,6 +5,8 @@ import { bsc, polygon, mainnet, arbitrum } from 'viem/chains';
 import BeamUpABI from '../../../contracts/BeamUpV3.json';
 import { CONTRACT_ADDRESSES } from '../../../config/contracts';
 import { buildMediaSessionMessage, SESSION_MAX_AGE_MS } from '../../../services/mediaAccess';
+import { getFormat } from '../../../config/formats';
+import { gameLink } from '../../../lib/games/link';
 
 // Délivre un lien de lecture temporaire pour une œuvre premium, uniquement si le wallet
 // (prouvé par signature) détient le NFT d'accès ou est le créateur. Vérification on-chain.
@@ -48,6 +50,9 @@ export async function POST(request: Request) {
       client.readContract({ address: contract, abi: BeamUpABI, functionName: 'getWork', args: [BigInt(workId)] }) as Promise<any>,
     ]);
     if (!allowed) return NextResponse.json({ error: "Vous n'avez pas le NFT d'accès à cette œuvre" }, { status: 403 });
+
+    // Jeu premium : achat vérifié ci-dessus ; lien vers le domaine des jeux (isolé de BeamUp).
+    if (getFormat(work.category).kind === 'game') return gameLink(work.ipfsCID);
 
     const cid: string = work.ipfsCID;
     const lookup = await fetch(`https://api.pinata.cloud/v3/files/private?cid=${encodeURIComponent(cid)}&limit=1`, {

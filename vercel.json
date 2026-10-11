@@ -1,0 +1,7 @@
+{
+  "crons": [
+    { "path": "/api/agents/tournament", "schedule": "0 13 * * 1" },
+    { "path": "/api/agents/promotion", "schedule": "0 12 * * 2" },
+    { "path": "/api/agents/moderation", "schedule": "0 10 * * *" }
+  ]
+}

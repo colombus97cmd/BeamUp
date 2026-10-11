@@ -2,9 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
 import { useActiveChainId } from '../hooks/useActiveChainId';
-import { X, Send, MessageSquare, User, Loader2, Sparkles, Zap, ShieldCheck } from 'lucide-react';
+import { X, Send, MessageSquare, User, Loader2, Sparkles, Zap, ShieldCheck, Flag, EyeOff } from 'lucide-react';
+import Link from 'next/link';
 import BeamUpABI from '../contracts/BeamUpV3.json';
 import { getContractAddress } from '../config/contracts';
+
+interface Advice { decision: 'ok' | 'reformuler' | 'masquer'; reason: string; suggestion: string }
 
 
 interface CommentDrawerProps {
@@ -34,15 +37,54 @@ export default function CommentDrawer({ workId, isOpen, onClose, chainId: workCh
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
+  // Modération : conseil de l'agent avant l'envoi, commentaires masqués, signalements.
+  const [advice, setAdvice] = useState<Advice | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [hidden, setHidden] = useState<Record<string, string>>({});
+  const [reported, setReported] = useState<Record<number, boolean>>({});
+
+  const loadHidden = () => {
+    fetch(`/api/moderation/hidden?chainId=${chainId}&workId=${workId}`)
+      .then((r) => r.json())
+      .then((d) => setHidden(d.hidden || {}))
+      .catch(() => {});
+  };
+  useEffect(() => { if (isOpen) loadHidden(); }, [isOpen, chainId, workId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (isConfirmed) {
       refetch();
       setCommentText('');
+      setAdvice(null);
     }
   }, [isConfirmed, refetch]);
 
-  const handleSendComment = async () => {
+  const report = async (index: number) => {
+    const motive = window.prompt('Pourquoi signalez-vous ce commentaire ? (facultatif)');
+    if (motive === null) return;
+    setReported((r) => ({ ...r, [index]: true }));
+    await fetch('/api/moderation/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chainId, workId, index, motive }),
+    }).catch(() => {});
+    loadHidden();
+  };
+
+  /** L'agent conseille avant la signature. Il ne bloque jamais : on peut toujours publier tel quel. */
+  const handleSendComment = async (skipCheck = false) => {
     if (!commentText.trim()) return;
+    if (!skipCheck) {
+      setChecking(true);
+      const verdict: Advice | null = await fetch('/api/moderation/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: commentText }),
+      }).then((r) => r.json()).catch(() => null);
+      setChecking(false);
+      if (verdict && verdict.decision !== 'ok') { setAdvice(verdict); return; }
+    }
+    setAdvice(null);
     // Le commentaire est enregistré sur le réseau de l'œuvre : bascule du wallet si besoin.
     if (walletChainId !== chainId) {
       try { await switchChainAsync({ chainId }); } catch { return; }
@@ -121,12 +163,32 @@ export default function CommentDrawer({ workId, isOpen, onClose, chainId: workCh
                   <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#050505]" />
                 </div>
                 <div className="space-y-2 flex-1">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <p className="text-[10px] font-black text-[#00f2ff] uppercase tracking-tighter">@{c.author.slice(0,6)}...{c.author.slice(-4)}</p>
-                    <span className="text-[8px] text-gray-600 font-mono uppercase">{formatTimestamp(c.timestamp)}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[8px] text-gray-600 font-mono uppercase">{formatTimestamp(c.timestamp)}</span>
+                      {!hidden[i] && (
+                        <button
+                          onClick={() => report(i)}
+                          disabled={reported[i]}
+                          title={reported[i] ? 'Signalé' : 'Signaler ce commentaire'}
+                          aria-label={reported[i] ? 'Commentaire signalé' : 'Signaler ce commentaire'}
+                          className="text-gray-600 hover:text-yellow-400 disabled:text-yellow-500 transition-colors"
+                        >
+                          <Flag className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="bg-white/5 p-4 rounded-2xl rounded-tl-none border border-white/5 group-hover:border-white/10 transition-all">
-                    <p className="text-xs text-gray-300 leading-relaxed font-medium">{c.text}</p>
+                    {hidden[i] ? (
+                      <p className="text-[11px] text-gray-500 italic flex items-start gap-2">
+                        <EyeOff className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                        <span>Commentaire masqué par la modération : {hidden[i]} <Link href="/charte" className="underline hover:text-gray-300">Charte</Link></span>
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-300 leading-relaxed font-medium">{c.text}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -140,22 +202,46 @@ export default function CommentDrawer({ workId, isOpen, onClose, chainId: workCh
              <div className="absolute inset-x-0 top-0 h-1 bg-[#00f2ff] animate-beam-send origin-left" />
           )}
 
+          {advice && (
+            <div className="mb-4 p-4 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 text-[11px] leading-relaxed space-y-3" role="status">
+              <p className="text-yellow-100/90">
+                <Sparkles className="inline w-3.5 h-3.5 mr-1 text-yellow-400" />
+                {advice.reason}
+                {advice.decision === 'masquer' && ' Publié tel quel, il serait masqué sur BeamUp (il reste enregistré sur la blockchain).'}
+              </p>
+              {advice.suggestion && <p className="text-gray-300 italic">« {advice.suggestion} »</p>}
+              <div className="flex flex-wrap gap-2">
+                {advice.suggestion && (
+                  <button onClick={() => { setCommentText(advice.suggestion.slice(0, 500)); setAdvice(null); }} className="px-3 py-1.5 rounded-full bg-[#00f2ff] text-black font-black uppercase text-[9px] tracking-wider">
+                    Utiliser la suggestion
+                  </button>
+                )}
+                <button onClick={() => handleSendComment(true)} className="px-3 py-1.5 rounded-full border border-white/20 text-white font-black uppercase text-[9px] tracking-wider">
+                  Publier tel quel
+                </button>
+                <button onClick={() => setAdvice(null)} className="px-3 py-1.5 rounded-full text-gray-400 font-black uppercase text-[9px] tracking-wider">
+                  Modifier
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="relative group">
-            <input 
+            <input
               value={commentText}
               maxLength={500}
-              onChange={(e) => setCommentText(e.target.value)}
+              onChange={(e) => { setCommentText(e.target.value); setAdvice(null); }}
               placeholder="Diffuser votre pensée..."
-              disabled={isPending || isConfirming}
+              disabled={isPending || isConfirming || checking}
               className="w-full bg-white/5 border border-white/10 p-5 pr-16 rounded-[24px] outline-none focus:border-[#00f2ff] transition-all text-xs font-bold placeholder:text-gray-700 shadow-inner"
               onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
             />
-            <button 
-              onClick={handleSendComment}
-              disabled={isPending || isConfirming || !commentText.trim()}
+            <button
+              onClick={() => handleSendComment()}
+              disabled={isPending || isConfirming || checking || !commentText.trim()}
               className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-gradient-to-tr from-[#00f2ff] to-[#bc13fe] text-black rounded-2xl hover:scale-105 active:scale-90 transition-all shadow-xl flex items-center justify-center disabled:grayscale disabled:opacity-30"
             >
-              {isPending || isConfirming ? (
+              {isPending || isConfirming || checking ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : isConfirmed ? (
                 <ShieldCheck className="w-5 h-5 animate-bounce" />
@@ -165,7 +251,9 @@ export default function CommentDrawer({ workId, isOpen, onClose, chainId: workCh
             </button>
           </div>
           <div className="flex items-center justify-between mt-4 px-2">
-            <p className="text-[7px] text-gray-600 uppercase tracking-[0.4em] font-black">Protocole Proof-of-Talk</p>
+            <p className="text-[7px] text-gray-600 uppercase tracking-[0.4em] font-black">
+              Protocole Proof-of-Talk · <Link href="/charte" className="hover:text-gray-300 underline">Charte</Link>
+            </p>
             {isConfirmed && <span className="text-[7px] text-green-500 font-black uppercase animate-pulse">Confirmé</span>}
           </div>
         </div>

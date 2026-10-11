@@ -10,9 +10,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
     "@tanstack/react-query": "^5.90.21",
     "connectkit": "^1.9.1",
     "dotenv": "^17.3.1",
+    "fflate": "^0.8.2",
     "lucide-react": "^0.577.0",
     "next": "^15.5.12",
     "pinata-web3": "^0.5.4",

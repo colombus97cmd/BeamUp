@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 import { SUPPORTED_CHAIN_IDS } from '../../../config/contracts';
+import { redis, REDIS_URL, REDIS_TOKEN } from '../../../lib/redis';
 
 // Statistiques de lecture, stockées dans Upstash Redis (persistant, contrairement au disque Vercel).
 // Règles anti-fausses vues :
@@ -14,33 +15,6 @@ const FIELD: Record<StatType, string> = { view: 'views', inProgress: 'inProgress
 const DEDUPE_SECONDS = 24 * 3600;
 const RATE_LIMIT_PER_MINUTE = 30;
 const BOT_UA = /bot|crawl|spider|slurp|headless|lighthouse|preview|curl|wget|python|axios|node-fetch|go-http/i;
-
-// L'intégration Upstash de Vercel nomme les variables selon le préfixe choisi
-// (KV_REST_API_URL, UPSTASH_REDIS_REST_URL, STORAGE_KV_REST_API_URL...) : on accepte toutes ces formes.
-const findEnv = (...suffixes: string[]) => {
-  for (const suffix of suffixes) {
-    const key = Object.keys(process.env).find((k) => k.endsWith(suffix) && !k.includes('READ_ONLY') && process.env[k]);
-    if (key) return process.env[key];
-  }
-  return undefined;
-};
-const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || findEnv('KV_REST_API_URL', 'REDIS_REST_URL', 'REST_API_URL');
-const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || findEnv('KV_REST_API_TOKEN', 'REDIS_REST_TOKEN', 'REST_API_TOKEN');
-
-async function redis(commands: (string | number)[][]): Promise<any[]> {
-  const res = await fetch(`${REDIS_URL}/pipeline`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${REDIS_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(commands),
-    cache: 'no-store',
-  });
-  if (!res.ok) throw new Error(`Redis ${res.status}`);
-  const data = (await res.json()) as { result?: any; error?: string }[];
-  return data.map((d) => {
-    if (d.error) throw new Error(d.error);
-    return d.result;
-  });
-}
 
 const statsKey = (chainId: number) => `beam:v1:stats:${chainId}`;
 

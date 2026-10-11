@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navigation from '../../components/Navigation';
 import { uploadToIPFS } from '../../services/pinata';
+import { submitGame } from '../../services/gameSubmit';
 import BeamUpABI from '../../contracts/BeamUpV3.json';
 import { getContractAddress, getCurrencySymbol, getChainName, BTC_TOKENS, NATIVE_TOKEN } from '../../config/contracts';
 import { FORMATS, getFormat } from '../../config/formats';
@@ -25,7 +26,7 @@ export default function Publish() {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Musique');
   const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState<'idle' | 'uploading' | 'blockchain' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'uploading' | 'verifying' | 'blockchain' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [manualCid, setManualCid] = useState('');
@@ -53,17 +54,25 @@ export default function Publish() {
   }, [isConfirmed, router]);
 
   const handlePublish = async () => {
-    if ((!file && !manualCid) || !title) return;
+    const isGame = getFormat(category).kind === 'game';
+    if ((!file && (!manualCid || isGame)) || !title) return;
     setStatus('uploading');
     setUploadProgress(0);
     try {
       let finalCid = manualCid;
-      if (file) {
+      if (file && isGame) {
+        // Jeu : zip déposé en zone d'attente privée, puis vérifié côté serveur. Le CID publié est celui du manifeste.
+        if (!address) throw new Error("Connectez votre wallet pour publier.");
+        const zipCid = await uploadToIPFS(file, address, signMessageAsync, (percent) => setUploadProgress(percent), { private: true, chainId });
+        setStatus('verifying');
+        finalCid = await submitGame(zipCid, title, address, signMessageAsync, chainId);
+        setCid(finalCid);
+      } else if (file) {
         if (!address) throw new Error("Connectez votre wallet pour publier.");
         finalCid = await uploadToIPFS(file, address, signMessageAsync, (percent) => setUploadProgress(percent), { private: isPremium, chainId });
         setCid(finalCid);
       }
-      
+
       setStatus('blockchain');
       const useBtc = isPremium && payWithBtc && !!btcToken;
       const royaltyBps = Math.round(Math.min(10, Math.max(0, Number(royalty) || 0)) * 100);
@@ -115,11 +124,11 @@ export default function Publish() {
 
       <main className='max-w-4xl mx-auto px-4 py-12 md:py-20'>
         <div className='cyber-glass p-6 md:p-12 rounded-3xl md:rounded-[48px] border border-white/10 relative overflow-hidden'>
-          {(status === 'uploading' || status === 'blockchain' || isConfirming) && (
+          {(status === 'uploading' || status === 'verifying' || status === 'blockchain' || isConfirming) && (
             <div className='absolute inset-0 bg-black/90 backdrop-blur-xl z-50 flex flex-col items-center justify-center text-center p-6'>
               <BeamEnergyBall />
               <h4 className='text-[#00f2ff] text-lg md:text-xl font-black uppercase tracking-[0.2em] mt-8'>
-                {status === 'uploading' ? (uploadProgress === 0 ? 'Signez dans votre wallet...' : `Envoi en cours... ${uploadProgress}%`) : isConfirming ? 'Confirmation...' : 'Transmission...'}
+                {status === 'uploading' ? (uploadProgress === 0 ? 'Signez dans votre wallet...' : `Envoi en cours... ${uploadProgress}%`) : status === 'verifying' ? 'Vérification du jeu... (signez, puis patientez jusqu\'à quelques minutes)' : isConfirming ? 'Confirmation...' : 'Transmission...'}
               </h4>
               
               {status === 'uploading' && (
@@ -173,7 +182,12 @@ export default function Publish() {
                 ) : (
                   <><Upload className='w-10 h-10 text-gray-500 mb-4' /><p className='text-[10px] uppercase font-black text-gray-500 tracking-widest'>Déposer votre {getFormat(category).label.toLowerCase()}</p></>
                 )}
-                {!file && (
+                {getFormat(category).kind === 'game' && !file && (
+                  <p className='text-[10px] text-gray-500 mt-4 max-w-xs text-center leading-relaxed'>
+                    Un zip de votre jeu web, avec index.html à la racine. Il est vérifié automatiquement, puis validé par l&apos;équipe BeamUp avant d&apos;être jouable.
+                  </p>
+                )}
+                {!file && getFormat(category).kind !== 'game' && (
                   <div className='flex items-center gap-4 mt-4 relative'>
                     <div className='absolute inset-0 bg-gradient-to-r from-[#00f2ff]/20 to-[#bc13fe]/20 blur-xl opacity-50 z-0'/>
                     <input 
@@ -279,7 +293,7 @@ export default function Publish() {
                   </p>
                 </div>
 
-                <button onClick={handlePublish} disabled={(!file && !manualCid) || !title || status === 'uploading'} className='w-full py-5 md:py-6 bg-gradient-to-r from-[#00f2ff] to-[#bc13fe] text-black font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-2xl md:rounded-[24px] hover:shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4'>
+                <button onClick={handlePublish} disabled={(!file && (!manualCid || getFormat(category).kind === 'game')) || !title || status === 'uploading' || status === 'verifying'} className='w-full py-5 md:py-6 bg-gradient-to-r from-[#00f2ff] to-[#bc13fe] text-black font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-2xl md:rounded-[24px] hover:shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4'>
                   <Rocket className='w-4 h-4 md:w-5 md:h-5' /> Diffuser ({feeLabel} {currencySymbol})
                 </button>
               </div>
@@ -301,7 +315,7 @@ export default function Publish() {
               <X className='w-6 h-6 md:w-8 md:h-8 text-red-500 flex-shrink-0' />
               <div>
                 <p className='text-xs md:text-sm font-black text-red-500 uppercase tracking-widest'>Échec de la diffusion</p>
-                <p className='text-[10px] text-red-400 mt-1 font-mono break-all'>{errorMessage}</p>
+                <p className='text-[10px] text-red-400 mt-1 font-mono break-all whitespace-pre-line'>{errorMessage}</p>
                 <button onClick={() => setStatus('idle')} className='mt-3 px-4 py-2 bg-red-500/20 text-red-300 text-[10px] rounded-lg font-bold uppercase'>Réessayer</button>
               </div>
             </div>
