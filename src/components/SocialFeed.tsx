@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { Heart, MessageCircle, Zap, Play, Share2, User, Lock, ShieldCheck, ShoppingCart, Eye, Bookmark } from 'lucide-react';
+import { Heart, MessageCircle, Zap, Play, Share2, User, Lock, ShieldCheck, ShoppingCart, Eye, Bookmark, ChevronDown, MoreHorizontal } from 'lucide-react';
 import AudioPlayer from './AudioPlayer';
 import { setMediaSession } from '../lib/mediaSession';
 import { getFormat } from '../config/formats';
@@ -20,9 +20,11 @@ interface SocialFeedProps {
   onTrackProgress: (id: number, progress: number) => void;
   isSaved?: (id: number) => boolean;
   onToggleSave?: (id: number) => void;
+  /** Laisse de la place en haut (barre de filtres de la bibliothèque). */
+  topInset?: boolean;
 }
 
-export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, getViewCount, onView, onTrackProgress, isSaved, onToggleSave }: SocialFeedProps) {
+export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, getViewCount, onView, onTrackProgress, isSaved, onToggleSave, topInset }: SocialFeedProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [commentWorkId, setCommentWorkId] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -55,6 +57,23 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
     } finally {
       setOpeningId(null);
     }
+  };
+
+  // Boutons sociaux repliables : repliés par défaut sur mobile, ouverts sur ordinateur ; choix mémorisé.
+  const [actionsOpen, setActionsOpen] = useState(true);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('beam_actions_open');
+      setActionsOpen(saved !== null ? saved === '1' : window.innerWidth >= 768);
+    } catch {
+      setActionsOpen(window.innerWidth >= 768);
+    }
+  }, []);
+  const toggleActions = () => {
+    setActionsOpen((v) => {
+      try { localStorage.setItem('beam_actions_open', v ? '0' : '1'); } catch {}
+      return !v;
+    });
   };
 
   const mediaSrc = (work: any) => (work.isPremium ? premiumUrls[work.id] : getMediaUrl(work.ipfsCID));
@@ -195,21 +214,21 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
 
           return (
             <div key={i} className="h-full w-full snap-start relative flex items-center justify-center overflow-hidden">
-              <div className="relative z-10 w-full h-full flex flex-col items-center justify-start md:justify-center px-3 pt-3 md:p-6">
+              <div className={`relative z-10 w-full h-full flex flex-col items-center justify-start md:justify-center px-3 md:p-6 ${topInset ? 'pt-14 md:pt-16' : 'pt-3'}`}>
                 <div className="w-full max-w-3xl h-[calc(100%-6.5rem)] md:h-[76vh] rounded-3xl md:rounded-[40px] overflow-hidden relative shadow-[0_0_120px_rgba(0,0,0,1)] border border-white/10 group bg-black/40 backdrop-blur-sm">
                   
                   {isLocked ? (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-black/60 backdrop-blur-3xl relative overflow-hidden group">
                       <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_50%,#bc13fe,transparent_70%)] animate-pulse" />
-                      <div className="relative z-10 flex flex-col items-center gap-8 p-12 text-center">
+                      <div className="relative z-10 flex flex-col items-center gap-5 md:gap-7 p-6 md:p-10 text-center">
                         <div className="relative">
                           <div className="absolute inset-0 bg-amber-500 blur-2xl opacity-20 animate-ping" />
-                          <div className="w-24 h-24 bg-amber-500/10 border border-amber-500/40 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(245,158,11,0.2)]">
-                            <Lock className="w-10 h-10 text-amber-500" />
+                          <div className="w-16 h-16 md:w-20 md:h-20 bg-amber-500/10 border border-amber-500/40 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(245,158,11,0.2)]">
+                            <Lock className="w-7 h-7 md:w-8 md:h-8 text-amber-500" />
                           </div>
                         </div>
                         <div className="space-y-4">
-                          <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-white">Œuvre Premium</h3>
+                          <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight text-white">Œuvre Premium</h3>
                           <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest leading-relaxed max-w-xs mx-auto">
                             Achetez le NFT d'accès pour soutenir l'artiste et en profiter sans limite. Le NFT est à vous : vous pouvez le revendre.
                           </p>
@@ -217,7 +236,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                         <button 
                           onClick={() => onBuy(work.id, work.price)}
                           disabled={work.soldOut}
-                          className="disabled:opacity-40 disabled:hover:scale-100 px-10 py-5 bg-gradient-to-r from-amber-500 to-amber-700 text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(245,158,11,0.3)] flex items-center gap-3"
+                          className="disabled:opacity-40 disabled:hover:scale-100 px-6 md:px-8 py-3.5 md:py-4 bg-gradient-to-r from-amber-500 to-amber-700 text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(245,158,11,0.3)] flex items-center gap-3"
                         >
                           <ShoppingCart className="w-4 h-4" /> {work.soldOut ? "Édition épuisée" : `Obtenir le NFT · ${work.priceLabel}`}
                         </button>
@@ -229,8 +248,8 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                     </div>
                   ) : work.isPremium && !premiumUrls[work.id] ? (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-6 p-10 text-center bg-black/60">
-                      <ShieldCheck className="w-14 h-14 text-amber-500" />
-                      <h3 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-white">{work.title}</h3>
+                      <ShieldCheck className="w-10 h-10 md:w-12 md:h-12 text-amber-500" />
+                      <h3 className="text-lg md:text-2xl font-black uppercase tracking-tight text-white line-clamp-2">{work.title}</h3>
                       <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest max-w-xs">
                         Vous détenez l'accès. Signez une fois avec votre wallet (gratuit) pour ouvrir vos œuvres premium.
                       </p>
@@ -258,7 +277,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                       ) : (
                         <button
                           onClick={() => openPremium(work.id)}
-                          className="px-10 py-5 bg-gradient-to-r from-amber-500 to-amber-700 text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                          className="px-6 md:px-8 py-3.5 md:py-4 bg-gradient-to-r from-amber-500 to-amber-700 text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
                         >
                           <Play className="w-4 h-4" /> {mediaError ? 'Réessayer' : "Ouvrir l'œuvre"}
                         </button>
@@ -316,6 +335,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                           audioRef={(el) => { audioRefs.current[i] = el; }}
                           onPlay={() => handleMediaPlay(work.id)}
                           onTimeUpdate={(e) => handleTimeUpdate(work.id, e)}
+                          reserveRight={actionsOpen}
                         />
                       ) : (
                         <img src={mediaSrc(work)} className="w-full h-full object-contain bg-black" alt={work.title} />
@@ -339,7 +359,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                             <span className="text-[10px] font-mono font-bold">{getViewCount(work.id)}</span>
                           </div>
                         </div>
-                        <h3 className="text-lg md:text-2xl font-black uppercase tracking-tight text-white leading-tight line-clamp-2">{work.title}</h3>
+                        <h3 className="text-base md:text-xl font-black uppercase tracking-tight text-white leading-tight line-clamp-2">{work.title}</h3>
                       </div>
                     </div>
                   </div>
@@ -347,7 +367,8 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                 </div>
               </div>
 
-              <div className="absolute right-3 md:right-8 bottom-44 md:bottom-24 z-20 flex flex-col gap-3 md:gap-5 items-center">
+              <div className="absolute right-3 md:right-8 bottom-44 md:bottom-24 z-20 flex flex-col gap-3 md:gap-4 items-center">
+                {actionsOpen && (<>
                 <button 
                   onClick={() => onLike(work.id)}
                   className="flex flex-col items-center gap-2 group"
@@ -401,6 +422,16 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                     <Share2 className="w-5 h-5 md:w-6 md:h-6 text-white" />
                   </div>
                   <span className="hidden md:block text-[9px] font-black uppercase tracking-widest text-gray-600">Viralize</span>
+                </button>
+                </>)}
+
+                <button
+                  onClick={toggleActions}
+                  aria-label={actionsOpen ? 'Masquer les actions' : 'Afficher les actions'}
+                  aria-expanded={actionsOpen}
+                  className="p-2 md:p-2.5 rounded-full bg-black/50 border border-white/10 text-gray-300 hover:text-white backdrop-blur-xl transition-all active:scale-90"
+                >
+                  {actionsOpen ? <ChevronDown className="w-4 h-4" /> : <MoreHorizontal className="w-4 h-4" />}
                 </button>
               </div>
             </div>

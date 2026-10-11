@@ -11,6 +11,8 @@ interface AudioPlayerProps {
   audioRef?: (el: HTMLAudioElement | null) => void;
   onPlay?: () => void;
   onTimeUpdate?: (e: React.SyntheticEvent<HTMLAudioElement, Event>) => void;
+  /** Laisse la place aux boutons sociaux à droite (mobile). */
+  reserveRight?: boolean;
 }
 
 const fmt = (s: number) => {
@@ -24,7 +26,7 @@ const fmt = (s: number) => {
  * Lecteur audio façon Spotify / YouTube Music : clic sur la pochette ou le bouton pour lecture/pause,
  * barre de progression cliquable, ±10 s. Commandes casque / écran verrouillé via Media Session.
  */
-export default function AudioPlayer({ src, title, artist, color, audioRef, onPlay, onTimeUpdate }: AudioPlayerProps) {
+export default function AudioPlayer({ src, title, artist, color, audioRef, onPlay, onTimeUpdate, reserveRight }: AudioPlayerProps) {
   const ref = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -56,7 +58,7 @@ export default function AudioPlayer({ src, title, artist, color, audioRef, onPla
   const progress = duration ? (current / duration) * 100 : 0;
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-4 md:gap-7 pl-5 pr-20 md:px-6 pb-10 md:pb-24 pt-6">
+    <div className={`w-full h-full flex flex-col items-center justify-center gap-4 md:gap-7 pl-5 md:px-6 pb-10 md:pb-24 pt-6 ${reserveRight ? 'pr-20' : 'pr-5'}`}>
       <audio
         ref={(el) => {
           ref.current = el;
@@ -86,7 +88,7 @@ export default function AudioPlayer({ src, title, artist, color, audioRef, onPla
         type="button"
         onClick={toggle}
         aria-label={playing ? 'Mettre en pause' : 'Lire'}
-        className="relative w-[min(58vw,15rem)] md:w-[min(26vh,16rem)] aspect-square rounded-3xl overflow-hidden border border-white/10 shadow-2xl group/cover focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        className="relative w-[min(50vw,13rem)] md:w-[min(24vh,14rem)] aspect-square rounded-3xl overflow-hidden border border-white/10 shadow-2xl group/cover focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
         style={{ background: `radial-gradient(circle at 30% 30%, ${color}, #0a0a0a 75%)` }}
       >
         <Music className={`absolute inset-0 m-auto w-1/3 h-1/3 text-white/25 ${playing ? 'animate-pulse' : ''}`} />
@@ -98,7 +100,7 @@ export default function AudioPlayer({ src, title, artist, color, audioRef, onPla
       </button>
 
       <div className="text-center max-w-md w-full">
-        <h3 className="text-xl md:text-2xl font-black tracking-tight text-white truncate">{title}</h3>
+        <h3 className="text-base md:text-xl font-black tracking-tight text-white truncate">{title}</h3>
         <p className="text-xs text-gray-400 truncate mt-1">{artist}</p>
       </div>
 

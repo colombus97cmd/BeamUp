@@ -11,6 +11,7 @@ import BeamUpABI from '../contracts/BeamUpV3.json';
 import { getPaymentInfo } from '../config/contracts';
 import { useWorks } from '../hooks/useWorks';
 import { useLibrary } from '../hooks/useLibrary';
+import { FORMATS, getFormat } from '../config/formats';
 import LandingPage from '../components/LandingPage';
 import CrowdfundingCampaign from '../components/CrowdfundingCampaign';
 
@@ -155,9 +156,16 @@ export default function Home() {
 
   // Bibliothèque : œuvres achetées (NFT d'accès), ses propres œuvres, et celles ajoutées avec le signet.
   const library = useLibrary(chainId, address);
-  const libraryWorks = processedWorks.filter(
+  const libraryAll = processedWorks.filter(
     (w) => (w.isPremium && w.hasPaid) || w.creator.toLowerCase() === address?.toLowerCase() || library.isSaved(w.id)
   );
+  // Rangement par type (musique, clips, manga…), les plus récentes d'abord dans chaque type.
+  const [libraryFilter, setLibraryFilter] = useState<string>('all');
+  const formatRank = (cat: string) => FORMATS.findIndex((f) => f.id === getFormat(cat).id);
+  const libraryCounts = FORMATS.map((f) => ({ ...f, count: libraryAll.filter((w) => getFormat(w.category).id === f.id).length }));
+  const libraryWorks = libraryAll
+    .filter((w) => libraryFilter === 'all' || getFormat(w.category).id === libraryFilter)
+    .sort((a, b) => formatRank(a.category) - formatRank(b.category));
 
   return (
     <div className='min-h-screen bg-[#020202] text-white selection:bg-[#00f2ff] selection:text-black'>    
@@ -222,15 +230,32 @@ export default function Home() {
             <Disc className='w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 animate-spin-slow' />
             <p className='text-xs uppercase tracking-[0.4em]'>Silence Intergalactique</p>
           </div>
-        ) : viewMode === 'library' && libraryWorks.length === 0 ? (
+        ) : viewMode === 'library' && libraryAll.length === 0 ? (
           <div className='flex flex-col items-center justify-center h-full min-h-[60vh] text-center px-6'>
             <Library className='w-14 h-14 mb-5 text-gray-600' />
             <p className='text-sm font-bold text-gray-300 mb-2'>Votre bibliothèque est vide</p>
             <p className='text-xs text-gray-500 max-w-xs'>Les œuvres que vous achetez y apparaissent automatiquement. Ajoutez les œuvres gratuites avec le bouton « Biblio » du flux.</p>
           </div>
         ) : viewMode === 'feed' || viewMode === 'library' ? (
+          <>
+          {viewMode === 'library' && (
+            <div className="fixed top-[68px] left-0 right-0 z-40 px-3">
+              <div className="max-w-3xl mx-auto flex gap-2 overflow-x-auto no-scrollbar py-1">
+                {[{ id: 'all', label: 'Tout', count: libraryAll.length, hex: '#ffffff' }, ...libraryCounts.filter((f) => f.count > 0)].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setLibraryFilter(f.id)}
+                    className={`shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all ${libraryFilter === f.id ? 'bg-white text-black border-white' : 'bg-black/60 text-gray-300 border-white/10 backdrop-blur-xl'}`}
+                  >
+                    {f.label} <span className="opacity-60">{f.count}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <SocialFeed 
-            key={viewMode}
+            key={viewMode + libraryFilter}
+            topInset={viewMode === 'library'}
             works={viewMode === 'library' ? libraryWorks : processedWorks} 
             isSaved={library.isSaved}
             onToggleSave={library.toggle}
@@ -242,6 +267,7 @@ export default function Home() {
             onView={trackView}
             onTrackProgress={trackProgress}
           />
+          </>
         ) : (
           <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-10'>   
             {processedWorks.map((work, i) => (
