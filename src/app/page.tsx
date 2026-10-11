@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useWriteContract, useAccount, useConfig } from 'wagmi';
+import { useWriteContract, useAccount, useConfig, useChainId } from 'wagmi';
 import { readContract, waitForTransactionReceipt } from 'wagmi/actions';
 import { parseEther, erc20Abi } from 'viem';
 import { LayoutGrid, Rocket, Disc, Loader2, Zap, Play, Sparkles, Smartphone, Eye } from 'lucide-react';
@@ -16,22 +16,23 @@ import CrowdfundingCampaign from '../components/CrowdfundingCampaign';
 export default function Home() {
   const [viewMode, setViewMode] = useState<'grid' | 'feed' | 'crowdfunding'>('feed');
   const [analytics, setAnalytics] = useState<Record<number, { views: number; completed: number; inProgress: number }>>({});
+  const viewsChainId = useChainId();
 
   useEffect(() => {
-    fetch('/api/views')
+    fetch(`/api/views?chainId=${viewsChainId}`)
       .then(res => res.json())
       .then(data => {
         setAnalytics(data);
       })
       .catch(err => console.error("Error fetching views:", err));
-  }, []);
+  }, [viewsChainId]);
 
   const trackView = async (id: number) => {
     try {
       const res = await fetch('/api/views', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workId: id, type: 'view' }),
+        body: JSON.stringify({ chainId: viewsChainId, workId: id, type: 'view' }),
       });
       const data = await res.json();
       if (data.success) {
@@ -68,7 +69,7 @@ export default function Home() {
       const res = await fetch('/api/views', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workId: id, type }),
+        body: JSON.stringify({ chainId: viewsChainId, workId: id, type }),
       });
       const data = await res.json();
       if (data.success) {

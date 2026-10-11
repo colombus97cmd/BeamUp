@@ -39,11 +39,31 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
     }
   };
 
+  // Vues réelles uniquement : une vue compte après au moins 5 s réellement lues (ou la moitié
+  // d'un média plus court), une lecture complète après 90 % réellement lus. Avancer la barre
+  // de lecture ne compte pas : on additionne les plages effectivement jouées.
+  const countedViews = useRef<Set<number>>(new Set());
+  const isLockedFor = (work: any) =>
+    work.isPremium && !work.hasPaid && address?.toLowerCase() !== work.creator?.toLowerCase();
+
+  const countView = (id: number) => {
+    if (countedViews.current.has(id)) return;
+    countedViews.current.add(id);
+    onView(id);
+  };
+
   const handleMediaPlay = (id: number) => {
-    if (lastPlayedWorkId.current !== id) {
-      lastPlayedWorkId.current = id;
-      onView(id);
-    }
+    lastPlayedWorkId.current = id;
+  };
+
+  const handleTimeUpdate = (id: number, e: React.SyntheticEvent<HTMLMediaElement, Event>) => {
+    const media = e.currentTarget;
+    const duration = media.duration;
+    if (!duration || !isFinite(duration)) return;
+    let played = 0;
+    for (let i = 0; i < media.played.length; i++) played += media.played.end(i) - media.played.start(i);
+    if (played >= Math.min(5, duration * 0.5)) countView(id);
+    onTrackProgress(id, (played / duration) * 100);
   };
 
   const handleFullscreenChange = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
@@ -55,17 +75,13 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
     }
   };
 
+  // Images et GIF : une vue après 3 s réellement affichés à l'écran (œuvre non verrouillée).
   useEffect(() => {
-    if (works[activeIndex]) {
-      const activeWork = works[activeIndex];
-      const kind = getFormat(activeWork.category).kind;
-      const isMedia = kind === 'audio' || kind === 'video';
-      // Only auto-trigger view on active card for static documents (Webtoons/Images)
-      if (!isMedia) {
-        onView(activeWork.id);
-      }
-    }
-  }, [activeIndex, works, onView]);
+    const activeWork = works[activeIndex];
+    if (!activeWork || isLockedFor(activeWork) || getFormat(activeWork.category).kind !== 'image') return;
+    const timer = setTimeout(() => countView(activeWork.id), 3000);
+    return () => clearTimeout(timer);
+  }, [activeIndex, works]);
 
   useEffect(() => {
     // Reset play session tracker when activeIndex changes
@@ -90,30 +106,6 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
     }
   }, [activeIndex, commentWorkId]);
 
-  useEffect(() => {
-    let viewTimer: NodeJS.Timeout;
-    let completeTimer: NodeJS.Timeout;
-
-    if (works[activeIndex]) {
-      const activeWork = works[activeIndex];
-      const isWebtoon = getFormat(activeWork.category).kind === 'scroll';
-      
-      if (!isWebtoon) {
-        viewTimer = setTimeout(() => {
-          onTrackProgress(activeWork.id, 15);
-        }, 1000);
-
-        completeTimer = setTimeout(() => {
-          onTrackProgress(activeWork.id, 95);
-        }, 5000);
-      }
-    }
-
-    return () => {
-      clearTimeout(viewTimer);
-      clearTimeout(completeTimer);
-    };
-  }, [activeIndex, works, onTrackProgress]);
 
   const getThemeColor = (cat: string) => getFormat(cat).glow;
 
@@ -224,6 +216,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                             const target = e.currentTarget;
                             const progress = target.scrollTop / (target.scrollHeight - target.clientHeight);
                             localStorage.setItem(`beam_read_progress_${address || 'guest'}_${work.id}`, progress.toString());
+                            if (progress >= 0.1) countView(work.id);
                             onTrackProgress(work.id, progress * 100);
                           }}
                           className="w-full h-full overflow-y-auto no-scrollbar scroll-smooth relative"
@@ -241,6 +234,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                           playsInline
                           preload="auto"
                           onPlay={() => handleMediaPlay(work.id)}
+                          onTimeUpdate={(e) => handleTimeUpdate(work.id, e)}
                           onFullscreenChange={handleFullscreenChange}
                           {...({ onWebkitEndFullscreen: handleFullscreenChange } as any)}
                         />
@@ -271,6 +265,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                               controls 
                               className="w-full max-w-md opacity-40 hover:opacity-100 transition-opacity"
                               onPlay={() => handleMediaPlay(work.id)}
+                          onTimeUpdate={(e) => handleTimeUpdate(work.id, e)}
                             />
                           </div>
                         </div>

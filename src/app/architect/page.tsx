@@ -28,13 +28,13 @@ export default function Architect() {
   const [analytics, setAnalytics] = useState<Record<number, { views: number; completed: number; inProgress: number }>>({});
 
   useEffect(() => {
-    fetch('/api/views')
+    fetch(`/api/views?chainId=${chainId}`)
       .then(res => res.json())
       .then(data => {
         setAnalytics(data);
       })
       .catch(err => console.error("Error fetching views:", err));
-  }, []);
+  }, [chainId]);
 
   const getWorkStats = (id: number) => {
     const stats = analytics[id];
