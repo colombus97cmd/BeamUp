@@ -157,10 +157,10 @@ export default function LandingPage() {
               <Layers className="w-7 h-7 text-[#bc13fe]" />
             </div>
             <div className="flex-1">
-              <span className="inline-block text-[9px] uppercase tracking-[0.25em] font-black px-2.5 py-1 rounded-full bg-yellow-400 text-black mb-3">En construction</span>
+              <span className="inline-block text-[9px] uppercase tracking-[0.25em] font-black px-2.5 py-1 rounded-full bg-[#00f2ff] text-black mb-3">Nouveau</span>
               <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-3">Vos œuvres en NFT, l&apos;accès en streaming</h2>
               <p className="text-gray-400 text-sm md:text-base leading-relaxed max-w-2xl">
-                Chaque œuvre pourra devenir un NFT : le détenir donnera accès à l&apos;écoute ou au visionnage, et chaque revente reversera des royalties au créateur. Cette fonction est en construction et arrivera avec la prochaine version du contrat.
+                Chaque œuvre premium est un NFT : le détenir donne accès à l&apos;écoute, la lecture ou le visionnage, et chaque revente reverse jusqu&apos;à 10 % de royalties au créateur. Paiement en BNB, POL, ETH ou en bitcoin (WBTC, BTCB).
               </p>
             </div>
           </div>

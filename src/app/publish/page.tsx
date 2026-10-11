@@ -1,15 +1,15 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { ConnectKitButton } from 'connectkit';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId, useSignMessage } from 'wagmi';
-import { parseEther } from 'viem';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId, useSignMessage, useReadContract } from 'wagmi';
+import { parseUnits, formatEther } from 'viem';
 import { Rocket, Upload, PlusCircle, X, CheckCircle2, ShieldCheck, Sparkles, Coins } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navigation from '../../components/Navigation';
 import { uploadToIPFS } from '../../services/pinata';
-import BeamUpABI from '../../contracts/BeamUp.json';
-import { getContractAddress, getCurrencySymbol, getChainName } from '../../config/contracts';
+import BeamUpABI from '../../contracts/BeamUpV3.json';
+import { getContractAddress, getCurrencySymbol, getChainName, BTC_TOKENS, NATIVE_TOKEN } from '../../config/contracts';
 import { FORMATS, getFormat } from '../../config/formats';
 
 
@@ -32,6 +32,12 @@ export default function Publish() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [price, setPrice] = useState('0.1');
+  const [payWithBtc, setPayWithBtc] = useState(false);
+  const [royalty, setRoyalty] = useState('5');
+  const [maxSupply, setMaxSupply] = useState('');
+  const btcToken = BTC_TOKENS[chainId];
+  const { data: platformFee } = useReadContract({ address: CONTRACT_ADDRESS, abi: BeamUpABI, functionName: 'platformFee' });
+  const feeLabel = platformFee !== undefined ? formatEther(platformFee as bigint) : '0.0001';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { writeContract, data: hash } = useWriteContract();
@@ -58,12 +64,24 @@ export default function Publish() {
       }
       
       setStatus('blockchain');
+      const useBtc = isPremium && payWithBtc && !!btcToken;
+      const royaltyBps = Math.round(Math.min(10, Math.max(0, Number(royalty) || 0)) * 100);
       writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
         abi: BeamUpABI,
         functionName: 'publishWork',
-        args: [finalCid, title, category, isPremium, parseEther(price || '0')],
-        value: parseEther('0.0001'),
+        args: [{
+          ipfsCID: finalCid,
+          title,
+          category,
+          isPremium,
+          price: isPremium ? parseUnits(price || '0', useBtc ? btcToken.decimals : 18) : BigInt(0),
+          paymentToken: useBtc ? btcToken.address : NATIVE_TOKEN,
+          royaltyBps,
+          maxSupply: BigInt(Math.max(0, Math.floor(Number(maxSupply) || 0))),
+          metadataURI: '',
+        }],
+        value: (platformFee as bigint | undefined) ?? BigInt(0),
       });
     } catch (error: any) {
       console.error(error);
@@ -170,7 +188,7 @@ export default function Publish() {
               <div className='space-y-6 md:space-y-8'>
                 <div className='space-y-2'>
                   <label className='text-[9px] md:text-[10px] uppercase font-black text-gray-500 tracking-widest'>Titre de l'œuvre</label>
-                  <input value={title} onChange={(e) => setTitle(e.target.value)} className='w-full bg-white/5 border border-white/10 p-4 md:p-5 rounded-xl md:rounded-2xl focus:ring-1 focus:ring-[#00f2ff] outline-none font-bold text-sm md:text-base' placeholder='Ex: Quantum Horizon' />
+                  <input value={title} onChange={(e) => setTitle(e.target.value)} className='w-full bg-white/5 border border-white/10 p-4 md:p-5 rounded-xl md:rounded-2xl focus:ring-1 focus:ring-[#00f2ff] outline-none font-bold text-sm md:text-base' placeholder='Ex: Quantum Horizon' maxLength={120} />
                 </div>
 
                 <div className='space-y-2'>
@@ -217,7 +235,14 @@ export default function Publish() {
 
                   {isPremium && (
                     <div className='animate-in slide-in-from-top-2 duration-300'>
-                      <label className='text-[9px] uppercase font-black text-amber-500/60 tracking-widest mb-2 block'>Prix de l'œuvre ({currencySymbol})</label>
+                      {btcToken && (
+                        <div className='grid grid-cols-2 gap-2 mb-3'>
+                          {[{ btc: false, label: currencySymbol }, { btc: true, label: `${btcToken.symbol} (bitcoin)` }].map(o => (
+                            <button key={o.label} type='button' onClick={() => setPayWithBtc(o.btc)} className={`py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all ${payWithBtc === o.btc ? 'bg-amber-500 text-black border-amber-500' : 'bg-white/5 border-white/10 text-gray-400'}`}>{o.label}</button>
+                          ))}
+                        </div>
+                      )}
+                      <label className='text-[9px] uppercase font-black text-amber-500/60 tracking-widest mb-2 block'>Prix du NFT d'accès ({payWithBtc && btcToken ? btcToken.symbol : currencySymbol})</label>
                       <div className='relative'>
                         <input 
                           type='number' 
@@ -227,10 +252,20 @@ export default function Publish() {
                           className='w-full bg-amber-500/5 border border-amber-500/20 p-4 rounded-xl focus:ring-1 focus:ring-amber-500 outline-none font-bold text-sm text-amber-500 placeholder-amber-900/40' 
                           placeholder='0.1' 
                         />
-                        <span className='absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-amber-500/40'>{currencySymbol}</span>
+                        <span className='absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-amber-500/40'>{payWithBtc && btcToken ? btcToken.symbol : currencySymbol}</span>
+                      </div>
+                      <div className='grid grid-cols-2 gap-3 mt-3'>
+                        <label className='block'>
+                          <span className='text-[9px] uppercase font-black text-amber-500/60 tracking-widest mb-2 block'>Royalties revente (%)</span>
+                          <input type='number' min='0' max='10' step='0.5' value={royalty} onChange={(e) => setRoyalty(e.target.value)} className='w-full bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl outline-none font-bold text-sm text-amber-500' />
+                        </label>
+                        <label className='block'>
+                          <span className='text-[9px] uppercase font-black text-amber-500/60 tracking-widest mb-2 block'>Édition limitée</span>
+                          <input type='number' min='0' step='1' value={maxSupply} onChange={(e) => setMaxSupply(e.target.value)} placeholder='Illimitée' className='w-full bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl outline-none font-bold text-sm text-amber-500 placeholder-amber-900/50' />
+                        </label>
                       </div>
                       <p className='text-[9px] text-gray-500 mt-2 leading-relaxed'>
-                        L&apos;accès premium est filtré par l&apos;interface : le fichier reste techniquement lisible via son lien IPFS. Le chiffrement des œuvres premium est prévu.
+                        Chaque fan reçoit un NFT d&apos;accès, revendable ; vous touchez les royalties (10 % max) à chaque revente. L&apos;accès est filtré par l&apos;interface : le fichier reste lisible via son lien IPFS, le chiffrement des œuvres premium est prévu.
                       </p>
                     </div>
                   )}
@@ -244,7 +279,7 @@ export default function Publish() {
                 </div>
 
                 <button onClick={handlePublish} disabled={(!file && !manualCid) || !title || status === 'uploading'} className='w-full py-5 md:py-6 bg-gradient-to-r from-[#00f2ff] to-[#bc13fe] text-black font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-2xl md:rounded-[24px] hover:shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4'>
-                  <Rocket className='w-4 h-4 md:w-5 md:h-5' /> Diffuser (0.0001 {currencySymbol})
+                  <Rocket className='w-4 h-4 md:w-5 md:h-5' /> Diffuser ({feeLabel} {currencySymbol})
                 </button>
               </div>
             </div>

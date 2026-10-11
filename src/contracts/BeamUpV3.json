@@ -1,0 +1,2407 @@
+[
+ {
+  "inputs": [],
+  "stateMutability": "nonpayable",
+  "type": "constructor"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "target",
+    "type": "address"
+   }
+  ],
+  "name": "AddressEmptyCode",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "AlreadyHasAccess",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "sender",
+    "type": "address"
+   },
+   {
+    "internalType": "uint256",
+    "name": "balance",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "needed",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "tokenId",
+    "type": "uint256"
+   }
+  ],
+  "name": "ERC1155InsufficientBalance",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "approver",
+    "type": "address"
+   }
+  ],
+  "name": "ERC1155InvalidApprover",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "idsLength",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "valuesLength",
+    "type": "uint256"
+   }
+  ],
+  "name": "ERC1155InvalidArrayLength",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "operator",
+    "type": "address"
+   }
+  ],
+  "name": "ERC1155InvalidOperator",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "receiver",
+    "type": "address"
+   }
+  ],
+  "name": "ERC1155InvalidReceiver",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "sender",
+    "type": "address"
+   }
+  ],
+  "name": "ERC1155InvalidSender",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "operator",
+    "type": "address"
+   },
+   {
+    "internalType": "address",
+    "name": "owner",
+    "type": "address"
+   }
+  ],
+  "name": "ERC1155MissingApprovalForAll",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "implementation",
+    "type": "address"
+   }
+  ],
+  "name": "ERC1967InvalidImplementation",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "ERC1967NonPayable",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "numerator",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "denominator",
+    "type": "uint256"
+   }
+  ],
+  "name": "ERC2981InvalidDefaultRoyalty",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "receiver",
+    "type": "address"
+   }
+  ],
+  "name": "ERC2981InvalidDefaultRoyaltyReceiver",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "tokenId",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "numerator",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "denominator",
+    "type": "uint256"
+   }
+  ],
+  "name": "ERC2981InvalidTokenRoyalty",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "tokenId",
+    "type": "uint256"
+   },
+   {
+    "internalType": "address",
+    "name": "receiver",
+    "type": "address"
+   }
+  ],
+  "name": "ERC2981InvalidTokenRoyaltyReceiver",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "EnforcedPause",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "ExpectedPause",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "FailedCall",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "FeeTooLow",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "InvalidInitialization",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "InvalidInput",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "InvalidWork",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "Locked",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "MigrationIsClosed",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "NotAuthorized",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "NotInitializing",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "NotPremium",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "NothingToWithdraw",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "owner",
+    "type": "address"
+   }
+  ],
+  "name": "OwnableInvalidOwner",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "account",
+    "type": "address"
+   }
+  ],
+  "name": "OwnableUnauthorizedAccount",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "token",
+    "type": "address"
+   }
+  ],
+  "name": "SafeERC20FailedOperation",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "SoldOut",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "TimelockNotReady",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "TokenNotAllowed",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "TooLong",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "TransferFailed",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "UUPSUnauthorizedCallContext",
+  "type": "error"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "bytes32",
+    "name": "slot",
+    "type": "bytes32"
+   }
+  ],
+  "name": "UUPSUnsupportedProxiableUUID",
+  "type": "error"
+ },
+ {
+  "inputs": [],
+  "name": "WrongPayment",
+  "type": "error"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "buyer",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "token",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "price",
+    "type": "uint256"
+   }
+  ],
+  "name": "AccessPurchased",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "account",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "operator",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "bool",
+    "name": "approved",
+    "type": "bool"
+   }
+  ],
+  "name": "ApprovalForAll",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "author",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   },
+   {
+    "indexed": false,
+    "internalType": "string",
+    "name": "text",
+    "type": "string"
+   }
+  ],
+  "name": "CommentAdded",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [],
+  "name": "FeesChangeCancelled",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "platformFee",
+    "type": "uint256"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "commissionBps",
+    "type": "uint256"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "eta",
+    "type": "uint256"
+   }
+  ],
+  "name": "FeesChangeProposed",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "platformFee",
+    "type": "uint256"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "commissionBps",
+    "type": "uint256"
+   }
+  ],
+  "name": "FeesChanged",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "token",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "to",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "amount",
+    "type": "uint256"
+   }
+  ],
+  "name": "FeesWithdrawn",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": false,
+    "internalType": "uint64",
+    "name": "version",
+    "type": "uint64"
+   }
+  ],
+  "name": "Initialized",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "user",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   },
+   {
+    "indexed": false,
+    "internalType": "bool",
+    "name": "liked",
+    "type": "bool"
+   }
+  ],
+  "name": "LikeToggled",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [],
+  "name": "MigrationClosed",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "previousOwner",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "newOwner",
+    "type": "address"
+   }
+  ],
+  "name": "OwnershipTransferStarted",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "previousOwner",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "newOwner",
+    "type": "address"
+   }
+  ],
+  "name": "OwnershipTransferred",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": false,
+    "internalType": "address",
+    "name": "account",
+    "type": "address"
+   }
+  ],
+  "name": "Paused",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "account",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "token",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "amount",
+    "type": "uint256"
+   }
+  ],
+  "name": "PaymentDeferred",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "user",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "string",
+    "name": "username",
+    "type": "string"
+   },
+   {
+    "indexed": false,
+    "internalType": "string",
+    "name": "avatarCID",
+    "type": "string"
+   }
+  ],
+  "name": "ProfileUpdated",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "from",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "to",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   },
+   {
+    "indexed": false,
+    "internalType": "address",
+    "name": "token",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "amount",
+    "type": "uint256"
+   }
+  ],
+  "name": "TipSent",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "token",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "bool",
+    "name": "allowed",
+    "type": "bool"
+   }
+  ],
+  "name": "TokenAllowed",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "operator",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "from",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "to",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256[]",
+    "name": "ids",
+    "type": "uint256[]"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256[]",
+    "name": "values",
+    "type": "uint256[]"
+   }
+  ],
+  "name": "TransferBatch",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "operator",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "from",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "to",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "value",
+    "type": "uint256"
+   }
+  ],
+  "name": "TransferSingle",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": false,
+    "internalType": "string",
+    "name": "value",
+    "type": "string"
+   },
+   {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   }
+  ],
+  "name": "URI",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": false,
+    "internalType": "address",
+    "name": "account",
+    "type": "address"
+   }
+  ],
+  "name": "Unpaused",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "implementation",
+    "type": "address"
+   }
+  ],
+  "name": "Upgraded",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "account",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "token",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "amount",
+    "type": "uint256"
+   }
+  ],
+  "name": "Withdrawn",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "creator",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   },
+   {
+    "indexed": false,
+    "internalType": "string",
+    "name": "ipfsCID",
+    "type": "string"
+   }
+  ],
+  "name": "WorkMigrated",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "creator",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   },
+   {
+    "indexed": false,
+    "internalType": "string",
+    "name": "ipfsCID",
+    "type": "string"
+   },
+   {
+    "indexed": false,
+    "internalType": "string",
+    "name": "title",
+    "type": "string"
+   },
+   {
+    "indexed": false,
+    "internalType": "string",
+    "name": "category",
+    "type": "string"
+   },
+   {
+    "indexed": false,
+    "internalType": "bool",
+    "name": "isPremium",
+    "type": "bool"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "price",
+    "type": "uint256"
+   },
+   {
+    "indexed": false,
+    "internalType": "address",
+    "name": "paymentToken",
+    "type": "address"
+   }
+  ],
+  "name": "WorkPublished",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   },
+   {
+    "indexed": false,
+    "internalType": "bool",
+    "name": "hidden",
+    "type": "bool"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "by",
+    "type": "address"
+   }
+  ],
+  "name": "WorkVisibilityChanged",
+  "type": "event"
+ },
+ {
+  "inputs": [],
+  "name": "BPS",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "FEE_CHANGE_DELAY",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "MAX_BIO",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "MAX_CATEGORY",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "MAX_CID",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "MAX_COMMENT",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "MAX_COMMISSION_BPS",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "MAX_PAGE",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "MAX_PLATFORM_FEE",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "MAX_ROYALTY_BPS",
+  "outputs": [
+   {
+    "internalType": "uint96",
+    "name": "",
+    "type": "uint96"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "MAX_TITLE",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "MAX_URI",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "MAX_USERNAME",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "NATIVE",
+  "outputs": [
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "UPGRADE_INTERFACE_VERSION",
+  "outputs": [
+   {
+    "internalType": "string",
+    "name": "",
+    "type": "string"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "acceptOwnership",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   }
+  ],
+  "name": "accruedFees",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   },
+   {
+    "internalType": "string",
+    "name": "text",
+    "type": "string"
+   }
+  ],
+  "name": "addComment",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   }
+  ],
+  "name": "allowedTokens",
+  "outputs": [
+   {
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "applyFees",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "account",
+    "type": "address"
+   },
+   {
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   }
+  ],
+  "name": "balanceOf",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address[]",
+    "name": "accounts",
+    "type": "address[]"
+   },
+   {
+    "internalType": "uint256[]",
+    "name": "ids",
+    "type": "uint256[]"
+   }
+  ],
+  "name": "balanceOfBatch",
+  "outputs": [
+   {
+    "internalType": "uint256[]",
+    "name": "",
+    "type": "uint256[]"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   }
+  ],
+  "name": "buyAccess",
+  "outputs": [],
+  "stateMutability": "payable",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "cancelFees",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "closeMigration",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   }
+  ],
+  "name": "commentsCount",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "commissionBps",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256[]",
+    "name": "workIds",
+    "type": "uint256[]"
+   },
+   {
+    "internalType": "address",
+    "name": "user",
+    "type": "address"
+   }
+  ],
+  "name": "getPremiumBatch",
+  "outputs": [
+   {
+    "internalType": "bool[]",
+    "name": "premium",
+    "type": "bool[]"
+   },
+   {
+    "internalType": "uint256[]",
+    "name": "prices",
+    "type": "uint256[]"
+   },
+   {
+    "internalType": "bool[]",
+    "name": "paid",
+    "type": "bool[]"
+   },
+   {
+    "internalType": "address[]",
+    "name": "tokens",
+    "type": "address[]"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "user",
+    "type": "address"
+   }
+  ],
+  "name": "getProfile",
+  "outputs": [
+   {
+    "components": [
+     {
+      "internalType": "string",
+      "name": "username",
+      "type": "string"
+     },
+     {
+      "internalType": "string",
+      "name": "avatarCID",
+      "type": "string"
+     },
+     {
+      "internalType": "string",
+      "name": "bio",
+      "type": "string"
+     },
+     {
+      "internalType": "bool",
+      "name": "exists",
+      "type": "bool"
+     }
+    ],
+    "internalType": "struct BeamUpV3.Profile",
+    "name": "",
+    "type": "tuple"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   }
+  ],
+  "name": "getWork",
+  "outputs": [
+   {
+    "components": [
+     {
+      "internalType": "address payable",
+      "name": "creator",
+      "type": "address"
+     },
+     {
+      "internalType": "string",
+      "name": "ipfsCID",
+      "type": "string"
+     },
+     {
+      "internalType": "string",
+      "name": "title",
+      "type": "string"
+     },
+     {
+      "internalType": "string",
+      "name": "category",
+      "type": "string"
+     },
+     {
+      "internalType": "uint256",
+      "name": "totalTips",
+      "type": "uint256"
+     },
+     {
+      "internalType": "uint256",
+      "name": "timestamp",
+      "type": "uint256"
+     },
+     {
+      "internalType": "uint256",
+      "name": "likesCount",
+      "type": "uint256"
+     },
+     {
+      "internalType": "bool",
+      "name": "isPremium",
+      "type": "bool"
+     },
+     {
+      "internalType": "uint256",
+      "name": "price",
+      "type": "uint256"
+     },
+     {
+      "internalType": "address",
+      "name": "paymentToken",
+      "type": "address"
+     },
+     {
+      "internalType": "uint256",
+      "name": "maxSupply",
+      "type": "uint256"
+     },
+     {
+      "internalType": "uint256",
+      "name": "minted",
+      "type": "uint256"
+     },
+     {
+      "internalType": "string",
+      "name": "metadataURI",
+      "type": "string"
+     },
+     {
+      "internalType": "bool",
+      "name": "hidden",
+      "type": "bool"
+     }
+    ],
+    "internalType": "struct BeamUpV3.Work",
+    "name": "",
+    "type": "tuple"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "offset",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "limit",
+    "type": "uint256"
+   }
+  ],
+  "name": "getWorkComments",
+  "outputs": [
+   {
+    "components": [
+     {
+      "internalType": "address",
+      "name": "author",
+      "type": "address"
+     },
+     {
+      "internalType": "string",
+      "name": "text",
+      "type": "string"
+     },
+     {
+      "internalType": "uint256",
+      "name": "timestamp",
+      "type": "uint256"
+     }
+    ],
+    "internalType": "struct BeamUpV3.Comment[]",
+    "name": "page",
+    "type": "tuple[]"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "offset",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "limit",
+    "type": "uint256"
+   }
+  ],
+  "name": "getWorksPage",
+  "outputs": [
+   {
+    "components": [
+     {
+      "internalType": "address payable",
+      "name": "creator",
+      "type": "address"
+     },
+     {
+      "internalType": "string",
+      "name": "ipfsCID",
+      "type": "string"
+     },
+     {
+      "internalType": "string",
+      "name": "title",
+      "type": "string"
+     },
+     {
+      "internalType": "string",
+      "name": "category",
+      "type": "string"
+     },
+     {
+      "internalType": "uint256",
+      "name": "totalTips",
+      "type": "uint256"
+     },
+     {
+      "internalType": "uint256",
+      "name": "timestamp",
+      "type": "uint256"
+     },
+     {
+      "internalType": "uint256",
+      "name": "likesCount",
+      "type": "uint256"
+     },
+     {
+      "internalType": "bool",
+      "name": "isPremium",
+      "type": "bool"
+     },
+     {
+      "internalType": "uint256",
+      "name": "price",
+      "type": "uint256"
+     },
+     {
+      "internalType": "address",
+      "name": "paymentToken",
+      "type": "address"
+     },
+     {
+      "internalType": "uint256",
+      "name": "maxSupply",
+      "type": "uint256"
+     },
+     {
+      "internalType": "uint256",
+      "name": "minted",
+      "type": "uint256"
+     },
+     {
+      "internalType": "string",
+      "name": "metadataURI",
+      "type": "string"
+     },
+     {
+      "internalType": "bool",
+      "name": "hidden",
+      "type": "bool"
+     }
+    ],
+    "internalType": "struct BeamUpV3.Work[]",
+    "name": "page",
+    "type": "tuple[]"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   },
+   {
+    "internalType": "address",
+    "name": "user",
+    "type": "address"
+   }
+  ],
+  "name": "hasAccess",
+  "outputs": [
+   {
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   },
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   }
+  ],
+  "name": "hasLiked",
+  "outputs": [
+   {
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "initialOwner",
+    "type": "address"
+   },
+   {
+    "internalType": "uint256",
+    "name": "initialPlatformFee",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "initialCommissionBps",
+    "type": "uint256"
+   },
+   {
+    "internalType": "string",
+    "name": "baseURI",
+    "type": "string"
+   },
+   {
+    "internalType": "address[]",
+    "name": "tokens",
+    "type": "address[]"
+   }
+  ],
+  "name": "initialize",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "account",
+    "type": "address"
+   },
+   {
+    "internalType": "address",
+    "name": "operator",
+    "type": "address"
+   }
+  ],
+  "name": "isApprovedForAll",
+  "outputs": [
+   {
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "components": [
+     {
+      "internalType": "address payable",
+      "name": "creator",
+      "type": "address"
+     },
+     {
+      "internalType": "string",
+      "name": "ipfsCID",
+      "type": "string"
+     },
+     {
+      "internalType": "string",
+      "name": "title",
+      "type": "string"
+     },
+     {
+      "internalType": "string",
+      "name": "category",
+      "type": "string"
+     },
+     {
+      "internalType": "uint256",
+      "name": "totalTips",
+      "type": "uint256"
+     },
+     {
+      "internalType": "uint256",
+      "name": "timestamp",
+      "type": "uint256"
+     }
+    ],
+    "internalType": "struct BeamUpV3.MigrationWork[]",
+    "name": "oldWorks",
+    "type": "tuple[]"
+   }
+  ],
+  "name": "migrateWorks",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "migrationClosed",
+  "outputs": [
+   {
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "owner",
+  "outputs": [
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "pause",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "paused",
+  "outputs": [
+   {
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "pendingCommissionBps",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "pendingFeesEta",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "pendingOwner",
+  "outputs": [
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "pendingPlatformFee",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   },
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   }
+  ],
+  "name": "pendingWithdrawals",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "platformFee",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "newPlatformFee",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "newCommissionBps",
+    "type": "uint256"
+   }
+  ],
+  "name": "proposeFees",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "proxiableUUID",
+  "outputs": [
+   {
+    "internalType": "bytes32",
+    "name": "",
+    "type": "bytes32"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "components": [
+     {
+      "internalType": "string",
+      "name": "ipfsCID",
+      "type": "string"
+     },
+     {
+      "internalType": "string",
+      "name": "title",
+      "type": "string"
+     },
+     {
+      "internalType": "string",
+      "name": "category",
+      "type": "string"
+     },
+     {
+      "internalType": "bool",
+      "name": "isPremium",
+      "type": "bool"
+     },
+     {
+      "internalType": "uint256",
+      "name": "price",
+      "type": "uint256"
+     },
+     {
+      "internalType": "address",
+      "name": "paymentToken",
+      "type": "address"
+     },
+     {
+      "internalType": "uint96",
+      "name": "royaltyBps",
+      "type": "uint96"
+     },
+     {
+      "internalType": "uint256",
+      "name": "maxSupply",
+      "type": "uint256"
+     },
+     {
+      "internalType": "string",
+      "name": "metadataURI",
+      "type": "string"
+     }
+    ],
+    "internalType": "struct BeamUpV3.PublishParams",
+    "name": "p",
+    "type": "tuple"
+   }
+  ],
+  "name": "publishWork",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "payable",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "renounceOwnership",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "tokenId",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "salePrice",
+    "type": "uint256"
+   }
+  ],
+  "name": "royaltyInfo",
+  "outputs": [
+   {
+    "internalType": "address",
+    "name": "receiver",
+    "type": "address"
+   },
+   {
+    "internalType": "uint256",
+    "name": "amount",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "from",
+    "type": "address"
+   },
+   {
+    "internalType": "address",
+    "name": "to",
+    "type": "address"
+   },
+   {
+    "internalType": "uint256[]",
+    "name": "ids",
+    "type": "uint256[]"
+   },
+   {
+    "internalType": "uint256[]",
+    "name": "values",
+    "type": "uint256[]"
+   },
+   {
+    "internalType": "bytes",
+    "name": "data",
+    "type": "bytes"
+   }
+  ],
+  "name": "safeBatchTransferFrom",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "from",
+    "type": "address"
+   },
+   {
+    "internalType": "address",
+    "name": "to",
+    "type": "address"
+   },
+   {
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "value",
+    "type": "uint256"
+   },
+   {
+    "internalType": "bytes",
+    "name": "data",
+    "type": "bytes"
+   }
+  ],
+  "name": "safeTransferFrom",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "token",
+    "type": "address"
+   },
+   {
+    "internalType": "bool",
+    "name": "allowed",
+    "type": "bool"
+   }
+  ],
+  "name": "setAllowedToken",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "operator",
+    "type": "address"
+   },
+   {
+    "internalType": "bool",
+    "name": "approved",
+    "type": "bool"
+   }
+  ],
+  "name": "setApprovalForAll",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "string",
+    "name": "newURI",
+    "type": "string"
+   }
+  ],
+  "name": "setURI",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   },
+   {
+    "internalType": "bool",
+    "name": "hidden",
+    "type": "bool"
+   }
+  ],
+  "name": "setWorkHidden",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "bytes4",
+    "name": "interfaceId",
+    "type": "bytes4"
+   }
+  ],
+  "name": "supportsInterface",
+  "outputs": [
+   {
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   }
+  ],
+  "name": "tipArtist",
+  "outputs": [],
+  "stateMutability": "payable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   },
+   {
+    "internalType": "address",
+    "name": "token",
+    "type": "address"
+   },
+   {
+    "internalType": "uint256",
+    "name": "amount",
+    "type": "uint256"
+   }
+  ],
+  "name": "tipArtistWithToken",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "workId",
+    "type": "uint256"
+   }
+  ],
+  "name": "toggleLike",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   },
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   }
+  ],
+  "name": "tokenTips",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "newOwner",
+    "type": "address"
+   }
+  ],
+  "name": "transferOwnership",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "unpause",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "string",
+    "name": "username",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "avatarCID",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "bio",
+    "type": "string"
+   }
+  ],
+  "name": "updateProfile",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "newImplementation",
+    "type": "address"
+   },
+   {
+    "internalType": "bytes",
+    "name": "data",
+    "type": "bytes"
+   }
+  ],
+  "name": "upgradeToAndCall",
+  "outputs": [],
+  "stateMutability": "payable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   }
+  ],
+  "name": "uri",
+  "outputs": [
+   {
+    "internalType": "string",
+    "name": "",
+    "type": "string"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "token",
+    "type": "address"
+   }
+  ],
+  "name": "withdraw",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "token",
+    "type": "address"
+   },
+   {
+    "internalType": "address",
+    "name": "to",
+    "type": "address"
+   }
+  ],
+  "name": "withdrawFees",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "worksCount",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ }
+]

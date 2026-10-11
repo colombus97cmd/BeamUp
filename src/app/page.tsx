@@ -1,12 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useReadContract, useWriteContract, useAccount, useChainId } from 'wagmi';
-import { formatEther, parseEther } from 'viem';
+import { useWriteContract, useAccount, useConfig } from 'wagmi';
+import { readContract, waitForTransactionReceipt } from 'wagmi/actions';
+import { parseEther, erc20Abi } from 'viem';
 import { LayoutGrid, Rocket, Disc, Loader2, Zap, Play, Sparkles, Smartphone, Eye } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import SocialFeed from '../components/SocialFeed';
-import BeamUpABI from '../contracts/BeamUp.json';
-import { getContractAddress } from '../config/contracts';
+import BeamUpABI from '../contracts/BeamUpV3.json';
+import { getPaymentInfo } from '../config/contracts';
+import { useWorks } from '../hooks/useWorks';
 import LandingPage from '../components/LandingPage';
 import CrowdfundingCampaign from '../components/CrowdfundingCampaign';
 
@@ -86,28 +88,13 @@ export default function Home() {
   };
 
   const { isConnected, address } = useAccount();
-  const { writeContract } = useWriteContract();
-  const chainId = useChainId();
-  const CONTRACT_ADDRESS = getContractAddress(chainId);
-
-  const safeAddress = address || '0x0000000000000000000000000000000000000000';
-
-  const { data: blockchainWorks, isLoading: isGalleryLoading } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: BeamUpABI,
-    functionName: 'getAllWorks',
-  });
-
-  const { data: premiumInfo } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: BeamUpABI,
-    functionName: 'getPremiumBatch',
-    args: [blockchainWorks ? (blockchainWorks as any[]).map((_, i) => BigInt(i)) : [], safeAddress],
-  });
+  const { writeContract, writeContractAsync } = useWriteContract();
+  const config = useConfig();
+  const { works, isLoading: isGalleryLoading, refetch, contractAddress: CONTRACT_ADDRESS, chainId } = useWorks(address);
 
   const handleTip = (id: number) => {
     writeContract({
-      address: CONTRACT_ADDRESS as `0x${string}`,
+      address: CONTRACT_ADDRESS,
       abi: BeamUpABI,
       functionName: 'tipArtist',
       args: [BigInt(id)],
@@ -115,19 +102,33 @@ export default function Home() {
     });
   };
 
-  const handleBuy = (id: number, price: bigint) => {
-    writeContract({
-      address: CONTRACT_ADDRESS as `0x${string}`,
-      abi: BeamUpABI,
-      functionName: 'buyWork',
-      args: [BigInt(id)],
-      value: price,
-    });
+  // Achat de l'accès (NFT) : en monnaie native, ou en WBTC/BTCB après autorisation du jeton.
+  const handleBuy = async (id: number) => {
+    const work = works.find((w) => w.id === id);
+    if (!work || !address) return;
+    try {
+      const pay = getPaymentInfo(chainId, work.paymentToken);
+      if (pay.isNative) {
+        const hash = await writeContractAsync({ address: CONTRACT_ADDRESS, abi: BeamUpABI, functionName: 'buyAccess', args: [BigInt(id)], value: work.price });
+        await waitForTransactionReceipt(config, { hash });
+      } else {
+        const allowance = await readContract(config, { address: work.paymentToken, abi: erc20Abi, functionName: 'allowance', args: [address, CONTRACT_ADDRESS] });
+        if (allowance < work.price) {
+          const approveHash = await writeContractAsync({ address: work.paymentToken, abi: erc20Abi, functionName: 'approve', args: [CONTRACT_ADDRESS, work.price] });
+          await waitForTransactionReceipt(config, { hash: approveHash });
+        }
+        const hash = await writeContractAsync({ address: CONTRACT_ADDRESS, abi: BeamUpABI, functionName: 'buyAccess', args: [BigInt(id)] });
+        await waitForTransactionReceipt(config, { hash });
+      }
+      refetch();
+    } catch (error) {
+      console.error('Achat annulé ou échoué :', error);
+    }
   };
 
   const handleLike = (id: number) => {
     writeContract({
-      address: CONTRACT_ADDRESS as `0x${string}`,
+      address: CONTRACT_ADDRESS,
       abi: BeamUpABI,
       functionName: 'toggleLike',
       args: [BigInt(id)],
@@ -147,16 +148,7 @@ export default function Home() {
     </div>
   );
 
-  const processedWorks = ((blockchainWorks as any[]) || []).map((work, i) => {
-    const pInfo = premiumInfo as any;
-    return {
-      ...work,
-      id: i,
-      isPremium: pInfo?.[0]?.[i] ?? false,
-      price: pInfo?.[1]?.[i] ?? BigInt(0),
-      hasPaid: pInfo?.[2]?.[i] ?? false,
-    };
-  }).reverse();
+  const processedWorks = [...works].reverse();
 
   return (
     <div className='min-h-screen bg-[#020202] text-white selection:bg-[#00f2ff] selection:text-black'>    

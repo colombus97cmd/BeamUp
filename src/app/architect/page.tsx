@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useAccount, useReadContract, useWriteContract, useBalance, useWaitForTransactionReceipt, useChainId, useSignMessage } from 'wagmi';
-import { formatEther } from 'viem';
+import { formatEther, parseAbi } from 'viem';
 import { 
   LayoutGrid, User, Mail, Globe, ExternalLink, Zap, Shield, Sparkles, 
   Wallet, ArrowDownCircle, Loader2, Fingerprint, Disc, TrendingUp, 
@@ -10,9 +10,10 @@ import {
 import Link from 'next/link';
 import Navigation from '../../components/Navigation';
 import { uploadToIPFS } from '../../services/pinata';
-import BeamUpABI from '../../contracts/BeamUp.json';
+import BeamUpABI from '../../contracts/BeamUpV3.json';
+import { useWorks } from '../../hooks/useWorks';
 import { getFormat } from '../../config/formats';
-import { getContractAddress, getCurrencySymbol } from '../../config/contracts';
+import { getContractAddress, getCurrencySymbol, SAFE_ADDRESS, getSafeUrl } from '../../config/contracts';
 
 
 const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
@@ -66,20 +67,22 @@ export default function Architect() {
     args: [address as `0x${string}`],
   });
 
-  const { data: ownerAddress } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: BeamUpABI,
-    functionName: 'owner',
+  // Le propriétaire du contrat est le Safe : l'espace admin s'affiche pour ses signataires.
+  const { data: isSafeSigner } = useReadContract({
+    address: SAFE_ADDRESS as `0x${string}`,
+    abi: parseAbi(['function isOwner(address owner) view returns (bool)']),
+    functionName: 'isOwner',
+    args: [address as `0x${string}`],
+    query: { enabled: !!address },
   });
 
-  const { data: allWorks } = useReadContract({
+  const { works: allWorks } = useWorks(address);
+
+  const { data: accruedFees } = useReadContract({
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: BeamUpABI,
-    functionName: 'getAllWorks',
-  });
-
-  const { data: contractBalance } = useBalance({
-    address: CONTRACT_ADDRESS as `0x${string}`,
+    functionName: 'accruedFees',
+    args: ['0x0000000000000000000000000000000000000000'],
   });
 
   const { writeContract, data: hash, isPending } = useWriteContract();
@@ -93,12 +96,10 @@ export default function Architect() {
   }, [isConfirmed, refetchProfile]);
 
   useEffect(() => {
-    if (address && ownerAddress) {
-      setIsAdmin(address.toLowerCase() === (ownerAddress as string).toLowerCase());
-    }
+    setIsAdmin(!!isSafeSigner);
 
     if (address && allWorks) {
-      const works = (allWorks as any[]).map((w, index) => ({ ...w, workId: index }));
+      const works = allWorks.map((w) => ({ ...w, workId: w.id }));
       const filtered = works.filter(w => w.creator.toLowerCase() === address.toLowerCase());
       const total = filtered.reduce((acc, curr) => acc + BigInt(curr.totalTips), 0n);
       setUserWorks(filtered);
@@ -121,7 +122,7 @@ export default function Architect() {
       }
       setAvatarPreview(`${IPFS_GATEWAY}${p.avatarCID}`);
     }
-  }, [address, ownerAddress, allWorks, profileData]);
+  }, [address, isSafeSigner, allWorks, profileData]);
 
   const handleUpdateProfile = async () => {
     setIsUploading(true);
@@ -147,12 +148,9 @@ export default function Architect() {
     }
   };
 
+  // Les commissions se retirent depuis le Safe (withdrawFees est réservé au propriétaire).
   const handleWithdraw = () => {
-    writeContract({
-      address: CONTRACT_ADDRESS as `0x${string}`,
-      abi: BeamUpABI,
-      functionName: 'withdrawFees',
-    });
+    window.open(getSafeUrl(chainId), '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -169,10 +167,10 @@ export default function Architect() {
                 <Fingerprint className='w-6 h-6 text-[#00f2ff]' />
                 <div>
                   <p className='text-[8px] uppercase tracking-widest font-black text-[#00f2ff]'>Terminal Architecte</p>
-                  <h3 className='text-2xl font-black font-mono'>{contractBalance?.formatted || '0.00'} {currencySymbol}</h3>
+                  <h3 className='text-2xl font-black font-mono'>{accruedFees !== undefined ? formatEther(accruedFees as bigint) : '0'} {currencySymbol}</h3>
                 </div>
               </div>
-              <button onClick={handleWithdraw} className='px-8 py-3 bg-white text-black font-black uppercase text-[9px] rounded-xl hover:bg-[#00f2ff] transition-all'>Encaisser</button>
+              <button onClick={handleWithdraw} className='px-8 py-3 bg-white text-black font-black uppercase text-[9px] rounded-xl hover:bg-[#00f2ff] transition-all'>Retirer via le Safe</button>
             </div>
           </section>
         )}

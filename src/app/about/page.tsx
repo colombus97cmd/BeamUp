@@ -77,7 +77,7 @@ export default function About() {
             <h2 className="text-2xl md:text-3xl font-black tracking-tight">Contrats vérifiés</h2>
           </div>
           <p className="text-gray-400 text-sm mb-6 max-w-2xl">
-            Le code source des contrats est publié et vérifié sur les explorateurs. Le propriétaire du contrat peut modifier les frais et la commission ; le passage à un multisig et un plafond de commission sont prévus dans la prochaine version.
+            Le code source des contrats est publié et vérifié sur les explorateurs. Ils appartiennent à un multisig Safe ; la commission est plafonnée à 10 % et tout changement de frais ne s’applique qu’après 48 h.
           </p>
           <div className="grid md:grid-cols-2 gap-3">
             {Object.entries(CONTRACT_ADDRESSES).map(([chainId, addr]) => {

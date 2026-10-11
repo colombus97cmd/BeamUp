@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { X, Send, MessageSquare, User, Loader2, Sparkles, Zap, ShieldCheck } from 'lucide-react';
-import BeamUpABI from '../contracts/BeamUp.json';
+import BeamUpABI from '../contracts/BeamUpV3.json';
 import { getContractAddress } from '../config/contracts';
 
 
@@ -22,7 +22,7 @@ export default function CommentDrawer({ workId, isOpen, onClose }: CommentDrawer
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: BeamUpABI,
     functionName: 'getWorkComments',
-    args: [BigInt(workId)],
+    args: [BigInt(workId), BigInt(0), BigInt(100)],
   });
 
   const { writeContract, data: hash, isPending } = useWriteContract();
@@ -132,6 +132,7 @@ export default function CommentDrawer({ workId, isOpen, onClose }: CommentDrawer
           <div className="relative group">
             <input 
               value={commentText}
+              maxLength={500}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Diffuser votre pensée..."
               disabled={isPending || isConfirming}

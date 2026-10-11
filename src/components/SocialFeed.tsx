@@ -2,12 +2,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { Heart, MessageCircle, Zap, Play, Pause, Music, Video, ImageIcon, Share2, User, Sparkles, Disc, Lock, ShieldCheck, ShoppingCart, Eye } from 'lucide-react';
 import { getFormat } from '../config/formats';
-import { formatEther } from 'viem';
 import { useAccount } from 'wagmi';
 import CommentDrawer from './CommentDrawer';
 
 interface SocialFeedProps {
-  works: (any & { id: number, isPremium: boolean, price: bigint, hasPaid: boolean })[];
+  works: (any & { id: number, isPremium: boolean, price: bigint, hasPaid: boolean, priceLabel: string, soldOut: boolean })[];
   onTip: (id: number) => void;
   onLike: (id: number) => void;
   onComment: (id: number) => void;
@@ -189,14 +188,15 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                         <div className="space-y-4">
                           <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-white">Œuvre Premium</h3>
                           <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest leading-relaxed max-w-xs mx-auto">
-                            Cette œuvre est protégée. Débloquez-la pour soutenir l'artiste et y accéder indéfiniment.
+                            Achetez le NFT d'accès pour soutenir l'artiste et en profiter sans limite. Le NFT est à vous : vous pouvez le revendre.
                           </p>
                         </div>
                         <button 
                           onClick={() => onBuy(work.id, work.price)}
-                          className="px-10 py-5 bg-gradient-to-r from-amber-500 to-amber-700 text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(245,158,11,0.3)] flex items-center gap-3"
+                          disabled={work.soldOut}
+                          className="disabled:opacity-40 disabled:hover:scale-100 px-10 py-5 bg-gradient-to-r from-amber-500 to-amber-700 text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(245,158,11,0.3)] flex items-center gap-3"
                         >
-                          <ShoppingCart className="w-4 h-4" /> Débloquer pour {formatEther(work.price)} BNB
+                          <ShoppingCart className="w-4 h-4" /> {work.soldOut ? "Édition épuisée" : `Obtenir le NFT · ${work.priceLabel}`}
                         </button>
                         <div className="flex items-center gap-2 mt-4 opacity-40">
                           <ShieldCheck className="w-3 h-3 text-amber-500" />
