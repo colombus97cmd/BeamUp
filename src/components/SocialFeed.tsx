@@ -2,7 +2,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Heart, MessageCircle, Zap, Play, Pause, Music, Video, ImageIcon, Share2, User, Sparkles, Disc, Lock, ShieldCheck, ShoppingCart, Eye } from 'lucide-react';
 import { getFormat } from '../config/formats';
-import { useAccount } from 'wagmi';
+import { useAccount, useChainId, useSignMessage } from 'wagmi';
+import { requestPremiumMedia } from '../services/mediaAccess';
 import CommentDrawer from './CommentDrawer';
 
 interface SocialFeedProps {
@@ -27,6 +28,29 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
   const lastPlayedWorkId = useRef<number | null>(null);
 
   const getMediaUrl = (ipfsCid: string) => `https://gateway.pinata.cloud/ipfs/${ipfsCid}`;
+
+  // Œuvres premium : fichier privé, lien temporaire obtenu après vérification on-chain du NFT.
+  const chainId = useChainId();
+  const { signMessageAsync } = useSignMessage();
+  const [premiumUrls, setPremiumUrls] = useState<Record<number, string>>({});
+  const [openingId, setOpeningId] = useState<number | null>(null);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+
+  const openPremium = async (id: number) => {
+    if (!address) return;
+    setOpeningId(id);
+    setMediaError(null);
+    try {
+      const url = await requestPremiumMedia(chainId, id, address, signMessageAsync);
+      setPremiumUrls((prev) => ({ ...prev, [id]: url }));
+    } catch (e: any) {
+      setMediaError(e?.shortMessage || e?.message || "Impossible d'ouvrir l'œuvre");
+    } finally {
+      setOpeningId(null);
+    }
+  };
+
+  const mediaSrc = (work: any) => (work.isPremium ? premiumUrls[work.id] : getMediaUrl(work.ipfsCID));
 
   const handleScroll = () => {
     if (containerRef.current) {
@@ -196,6 +220,22 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                         </div>
                       </div>
                     </div>
+                  ) : work.isPremium && !premiumUrls[work.id] ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-6 p-10 text-center bg-black/60">
+                      <ShieldCheck className="w-14 h-14 text-amber-500" />
+                      <h3 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-white">{work.title}</h3>
+                      <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest max-w-xs">
+                        Vous détenez l'accès. Signez une fois avec votre wallet (gratuit) pour ouvrir vos œuvres premium.
+                      </p>
+                      <button
+                        onClick={() => openPremium(work.id)}
+                        disabled={openingId === work.id}
+                        className="px-10 py-5 bg-gradient-to-r from-amber-500 to-amber-700 text-black font-black uppercase tracking-widest text-[10px] rounded-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
+                      >
+                        <Play className="w-4 h-4" /> {openingId === work.id ? 'Vérification…' : "Ouvrir l'œuvre"}
+                      </button>
+                      {mediaError && openingId === null && <p className="text-[10px] text-red-400">{mediaError}</p>}
+                    </div>
                   ) : (
                     <>
                       {getFormat(work.category).kind === 'scroll' ? (
@@ -221,12 +261,12 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                           }}
                           className="w-full h-full overflow-y-auto no-scrollbar scroll-smooth relative"
                         >
-                          <img src={getMediaUrl(work.ipfsCID)} className="w-full h-auto block bg-black" alt={work.title} />
+                          <img src={mediaSrc(work)} className="w-full h-auto block bg-black" alt={work.title} />
                         </div>
                       ) : getFormat(work.category).kind === 'video' ? (
                         <video
                           ref={(el) => { videoRefs.current[i] = el; }}
-                          src={getMediaUrl(work.ipfsCID)}
+                          src={mediaSrc(work)}
                           className="w-full h-full object-contain bg-black"
                           autoPlay={false}
                           controls
@@ -261,7 +301,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                             <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white animate-in zoom-in duration-700 drop-shadow-[0_0_20px_rgba(188,19,254,0.5)]">{work.title}</h3>
                             <audio 
                               ref={(el) => { audioRefs.current[i] = el; }}
-                              src={getMediaUrl(work.ipfsCID)} 
+                              src={mediaSrc(work)} 
                               controls 
                               className="w-full max-w-md opacity-40 hover:opacity-100 transition-opacity"
                               onPlay={() => handleMediaPlay(work.id)}
@@ -270,7 +310,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                           </div>
                         </div>
                       ) : (
-                        <img src={getMediaUrl(work.ipfsCID)} className="w-full h-full object-contain bg-black" alt={work.title} />
+                        <img src={mediaSrc(work)} className="w-full h-full object-contain bg-black" alt={work.title} />
                       )}
                     </>
                   )}

@@ -59,7 +59,7 @@ export default function Publish() {
       let finalCid = manualCid;
       if (file) {
         if (!address) throw new Error("Connectez votre wallet pour publier.");
-        finalCid = await uploadToIPFS(file, address, signMessageAsync, (percent) => setUploadProgress(percent));
+        finalCid = await uploadToIPFS(file, address, signMessageAsync, (percent) => setUploadProgress(percent), { private: isPremium });
         setCid(finalCid);
       }
       
@@ -265,7 +265,7 @@ export default function Publish() {
                         </label>
                       </div>
                       <p className='text-[9px] text-gray-500 mt-2 leading-relaxed'>
-                        Chaque fan reçoit un NFT d&apos;accès, revendable ; vous touchez les royalties (10 % max) à chaque revente. L&apos;accès est filtré par l&apos;interface : le fichier reste lisible via son lien IPFS, le chiffrement des œuvres premium est prévu.
+                        Chaque fan reçoit un NFT d&apos;accès, revendable ; vous touchez les royalties (10 % max) à chaque revente. Le fichier est stocké en privé : seuls les détenteurs du NFT (et vous) peuvent l&apos;ouvrir.
                       </p>
                     </div>
                   )}

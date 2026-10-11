@@ -10,10 +10,11 @@ import { buildUploadMessage } from '../../../services/uploadMessage';
 // temporaire, ce qui évite la limite de taille des fonctions serverless (vidéos).
 
 const SIGNATURE_MAX_AGE_MS = 5 * 60 * 1000;
+const MAX_PRIVATE_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2 Go
 
 export async function POST(request: Request) {
   try {
-    const { address, timestamp, signature } = await request.json();
+    const { address, timestamp, signature, private: isPrivate } = await request.json();
 
     if (typeof address !== 'string' || !isAddress(address)) {
       return NextResponse.json({ error: "Adresse de wallet invalide" }, { status: 400 });
@@ -38,6 +39,22 @@ export async function POST(request: Request) {
     if (!adminJwt) {
       console.error("PINATA_JWT n'est pas configurée côté serveur");
       return NextResponse.json({ error: "Upload indisponible" }, { status: 500 });
+    }
+
+    // Œuvre premium : URL d'envoi signée vers le réseau IPFS privé de Pinata (valable 10 min).
+    // Le fichier n'est ensuite lisible que via un lien temporaire délivré par /api/media.
+    if (isPrivate === true) {
+      const signRes = await fetch("https://uploads.pinata.cloud/v3/files/sign", {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminJwt}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: Math.floor(Date.now() / 1000), expires: 600, network: 'private', max_file_size: MAX_PRIVATE_FILE_SIZE }),
+      });
+      if (!signRes.ok) {
+        console.error("Erreur Pinata sign:", signRes.status, await signRes.text());
+        return NextResponse.json({ error: "Impossible de préparer l'upload privé" }, { status: 502 });
+      }
+      const { data: uploadUrl } = await signRes.json();
+      return NextResponse.json({ uploadUrl });
     }
 
     const response = await fetch("https://api.pinata.cloud/users/generateApiKey", {
