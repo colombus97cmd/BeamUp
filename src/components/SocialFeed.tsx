@@ -1,8 +1,11 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { Heart, MessageCircle, Zap, Play, Pause, Music, Video, ImageIcon, Share2, User, Sparkles, Disc, Lock, ShieldCheck, ShoppingCart, Eye } from 'lucide-react';
+import { Heart, MessageCircle, Zap, Play, Share2, User, Lock, ShieldCheck, ShoppingCart, Eye, Bookmark } from 'lucide-react';
+import AudioPlayer from './AudioPlayer';
+import { setMediaSession } from '../lib/mediaSession';
 import { getFormat } from '../config/formats';
-import { useAccount, useChainId, useSignMessage } from 'wagmi';
+import { useAccount, useSignMessage } from 'wagmi';
+import { useActiveChainId } from '../hooks/useActiveChainId';
 import { requestPremiumMedia, type MediaStep } from '../services/mediaAccess';
 import CommentDrawer from './CommentDrawer';
 
@@ -15,9 +18,11 @@ interface SocialFeedProps {
   getViewCount: (id: number) => number;
   onView: (id: number) => void;
   onTrackProgress: (id: number, progress: number) => void;
+  isSaved?: (id: number) => boolean;
+  onToggleSave?: (id: number) => void;
 }
 
-export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, getViewCount, onView, onTrackProgress }: SocialFeedProps) {
+export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, getViewCount, onView, onTrackProgress, isSaved, onToggleSave }: SocialFeedProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [commentWorkId, setCommentWorkId] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -30,7 +35,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
   const getMediaUrl = (ipfsCid: string) => `https://gateway.pinata.cloud/ipfs/${ipfsCid}`;
 
   // Œuvres premium : fichier privé, lien temporaire obtenu après vérification on-chain du NFT.
-  const chainId = useChainId();
+  const chainId = useActiveChainId();
   const { signMessageAsync } = useSignMessage();
   const [premiumUrls, setPremiumUrls] = useState<Record<number, string>>({});
   const [openingId, setOpeningId] = useState<number | null>(null);
@@ -190,8 +195,8 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
 
           return (
             <div key={i} className="h-full w-full snap-start relative flex items-center justify-center overflow-hidden">
-              <div className="relative z-10 w-full h-full flex flex-col items-center justify-center p-4 md:p-8">
-                <div className="w-full max-w-4xl h-[75vh] md:h-[80vh] rounded-[48px] overflow-hidden relative shadow-[0_0_150px_rgba(0,0,0,1)] border border-white/10 group bg-black/40 backdrop-blur-sm">
+              <div className="relative z-10 w-full h-full flex flex-col items-center justify-start md:justify-center px-3 pt-3 md:p-6">
+                <div className="w-full max-w-3xl h-[calc(100%-6.5rem)] md:h-[76vh] rounded-3xl md:rounded-[40px] overflow-hidden relative shadow-[0_0_120px_rgba(0,0,0,1)] border border-white/10 group bg-black/40 backdrop-blur-sm">
                   
                   {isLocked ? (
                     <div className="w-full h-full flex flex-col items-center justify-center bg-black/60 backdrop-blur-3xl relative overflow-hidden group">
@@ -297,55 +302,35 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                           loop
                           playsInline
                           preload="auto"
-                          onPlay={() => handleMediaPlay(work.id)}
+                          onPlay={(e) => { handleMediaPlay(work.id); setMediaSession(e.currentTarget, { title: work.title, artist: `@${work.creator.slice(0, 6)}…${work.creator.slice(-4)}` }); }}
                           onTimeUpdate={(e) => handleTimeUpdate(work.id, e)}
                           onFullscreenChange={handleFullscreenChange}
                           {...({ onWebkitEndFullscreen: handleFullscreenChange } as any)}
                         />
                       ) : getFormat(work.category).kind === 'audio' ? (
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-12 bg-gradient-to-b from-transparent via-black/80 to-transparent">
-                          <div className="relative w-64 h-64 group-hover:scale-105 transition-all duration-1000">
-                            <div 
-                              className="absolute inset-0 rounded-[56px] animate-spin-slow opacity-30 blur-3xl"
-                              style={{ backgroundColor: getThemeColor(work.category) }}
-                            />
-                            <div className="w-full h-full bg-white/5 rounded-[56px] flex items-center justify-center border border-white/10 shadow-2xl relative z-10 backdrop-blur-2xl">
-                              <Disc className="w-24 h-24 text-white/20 absolute animate-spin-slow" />
-                              <Music className="w-16 h-16 text-[#bc13fe] animate-bounce" />
-                            </div>
-                            {[...Array(3)].map((_, j) => (
-                              <div 
-                                key={j}
-                                className="absolute inset-0 border border-[#bc13fe]/20 rounded-[56px] animate-ping"
-                                style={{ animationDelay: `${j * 0.5}s`, animationDuration: '3s' }}
-                              />
-                            ))}
-                          </div>
-                          <div className="text-center space-y-6">
-                            <h3 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white animate-in zoom-in duration-700 drop-shadow-[0_0_20px_rgba(188,19,254,0.5)]">{work.title}</h3>
-                            <audio 
-                              ref={(el) => { audioRefs.current[i] = el; }}
-                              src={mediaSrc(work)} 
-                              controls 
-                              className="w-full max-w-md opacity-40 hover:opacity-100 transition-opacity"
-                              onPlay={() => handleMediaPlay(work.id)}
+                        <AudioPlayer
+                          src={mediaSrc(work)}
+                          title={work.title}
+                          artist={`@${work.creator.slice(0, 6)}…${work.creator.slice(-4)} · ${getViewCount(work.id)} vues`}
+                          color={getFormat(work.category).hex}
+                          audioRef={(el) => { audioRefs.current[i] = el; }}
+                          onPlay={() => handleMediaPlay(work.id)}
                           onTimeUpdate={(e) => handleTimeUpdate(work.id, e)}
-                            />
-                          </div>
-                        </div>
+                        />
                       ) : (
                         <img src={mediaSrc(work)} className="w-full h-full object-contain bg-black" alt={work.title} />
                       )}
                     </>
                   )}
 
-                  <div className="absolute bottom-0 left-0 right-0 p-10 md:p-14 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none">
-                    <div className="flex items-center gap-5 mb-6">
-                      <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 shadow-inner group-hover:border-[#00f2ff]/40 transition-colors">
-                        <User className="w-7 h-7 text-gray-400 group-hover:text-[#00f2ff] transition-colors" />
+                  {getFormat(work.category).kind !== 'audio' && (
+                  <div className={`absolute left-0 right-0 p-4 pr-20 md:p-8 md:pr-8 from-black via-black/40 to-transparent pointer-events-none ${getFormat(work.category).kind === 'video' ? 'top-0 bg-gradient-to-b' : 'bottom-0 bg-gradient-to-t'}`}>
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-white/5 rounded-xl flex items-center justify-center border border-white/10 shadow-inner group-hover:border-[#00f2ff]/40 transition-colors shrink-0">
+                        <User className="w-5 h-5 md:w-6 md:h-6 text-gray-400 group-hover:text-[#00f2ff] transition-colors" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-4 mb-2">
+                        <div className="flex items-center gap-3 mb-1">
                           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#00f2ff] drop-shadow-[0_0_10px_rgba(0,242,255,0.5)]">
                             @{work.creator.slice(0,6)}...{work.creator.slice(-4)}
                           </p>
@@ -354,54 +339,68 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                             <span className="text-[10px] font-mono font-bold">{getViewCount(work.id)}</span>
                           </div>
                         </div>
-                        <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-white leading-none group-hover:scale-105 transition-transform origin-left">{work.title}</h3>
+                        <h3 className="text-lg md:text-2xl font-black uppercase tracking-tight text-white leading-tight line-clamp-2">{work.title}</h3>
                       </div>
                     </div>
                   </div>
+                  )}
                 </div>
               </div>
 
-              <div className="absolute right-4 md:right-10 bottom-24 z-20 flex flex-col gap-6 md:gap-8 items-center">
+              <div className="absolute right-3 md:right-8 bottom-44 md:bottom-24 z-20 flex flex-col gap-3 md:gap-5 items-center">
                 <button 
                   onClick={() => onLike(work.id)}
                   className="flex flex-col items-center gap-2 group"
                 >
-                  <div className="p-4 md:p-5 bg-black/40 hover:bg-pink-500/20 rounded-[28px] border border-white/10 transition-all group-active:scale-90 shadow-2xl backdrop-blur-xl group-hover:border-pink-500/40 relative">
-                    <Heart className="w-6 h-6 md:w-8 md:h-8 text-white group-hover:text-pink-500 transition-colors group-hover:fill-pink-500" />
+                  <div className="p-3 md:p-4 bg-black/40 hover:bg-pink-500/20 rounded-2xl border border-white/10 transition-all group-active:scale-90 shadow-2xl backdrop-blur-xl group-hover:border-pink-500/40 relative">
+                    <Heart className="w-5 h-5 md:w-6 md:h-6 text-white group-hover:text-pink-500 transition-colors group-hover:fill-pink-500" />
                     {work.likesCount > 0 && (
                       <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.5)]">
                         {Number(work.likesCount)}
                       </span>
                     )}
                   </div>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 group-hover:text-pink-500 transition-colors">Beam Heart</span>
+                  <span className="hidden md:block text-[9px] font-black uppercase tracking-widest text-gray-500 group-hover:text-pink-500 transition-colors">Beam Heart</span>
                 </button>
 
                 <button 
                   onClick={() => setCommentWorkId(work.id)}
                   className="flex flex-col items-center gap-2 group"
                 >
-                  <div className={`p-4 md:p-5 ${commentWorkId === work.id ? 'bg-[#00f2ff] text-black border-[#00f2ff]' : 'bg-black/40 text-white border-white/10 hover:bg-[#00f2ff]/20'} rounded-[28px] border transition-all group-active:scale-90 shadow-2xl backdrop-blur-xl group-hover:border-[#00f2ff]/40`}>
-                    <MessageCircle className="w-6 h-6 md:w-8 md:h-8 transition-colors group-hover:scale-110" />
+                  <div className={`p-3 md:p-4 ${commentWorkId === work.id ? 'bg-[#00f2ff] text-black border-[#00f2ff]' : 'bg-black/40 text-white border-white/10 hover:bg-[#00f2ff]/20'} rounded-2xl border transition-all group-active:scale-90 shadow-2xl backdrop-blur-xl group-hover:border-[#00f2ff]/40`}>
+                    <MessageCircle className="w-5 h-5 md:w-6 md:h-6 transition-colors group-hover:scale-110" />
                   </div>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 group-hover:text-[#00f2ff] transition-colors">Beam Talk</span>
+                  <span className="hidden md:block text-[9px] font-black uppercase tracking-widest text-gray-500 group-hover:text-[#00f2ff] transition-colors">Beam Talk</span>
                 </button>
 
                 <button 
                   onClick={() => onTip(work.id)}
                   className="flex flex-col items-center gap-2 group"
                 >
-                  <div className="p-4 md:p-5 bg-gradient-to-tr from-[#bc13fe] to-[#00f2ff] rounded-[28px] transition-all group-active:scale-90 shadow-[0_0_50px_rgba(0,242,255,0.4)] animate-pulse hover:shadow-[0_0_80px_rgba(0,242,255,0.6)]">
-                    <Zap className="w-6 h-6 md:w-8 md:h-8 text-black fill-current" />
+                  <div className="p-3 md:p-4 bg-gradient-to-tr from-[#bc13fe] to-[#00f2ff] rounded-2xl transition-all group-active:scale-90 shadow-[0_0_50px_rgba(0,242,255,0.4)] animate-pulse hover:shadow-[0_0_80px_rgba(0,242,255,0.6)]">
+                    <Zap className="w-5 h-5 md:w-6 md:h-6 text-black fill-current" />
                   </div>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-[#00f2ff] animate-pulse">Beam BNB</span>
+                  <span className="hidden md:block text-[9px] font-black uppercase tracking-widest text-[#00f2ff] animate-pulse">Beam Tip</span>
                 </button>
 
-                <button className="flex flex-col items-center gap-2 group mt-4">
-                  <div className="p-4 md:p-5 bg-white/5 hover:bg-white/10 rounded-[28px] border border-white/10 transition-all group-active:scale-90 shadow-2xl backdrop-blur-xl">
-                    <Share2 className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                {onToggleSave && (
+                  <button
+                    onClick={() => onToggleSave(work.id)}
+                    className="flex flex-col items-center gap-2 group"
+                    aria-label={isSaved?.(work.id) ? 'Retirer de ma bibliothèque' : 'Ajouter à ma bibliothèque'}
+                  >
+                    <div className={`p-3 md:p-4 rounded-2xl border transition-all group-active:scale-90 shadow-2xl backdrop-blur-xl ${isSaved?.(work.id) ? 'bg-white text-black border-white' : 'bg-black/40 text-white border-white/10 hover:bg-white/10'}`}>
+                      <Bookmark className={`w-5 h-5 md:w-6 md:h-6 ${isSaved?.(work.id) ? 'fill-current' : ''}`} />
+                    </div>
+                    <span className="hidden md:block text-[9px] font-black uppercase tracking-widest text-gray-500">{isSaved?.(work.id) ? 'Ajouté' : 'Biblio'}</span>
+                  </button>
+                )}
+
+                <button className="flex flex-col items-center gap-2 group">
+                  <div className="p-3 md:p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/10 transition-all group-active:scale-90 shadow-2xl backdrop-blur-xl">
+                    <Share2 className="w-5 h-5 md:w-6 md:h-6 text-white" />
                   </div>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-gray-600">Viralize</span>
+                  <span className="hidden md:block text-[9px] font-black uppercase tracking-widest text-gray-600">Viralize</span>
                 </button>
               </div>
             </div>

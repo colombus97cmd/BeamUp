@@ -1,22 +1,24 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useWriteContract, useAccount, useConfig, useChainId } from 'wagmi';
+import { useWriteContract, useAccount, useConfig } from 'wagmi';
+import { useActiveChainId } from '../hooks/useActiveChainId';
 import { readContract, waitForTransactionReceipt } from 'wagmi/actions';
 import { parseEther, erc20Abi } from 'viem';
-import { LayoutGrid, Rocket, Disc, Loader2, Zap, Play, Sparkles, Smartphone, Eye } from 'lucide-react';
+import { LayoutGrid, Rocket, Disc, Loader2, Zap, Play, Sparkles, Smartphone, Eye, Library } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import SocialFeed from '../components/SocialFeed';
 import BeamUpABI from '../contracts/BeamUpV3.json';
 import { getPaymentInfo } from '../config/contracts';
 import { useWorks } from '../hooks/useWorks';
+import { useLibrary } from '../hooks/useLibrary';
 import LandingPage from '../components/LandingPage';
 import CrowdfundingCampaign from '../components/CrowdfundingCampaign';
 
 
 export default function Home() {
-  const [viewMode, setViewMode] = useState<'grid' | 'feed' | 'crowdfunding'>('feed');
+  const [viewMode, setViewMode] = useState<'grid' | 'feed' | 'library' | 'crowdfunding'>('feed');
   const [analytics, setAnalytics] = useState<Record<number, { views: number; completed: number; inProgress: number }>>({});
-  const viewsChainId = useChainId();
+  const viewsChainId = useActiveChainId();
 
   useEffect(() => {
     fetch(`/api/views?chainId=${viewsChainId}`)
@@ -113,7 +115,7 @@ export default function Home() {
         const hash = await writeContractAsync({ address: CONTRACT_ADDRESS, abi: BeamUpABI, functionName: 'buyAccess', args: [BigInt(id)], value: work.price });
         await waitForTransactionReceipt(config, { hash });
       } else {
-        const allowance = await readContract(config, { address: work.paymentToken, abi: erc20Abi, functionName: 'allowance', args: [address, CONTRACT_ADDRESS] });
+        const allowance = await readContract(config, { chainId, address: work.paymentToken, abi: erc20Abi, functionName: 'allowance', args: [address, CONTRACT_ADDRESS] });
         if (allowance < work.price) {
           const approveHash = await writeContractAsync({ address: work.paymentToken, abi: erc20Abi, functionName: 'approve', args: [CONTRACT_ADDRESS, work.price] });
           await waitForTransactionReceipt(config, { hash: approveHash });
@@ -151,6 +153,12 @@ export default function Home() {
 
   const processedWorks = [...works].reverse();
 
+  // Bibliothèque : œuvres achetées (NFT d'accès), ses propres œuvres, et celles ajoutées avec le signet.
+  const library = useLibrary(chainId, address);
+  const libraryWorks = processedWorks.filter(
+    (w) => (w.isPremium && w.hasPaid) || w.creator.toLowerCase() === address?.toLowerCase() || library.isSaved(w.id)
+  );
+
   return (
     <div className='min-h-screen bg-[#020202] text-white selection:bg-[#00f2ff] selection:text-black'>    
       <style jsx global>{`
@@ -174,22 +182,28 @@ export default function Home() {
       ) : (
         <>
           {/* View Mode Toggle */}
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex bg-black/60 backdrop-blur-2xl border border-white/10 p-1.5 rounded-full shadow-2xl scale-90 md:scale-100 gap-1">
+          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[100] flex bg-black/70 backdrop-blur-2xl border border-white/10 p-1 md:p-1.5 rounded-full shadow-2xl gap-0.5 md:gap-1 max-w-[calc(100vw-1.5rem)]">
         <button 
           onClick={() => setViewMode('grid')}
-          className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'grid' ? 'bg-white text-black font-black' : 'text-gray-500 hover:text-white'}`}
+          className={`flex items-center gap-1.5 px-3 md:px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'grid' ? 'bg-white text-black font-black' : 'text-gray-500 hover:text-white'}`}
         >
           <LayoutGrid className="w-3.5 h-3.5" /> Grille
         </button>
         <button 
           onClick={() => setViewMode('feed')}
-          className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'feed' ? 'bg-gradient-to-r from-[#00f2ff] to-[#bc13fe] text-black font-black' : 'text-gray-500 hover:text-white'}`}
+          className={`flex items-center gap-1.5 px-3 md:px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'feed' ? 'bg-gradient-to-r from-[#00f2ff] to-[#bc13fe] text-black font-black' : 'text-gray-500 hover:text-white'}`}
         >
-          <Smartphone className="w-3.5 h-3.5" /> Flux Beam
+          <Smartphone className="w-3.5 h-3.5" /> Flux
+        </button>
+        <button 
+          onClick={() => setViewMode('library')}
+          className={`flex items-center gap-1.5 px-3 md:px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'library' ? 'bg-white text-black font-black' : 'text-gray-500 hover:text-white'}`}
+        >
+          <Library className="w-3.5 h-3.5" /> Biblio
         </button>
         <button 
           onClick={() => setViewMode('crowdfunding')}
-          className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'crowdfunding' ? 'bg-gradient-to-r from-amber-500 to-amber-700 text-black font-black' : 'text-gray-500 hover:text-white'}`}
+          className={`flex items-center gap-1.5 px-3 md:px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'crowdfunding' ? 'bg-gradient-to-r from-amber-500 to-amber-700 text-black font-black' : 'text-gray-500 hover:text-white'}`}
         >
           <Rocket className="w-3.5 h-3.5" /> Campagne
         </button>
@@ -208,9 +222,18 @@ export default function Home() {
             <Disc className='w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 animate-spin-slow' />
             <p className='text-xs uppercase tracking-[0.4em]'>Silence Intergalactique</p>
           </div>
-        ) : viewMode === 'feed' ? (
+        ) : viewMode === 'library' && libraryWorks.length === 0 ? (
+          <div className='flex flex-col items-center justify-center h-full min-h-[60vh] text-center px-6'>
+            <Library className='w-14 h-14 mb-5 text-gray-600' />
+            <p className='text-sm font-bold text-gray-300 mb-2'>Votre bibliothèque est vide</p>
+            <p className='text-xs text-gray-500 max-w-xs'>Les œuvres que vous achetez y apparaissent automatiquement. Ajoutez les œuvres gratuites avec le bouton « Biblio » du flux.</p>
+          </div>
+        ) : viewMode === 'feed' || viewMode === 'library' ? (
           <SocialFeed 
-            works={processedWorks} 
+            key={viewMode}
+            works={viewMode === 'library' ? libraryWorks : processedWorks} 
+            isSaved={library.isSaved}
+            onToggleSave={library.toggle}
             onTip={handleTip} 
             onLike={handleLike}  
             onComment={handleComment} 

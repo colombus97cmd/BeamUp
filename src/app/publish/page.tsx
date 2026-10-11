@@ -1,7 +1,8 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { ConnectKitButton } from 'connectkit';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId, useSignMessage, useReadContract } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSignMessage, useReadContract } from 'wagmi';
+import { useActiveChainId } from '../../hooks/useActiveChainId';
 import { parseUnits, formatEther } from 'viem';
 import { Rocket, Upload, PlusCircle, X, CheckCircle2, ShieldCheck, Sparkles, Coins } from 'lucide-react';
 import Link from 'next/link';
@@ -16,7 +17,7 @@ import { FORMATS, getFormat } from '../../config/formats';
 export default function Publish() {
   const { isConnected, address } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const chainId = useChainId();
+  const chainId = useActiveChainId();
   const CONTRACT_ADDRESS = getContractAddress(chainId);
   const currencySymbol = getCurrencySymbol(chainId);
   const chainName = getChainName(chainId);
@@ -36,7 +37,7 @@ export default function Publish() {
   const [royalty, setRoyalty] = useState('5');
   const [maxSupply, setMaxSupply] = useState('');
   const btcToken = BTC_TOKENS[chainId];
-  const { data: platformFee } = useReadContract({ address: CONTRACT_ADDRESS, abi: BeamUpABI, functionName: 'platformFee' });
+  const { data: platformFee } = useReadContract({ chainId, address: CONTRACT_ADDRESS, abi: BeamUpABI, functionName: 'platformFee' });
   const feeLabel = platformFee !== undefined ? formatEther(platformFee as bigint) : '0.0001';
   const fileInputRef = useRef<HTMLInputElement>(null);
 

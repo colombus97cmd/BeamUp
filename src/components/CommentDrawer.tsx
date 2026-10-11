@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useActiveChainId } from '../hooks/useActiveChainId';
 import { X, Send, MessageSquare, User, Loader2, Sparkles, Zap, ShieldCheck } from 'lucide-react';
 import BeamUpABI from '../contracts/BeamUpV3.json';
 import { getContractAddress } from '../config/contracts';
@@ -14,11 +15,12 @@ interface CommentDrawerProps {
 
 export default function CommentDrawer({ workId, isOpen, onClose }: CommentDrawerProps) {
   const { address } = useAccount();
-  const chainId = useChainId();
+  const chainId = useActiveChainId();
   const CONTRACT_ADDRESS = getContractAddress(chainId);
   const [commentText, setCommentText] = useState('');
   
   const { data: comments, refetch } = useReadContract({
+    chainId,
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: BeamUpABI,
     functionName: 'getWorkComments',

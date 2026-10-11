@@ -1,6 +1,7 @@
 'use client';
 import { useMemo } from 'react';
-import { useReadContract, useReadContracts, useChainId } from 'wagmi';
+import { useReadContract, useReadContracts } from 'wagmi';
+import { useActiveChainId } from './useActiveChainId';
 import { formatUnits } from 'viem';
 import BeamUpABI from '../contracts/BeamUpV3.json';
 import { getContractAddress, getPaymentInfo, NATIVE_TOKEN } from '../config/contracts';
@@ -34,16 +35,17 @@ export interface WorkView {
  * puis l'état d'accès premium de l'utilisateur. Les œuvres masquées sont exclues.
  */
 export function useWorks(user?: string) {
-  const chainId = useChainId();
+  const chainId = useActiveChainId();
   const address = getContractAddress(chainId);
 
-  const { data: count, refetch: refetchCount } = useReadContract({ address, abi: BeamUpABI, functionName: 'worksCount' });
+  const { data: count, refetch: refetchCount } = useReadContract({ chainId, address, abi: BeamUpABI, functionName: 'worksCount' });
   const total = Number((count as bigint | undefined) ?? 0n);
   const pages = Math.ceil(total / PAGE_SIZE);
 
   const { data: pageData, isLoading, refetch: refetchPages } = useReadContracts({
     contracts: Array.from({ length: pages }, (_, p) => ({
       address,
+      chainId,
       abi: BeamUpABI as any,
       functionName: 'getWorksPage',
       args: [BigInt(p * PAGE_SIZE), BigInt(PAGE_SIZE)],
@@ -53,6 +55,7 @@ export function useWorks(user?: string) {
 
   const ids = useMemo(() => Array.from({ length: total }, (_, i) => BigInt(i)), [total]);
   const { data: premium, refetch: refetchPremium } = useReadContract({
+    chainId,
     address,
     abi: BeamUpABI,
     functionName: 'getPremiumBatch',

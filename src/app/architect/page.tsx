@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useAccount, useReadContract, useWriteContract, useBalance, useWaitForTransactionReceipt, useChainId, useSignMessage } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useBalance, useWaitForTransactionReceipt, useSignMessage } from 'wagmi';
+import { useActiveChainId } from '../../hooks/useActiveChainId';
 import { formatEther, parseAbi } from 'viem';
 import { 
   LayoutGrid, User, Mail, Globe, ExternalLink, Zap, Shield, Sparkles, 
@@ -21,7 +22,7 @@ const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
 export default function Architect() {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const chainId = useChainId();
+  const chainId = useActiveChainId();
   const CONTRACT_ADDRESS = getContractAddress(chainId);
   const currencySymbol = getCurrencySymbol(chainId);
 
@@ -61,6 +62,7 @@ export default function Architect() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profileData, refetch: refetchProfile } = useReadContract({
+    chainId,
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: BeamUpABI,
     functionName: 'getProfile',
@@ -69,6 +71,7 @@ export default function Architect() {
 
   // Le propriétaire du contrat est le Safe : l'espace admin s'affiche pour ses signataires.
   const { data: isSafeSigner } = useReadContract({
+    chainId,
     address: SAFE_ADDRESS as `0x${string}`,
     abi: parseAbi(['function isOwner(address owner) view returns (bool)']),
     functionName: 'isOwner',
@@ -79,6 +82,7 @@ export default function Architect() {
   const { works: allWorks } = useWorks(address);
 
   const { data: accruedFees } = useReadContract({
+    chainId,
     address: CONTRACT_ADDRESS as `0x${string}`,
     abi: BeamUpABI,
     functionName: 'accruedFees',

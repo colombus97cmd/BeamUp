@@ -1,13 +1,14 @@
 'use client';
 import { useState } from 'react';
-import { useAccount, useSendTransaction, useChainId } from 'wagmi';
+import { useAccount, useSendTransaction } from 'wagmi';
+import { useActiveChainId } from '../hooks/useActiveChainId';
 import { parseEther } from 'viem';
 import { Rocket, Heart, Sparkles, ChevronRight, ShieldCheck, HelpCircle, Layers, Leaf, Hammer, Cpu, Check, AlertCircle } from 'lucide-react';
 import { ConnectKitButton } from 'connectkit';
 
 export default function CrowdfundingCampaign() {
   const { isConnected, address } = useAccount();
-  const chainId = useChainId();
+  const chainId = useActiveChainId();
   const { sendTransaction, isPending } = useSendTransaction();
   
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
