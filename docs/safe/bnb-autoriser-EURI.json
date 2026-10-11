@@ -1,0 +1,40 @@
+{
+  "version": "1.0",
+  "chainId": "56",
+  "createdAt": 1791753814388,
+  "meta": {
+    "name": "BeamUp : autoriser EURI (Eurite) sur BNB Chain",
+    "description": "Appelle setAllowedToken(0x9d1A7A3191102e9F900Faa10540837ba84dCBAE7, true) sur le contrat BeamUp 0x715ED1F24a0D00F641E614CA2106aA8CC4266De5",
+    "txBuilderVersion": "1.17.1",
+    "createdFromSafeAddress": "0x5DBE809214C6a9eec3CD9b25277dd3b1F37B6a1e",
+    "createdFromOwnerAddress": "",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x715ED1F24a0D00F641E614CA2106aA8CC4266De5",
+      "value": "0",
+      "data": "0x8aaa22840000000000000000000000009d1a7a3191102e9f900faa10540837ba84dcbae70000000000000000000000000000000000000000000000000000000000000001",
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "allowed",
+            "type": "bool"
+          }
+        ],
+        "name": "setAllowedToken",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "token": "0x9d1A7A3191102e9F900Faa10540837ba84dCBAE7",
+        "allowed": "true"
+      }
+    }
+  ]
+}

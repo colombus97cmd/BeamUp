@@ -54,3 +54,25 @@ Puis `/publish` → « Jeu vidéo » → déposer `Documents\chains-and-crowns-b
 - Un jeu web s'exécute dans le navigateur du joueur : un joueur technique peut toujours lire le code de l'édition qu'il a achetée.
 - L'édition complète se joue dans BeamUp (le jeton de partie expire) : elle n'est pas installable hors ligne comme la démo.
 - Les fichiers sont diffusés à travers une fonction Vercel (`maxDuration = 300`) : prévoir la consommation de bande passante pour les gros jeux Unity.
+
+## Prix fixes : édition euro et édition dollar
+
+Le prix d'une œuvre est fixé à la publication, dans la monnaie choisie, et ne peut plus changer. Pour un prix stable, on publie le même jeu (même zip, donc même manifeste et une seule validation) en deux éditions :
+
+| Édition | Réseau | Monnaie | Pour qui |
+|---|---|---|---|
+| Euro | BNB Chain | EURI (Eurite, Banking Circle, autorisé MiCA), `0x9d1A7A3191102e9F900Faa10540837ba84dCBAE7` | Europe et territoires en euro (Antilles, Guyane, Réunion…) |
+| Dollar | Arbitrum | USDC natif de Circle (autorisé MiCA), `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` | reste du monde |
+
+Le fil n'affiche qu'une édition par jeu : celle que le visiteur possède, sinon celle de sa monnaie (fuseau horaire de l'appareil). L'USDT n'est pas utilisé : il n'est pas autorisé sous MiCA. Un faux « Eurite » circule sur BNB Chain (`0xc2ad…C47F`) : ne jamais l'utiliser.
+
+### Autoriser les stablecoins (une fois, par un signataire du Safe)
+
+Les contrats BeamUp n'acceptent un jeton qu'après `setAllowedToken`. Les transactions sont prêtes dans `docs/safe/` :
+
+1. app.safe.global → Safe `0x5DBE…6a1e` → choisir le réseau (BNB Chain pour l'EURI, Arbitrum pour l'USDC).
+2. Apps → **Transaction Builder** → glisser le fichier `bnb-autoriser-EURI.json` (ou `arbitrum-autoriser-USDC.json`).
+3. Vérifier : destinataire = contrat BeamUp du réseau, méthode `setAllowedToken`, jeton = adresse ci-dessus, `allowed` = true. Créer le lot, signer, exécuter (frais de quelques centimes).
+4. L'option « Euro (prix fixe) » ou « Dollar (prix fixe) » apparaît alors dans `/publish`.
+
+`polygon-autoriser-USDC.json` est fourni si l'on veut aussi accepter l'USDC sur Polygon.

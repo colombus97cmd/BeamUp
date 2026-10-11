@@ -59,10 +59,31 @@ export const BTC_TOKENS: Record<number, PaymentToken> = {
   42161: { address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f', symbol: 'WBTC', decimals: 8 },
 };
 
-/** Symbole et décimales d'un moyen de paiement (monnaie native ou jeton bitcoin). */
+// Stablecoin en euros (1 jeton = 1 €) : prix fixe en euros, insensible aux variations du BNB.
+// EURI (Eurite, Banking Circle), e-money token autorisé sous MiCA. Adresse vérifiée on-chain le 11/10/2026 :
+// même contrat que le déploiement officiel Ethereum (lien eurite.com sur Etherscan). Attention, un faux
+// « Eurite » circule sur BNB Chain (0xc2ad…C47F, 1 milliard de jetons) : ne jamais l'utiliser.
+// Le jeton doit aussi être autorisé dans le contrat par le Safe (setAllowedToken).
+export const EUR_TOKENS: Record<number, PaymentToken> = {
+  56: { address: '0x9d1A7A3191102e9F900Faa10540837ba84dCBAE7', symbol: 'EURI', decimals: 18 },
+};
+
+// Stablecoin en dollars : USDC natif émis par Circle (e-money token autorisé sous MiCA, contrairement à l'USDT).
+// Adresses officielles (developers.circle.com) vérifiées on-chain le 11/10/2026. Pas d'USDC natif sur BNB Chain.
+// Le jeton doit aussi être autorisé dans le contrat par le Safe (setAllowedToken).
+export const USD_TOKENS: Record<number, PaymentToken> = {
+  42161: { address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', symbol: 'USDC', decimals: 6 },
+  137: { address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', symbol: 'USDC', decimals: 6 },
+};
+
+/** Symbole et décimales d'un moyen de paiement (monnaie native, jeton bitcoin, euro ou dollar). */
 export const getPaymentInfo = (chainId: number, token?: string): { symbol: string; decimals: number; isNative: boolean } => {
   if (!token || token.toLowerCase() === NATIVE_TOKEN) return { symbol: getCurrencySymbol(chainId), decimals: 18, isNative: true };
   const btc = BTC_TOKENS[chainId];
   if (btc && btc.address.toLowerCase() === token.toLowerCase()) return { symbol: btc.symbol, decimals: btc.decimals, isNative: false };
+  const eur = EUR_TOKENS[chainId];
+  if (eur && eur.address.toLowerCase() === token.toLowerCase()) return { symbol: '€ (EURI)', decimals: eur.decimals, isNative: false };
+  const usd = USD_TOKENS[chainId];
+  if (usd && usd.address.toLowerCase() === token.toLowerCase()) return { symbol: '$ (USDC)', decimals: usd.decimals, isNative: false };
   return { symbol: 'jeton', decimals: 18, isNative: false };
 };

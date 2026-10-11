@@ -1,0 +1,40 @@
+{
+  "version": "1.0",
+  "chainId": "42161",
+  "createdAt": 1791753813779,
+  "meta": {
+    "name": "BeamUp : autoriser USDC (Circle) sur Arbitrum",
+    "description": "Appelle setAllowedToken(0xaf88d065e77c8cC2239327C5EDb3A432268e5831, true) sur le contrat BeamUp 0x7eF9447247477A6A09D41f5eba92849A39641ca7",
+    "txBuilderVersion": "1.17.1",
+    "createdFromSafeAddress": "0x5DBE809214C6a9eec3CD9b25277dd3b1F37B6a1e",
+    "createdFromOwnerAddress": "",
+    "checksum": ""
+  },
+  "transactions": [
+    {
+      "to": "0x7eF9447247477A6A09D41f5eba92849A39641ca7",
+      "value": "0",
+      "data": "0x8aaa2284000000000000000000000000af88d065e77c8cc2239327c5edb3a432268e58310000000000000000000000000000000000000000000000000000000000000001",
+      "contractMethod": {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "allowed",
+            "type": "bool"
+          }
+        ],
+        "name": "setAllowedToken",
+        "payable": false
+      },
+      "contractInputsValues": {
+        "token": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+        "allowed": "true"
+      }
+    }
+  ]
+}

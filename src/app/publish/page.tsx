@@ -11,7 +11,7 @@ import Navigation from '../../components/Navigation';
 import { uploadToIPFS } from '../../services/pinata';
 import { submitGame } from '../../services/gameSubmit';
 import BeamUpABI from '../../contracts/BeamUpV3.json';
-import { getContractAddress, getCurrencySymbol, getChainName, BTC_TOKENS, NATIVE_TOKEN } from '../../config/contracts';
+import { getContractAddress, getCurrencySymbol, getChainName, BTC_TOKENS, EUR_TOKENS, USD_TOKENS, NATIVE_TOKEN } from '../../config/contracts';
 import { FORMATS, getFormat } from '../../config/formats';
 
 
@@ -34,10 +34,19 @@ export default function Publish() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [price, setPrice] = useState('0.1');
-  const [payWithBtc, setPayWithBtc] = useState(false);
+  const [payWith, setPayWith] = useState<'native' | 'btc' | 'eur' | 'usd'>('native');
   const [royalty, setRoyalty] = useState('5');
   const [maxSupply, setMaxSupply] = useState('');
   const btcToken = BTC_TOKENS[chainId];
+  // Stablecoins (prix fixe) : proposés seulement une fois le jeton autorisé dans le contrat par le Safe.
+  const eurCandidate = EUR_TOKENS[chainId];
+  const usdCandidate = USD_TOKENS[chainId];
+  const { data: eurAllowed } = useReadContract({ chainId, address: CONTRACT_ADDRESS, abi: BeamUpABI, functionName: 'allowedTokens', args: [eurCandidate?.address ?? NATIVE_TOKEN], query: { enabled: !!eurCandidate } });
+  const { data: usdAllowed } = useReadContract({ chainId, address: CONTRACT_ADDRESS, abi: BeamUpABI, functionName: 'allowedTokens', args: [usdCandidate?.address ?? NATIVE_TOKEN], query: { enabled: !!usdCandidate } });
+  const eurToken = eurCandidate && eurAllowed === true ? eurCandidate : undefined;
+  const usdToken = usdCandidate && usdAllowed === true ? usdCandidate : undefined;
+  const payToken = payWith === 'btc' ? btcToken : payWith === 'eur' ? eurToken : payWith === 'usd' ? usdToken : undefined;
+  const payLabel = payWith === 'eur' && eurToken ? '€ (EURI)' : payWith === 'usd' && usdToken ? '$ (USDC)' : payToken ? payToken.symbol : currencySymbol;
   const { data: platformFee } = useReadContract({ chainId, address: CONTRACT_ADDRESS, abi: BeamUpABI, functionName: 'platformFee' });
   const feeLabel = platformFee !== undefined ? formatEther(platformFee as bigint) : '0.0001';
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -74,7 +83,7 @@ export default function Publish() {
       }
 
       setStatus('blockchain');
-      const useBtc = isPremium && payWithBtc && !!btcToken;
+      const token = isPremium ? payToken : undefined;
       const royaltyBps = Math.round(Math.min(10, Math.max(0, Number(royalty) || 0)) * 100);
       writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
@@ -85,8 +94,8 @@ export default function Publish() {
           title,
           category,
           isPremium,
-          price: isPremium ? parseUnits(price || '0', useBtc ? btcToken.decimals : 18) : BigInt(0),
-          paymentToken: useBtc ? btcToken.address : NATIVE_TOKEN,
+          price: isPremium ? parseUnits(price || '0', token ? token.decimals : 18) : BigInt(0),
+          paymentToken: token ? token.address : NATIVE_TOKEN,
           royaltyBps,
           maxSupply: BigInt(Math.max(0, Math.floor(Number(maxSupply) || 0))),
           metadataURI: '',
@@ -250,14 +259,25 @@ export default function Publish() {
 
                   {isPremium && (
                     <div className='animate-in slide-in-from-top-2 duration-300'>
-                      {btcToken && (
-                        <div className='grid grid-cols-2 gap-2 mb-3'>
-                          {[{ btc: false, label: currencySymbol }, { btc: true, label: `${btcToken.symbol} (bitcoin)` }].map(o => (
-                            <button key={o.label} type='button' onClick={() => setPayWithBtc(o.btc)} className={`py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all ${payWithBtc === o.btc ? 'bg-amber-500 text-black border-amber-500' : 'bg-white/5 border-white/10 text-gray-400'}`}>{o.label}</button>
+                      {(btcToken || eurToken || usdToken) && (
+                        <div className='grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3'>
+                          {([
+                            { id: 'native', label: currencySymbol },
+                            ...(eurToken ? [{ id: 'eur', label: 'Euro (prix fixe)' }] : []),
+                            ...(usdToken ? [{ id: 'usd', label: 'Dollar (prix fixe)' }] : []),
+                            ...(btcToken ? [{ id: 'btc', label: `${btcToken.symbol} (bitcoin)` }] : []),
+                          ] as { id: 'native' | 'btc' | 'eur' | 'usd'; label: string }[]).map(o => (
+                            <button key={o.id} type='button' onClick={() => setPayWith(o.id)} className={`py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all ${payWith === o.id ? 'bg-amber-500 text-black border-amber-500' : 'bg-white/5 border-white/10 text-gray-400'}`}>{o.label}</button>
                           ))}
                         </div>
                       )}
-                      <label className='text-[9px] uppercase font-black text-amber-500/60 tracking-widest mb-2 block'>Prix du NFT d'accès ({payWithBtc && btcToken ? btcToken.symbol : currencySymbol})</label>
+                      {payWith === 'usd' && usdToken && (
+                        <p className='text-[10px] text-amber-500/70 mb-3 leading-relaxed'>Payé en USDC, stablecoin dollar de Circle régulé (MiCA) : 1 USDC = 1 $. Le prix ne bouge pas avec le cours des cryptos.</p>
+                      )}
+                      {payWith === 'eur' && eurToken && (
+                        <p className='text-[10px] text-amber-500/70 mb-3 leading-relaxed'>Payé en EURI, stablecoin euro régulé (MiCA) : 1 EURI = 1 €. Le prix ne bouge pas avec le cours des cryptos.</p>
+                      )}
+                      <label className='text-[9px] uppercase font-black text-amber-500/60 tracking-widest mb-2 block'>Prix du NFT d'accès ({payLabel})</label>
                       <div className='relative'>
                         <input 
                           type='number' 
@@ -267,7 +287,7 @@ export default function Publish() {
                           className='w-full bg-amber-500/5 border border-amber-500/20 p-4 rounded-xl focus:ring-1 focus:ring-amber-500 outline-none font-bold text-sm text-amber-500 placeholder-amber-900/40' 
                           placeholder='0.1' 
                         />
-                        <span className='absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-amber-500/40'>{payWithBtc && btcToken ? btcToken.symbol : currencySymbol}</span>
+                        <span className='absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-amber-500/40'>{payLabel}</span>
                       </div>
                       <div className='grid grid-cols-2 gap-3 mt-3'>
                         <label className='block'>

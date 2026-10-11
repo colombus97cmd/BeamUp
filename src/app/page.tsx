@@ -108,6 +108,11 @@ export default function Home() {
         const hash = await writeContractAsync({ chainId, address: contract, abi: BeamUpABI, functionName: 'buyAccess', args: [BigInt(work.workId)], value: work.price });
         await waitForTransactionReceipt(config, { chainId, hash });
       } else {
+        const balance = await readContract(config, { chainId, address: work.paymentToken, abi: erc20Abi, functionName: 'balanceOf', args: [address] });
+        if (balance < work.price) {
+          window.alert(`Solde insuffisant : il faut ${work.priceLabel} sur ${work.chainName} dans votre wallet pour acheter cette œuvre.`);
+          return;
+        }
         const allowance = await readContract(config, { chainId, address: work.paymentToken, abi: erc20Abi, functionName: 'allowance', args: [address, contract] });
         if (allowance < work.price) {
           const approveHash = await writeContractAsync({ chainId, address: work.paymentToken, abi: erc20Abi, functionName: 'approve', args: [contract, work.price] });

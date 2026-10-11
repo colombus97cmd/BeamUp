@@ -3,7 +3,9 @@ import { useMemo } from 'react';
 import { useReadContracts } from 'wagmi';
 import { formatUnits } from 'viem';
 import BeamUpABI from '../contracts/BeamUpV3.json';
-import { CONTRACT_ADDRESSES, SUPPORTED_CHAIN_IDS, getPaymentInfo, getChainName } from '../config/contracts';
+import { CONTRACT_ADDRESSES, SUPPORTED_CHAIN_IDS, getPaymentInfo, getChainName, EUR_TOKENS, USD_TOKENS } from '../config/contracts';
+import { getFormat } from '../config/formats';
+import { preferredCurrency } from '../lib/region';
 import type { WorkView } from './useWorks';
 
 const PAGE_SIZE = 100;
@@ -14,6 +16,29 @@ const ZERO = '0x0000000000000000000000000000000000000000';
 const CHAIN_ORDER = [56, 137, 1, 42161];
 const OFFSET = 10_000_000;
 export const toUid = (chainId: number, workId: number) => CHAIN_ORDER.indexOf(chainId) * OFFSET + workId;
+
+/**
+ * Un même jeu peut être publié en plusieurs éditions (même fichier, prix en euros sur un réseau, en dollars sur un autre).
+ * Le fil n'en garde qu'une : celle que le visiteur possède ou a créée, sinon celle de sa monnaie (voir lib/region.ts).
+ */
+function pickGameEditions(works: MultiChainWork[], user?: string): MultiChainWork[] {
+  const currency = preferredCurrency();
+  const me = user?.toLowerCase();
+  const editionCurrency = (w: MultiChainWork) => {
+    const token = String(w.paymentToken || '').toLowerCase();
+    if (EUR_TOKENS[w.chainId]?.address.toLowerCase() === token) return 'eur';
+    if (USD_TOKENS[w.chainId]?.address.toLowerCase() === token) return 'usd';
+    return 'autre';
+  };
+  const score = (w: MultiChainWork) => (w.hasPaid || w.creator?.toLowerCase() === me ? 4 : 0) + (editionCurrency(w) === currency ? 2 : 0) + (w.soldOut ? 0 : 1);
+  const best = new Map<string, MultiChainWork>();
+  for (const w of works) {
+    if (getFormat(w.category).kind !== 'game') continue;
+    const current = best.get(w.ipfsCID);
+    if (!current || score(w) > score(current)) best.set(w.ipfsCID, w);
+  }
+  return works.filter((w) => getFormat(w.category).kind !== 'game' || best.get(w.ipfsCID) === w);
+}
 
 export interface MultiChainWork extends WorkView {
   /** Identifiant unique (clé d'affichage, bibliothèque, vues). */
@@ -89,7 +114,7 @@ export function useAllWorks(user?: string) {
         });
       });
     });
-    return out.sort((a, b) => Number(b.timestamp - a.timestamp));
+    return pickGameEditions(out, user).sort((a, b) => Number(b.timestamp - a.timestamp));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pages, premium, totals.join(',')]);
 
