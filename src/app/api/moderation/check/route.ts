@@ -14,7 +14,8 @@ export async function POST(req: Request) {
   const text = String(body?.text || '').slice(0, 500);
   try {
     return NextResponse.json(await moderateText(text));
-  } catch {
+  } catch (e: any) {
+    console.error('Modération indisponible :', e?.status ?? '', e?.name ?? '', e?.message ?? e);
     return NextResponse.json({ decision: 'ok', reason: '', suggestion: '' });
   }
 }
