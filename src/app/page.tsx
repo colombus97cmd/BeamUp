@@ -1,15 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useWriteContract, useAccount, useConfig } from 'wagmi';
-import { useActiveChainId } from '../hooks/useActiveChainId';
+import { useWriteContract, useAccount, useConfig, useSwitchChain } from 'wagmi';
 import { readContract, waitForTransactionReceipt } from 'wagmi/actions';
 import { parseEther, erc20Abi } from 'viem';
 import { LayoutGrid, Rocket, Disc, Loader2, Zap, Play, Sparkles, Smartphone, Eye, Library } from 'lucide-react';
 import Navigation from '../components/Navigation';
 import SocialFeed from '../components/SocialFeed';
 import BeamUpABI from '../contracts/BeamUpV3.json';
-import { getPaymentInfo } from '../config/contracts';
-import { useWorks } from '../hooks/useWorks';
+import { getPaymentInfo, CONTRACT_ADDRESSES, SUPPORTED_CHAIN_IDS } from '../config/contracts';
+import { useAllWorks, toUid } from '../hooks/useAllWorks';
 import { useLibrary } from '../hooks/useLibrary';
 import { FORMATS, getFormat } from '../config/formats';
 import LandingPage from '../components/LandingPage';
@@ -19,110 +18,103 @@ import CrowdfundingCampaign from '../components/CrowdfundingCampaign';
 export default function Home() {
   const [viewMode, setViewMode] = useState<'grid' | 'feed' | 'library' | 'crowdfunding'>('feed');
   const [analytics, setAnalytics] = useState<Record<number, { views: number; completed: number; inProgress: number }>>({});
-  const viewsChainId = useActiveChainId();
 
-  useEffect(() => {
-    fetch(`/api/views?chainId=${viewsChainId}`)
-      .then(res => res.json())
-      .then(data => {
-        setAnalytics(data);
-      })
-      .catch(err => console.error("Error fetching views:", err));
-  }, [viewsChainId]);
-
-  const trackView = async (id: number) => {
-    try {
-      const res = await fetch('/api/views', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chainId: viewsChainId, workId: id, type: 'view' }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setAnalytics(prev => ({
-          ...prev,
-          [id]: data.stats
-        }));
-      }
-    } catch (err) {
-      console.error("Error tracking view:", err);
-    }
-  };
-
-  const trackProgress = async (id: number, progress: number) => {
-    let type: 'completed' | 'inProgress' | null = null;
-    const sessionKeyInProgress = `beam_tracked_ip_${id}`;
-    const sessionKeyCompleted = `beam_tracked_cp_${id}`;
-
-    if (progress >= 10 && progress < 90) {
-      if (typeof window !== 'undefined' && !sessionStorage.getItem(sessionKeyInProgress) && !sessionStorage.getItem(sessionKeyCompleted)) {
-        sessionStorage.setItem(sessionKeyInProgress, 'true');
-        type = 'inProgress';
-      }
-    } else if (progress >= 90) {
-      if (typeof window !== 'undefined' && !sessionStorage.getItem(sessionKeyCompleted)) {
-        sessionStorage.setItem(sessionKeyCompleted, 'true');
-        type = 'completed';
-      }
-    }
-
-    if (!type) return;
-
-    try {
-      const res = await fetch('/api/views', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chainId: viewsChainId, workId: id, type }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setAnalytics(prev => ({
-          ...prev,
-          [id]: data.stats
-        }));
-      }
-    } catch (err) {
-      console.error("Error tracking progress:", err);
-    }
-  };
-
-  const getViewCount = (id: number) => {
-    const stats = analytics[id];
-    return stats?.views || 0;
-  };
-
-  const { isConnected, address } = useAccount();
-  const { writeContract, writeContractAsync } = useWriteContract();
+  const { isConnected, address, chainId: walletChainId } = useAccount();
+  const { writeContractAsync } = useWriteContract();
+  const { switchChainAsync } = useSwitchChain();
   const config = useConfig();
-  const { works, isLoading: isGalleryLoading, refetch, contractAddress: CONTRACT_ADDRESS, chainId } = useWorks(address);
 
-  const handleTip = (id: number) => {
-    writeContract({
-      address: CONTRACT_ADDRESS,
-      abi: BeamUpABI,
-      functionName: 'tipArtist',
-      args: [BigInt(id)],
-      value: parseEther('0.001'),
-    });
+  // Fil unique : les œuvres des 4 réseaux, chacune avec son réseau (badge) et son identifiant de contrat.
+  const { works, isLoading: isGalleryLoading, refetch } = useAllWorks(address);
+  const findWork = (uid: number) => works.find((w) => w.id === uid);
+
+  // Statistiques de vues des 4 réseaux, rangées par identifiant unique.
+  useEffect(() => {
+    Promise.all(
+      SUPPORTED_CHAIN_IDS.map((cid) =>
+        fetch(`/api/views?chainId=${cid}`)
+          .then((res) => res.json())
+          .then((data: Record<string, any>) => Object.entries(data).map(([wid, st]) => [toUid(cid, Number(wid)), st] as const))
+          .catch(() => [])
+      )
+    ).then((lists) => setAnalytics(Object.fromEntries(lists.flat())));
+  }, []);
+
+  const postStat = async (uid: number, type: 'view' | 'inProgress' | 'completed') => {
+    const work = findWork(uid);
+    if (!work) return;
+    try {
+      const res = await fetch('/api/views', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chainId: work.chainId, workId: work.workId, type }),
+      });
+      const data = await res.json();
+      if (data.success) setAnalytics((prev) => ({ ...prev, [uid]: data.stats }));
+    } catch (err) {
+      console.error('Erreur statistiques :', err);
+    }
+  };
+
+  const trackView = (uid: number) => postStat(uid, 'view');
+
+  const trackProgress = (uid: number, progress: number) => {
+    const ip = `beam_tracked_ip_${uid}`;
+    const cp = `beam_tracked_cp_${uid}`;
+    if (progress >= 10 && progress < 90 && !sessionStorage.getItem(ip) && !sessionStorage.getItem(cp)) {
+      sessionStorage.setItem(ip, 'true');
+      postStat(uid, 'inProgress');
+    } else if (progress >= 90 && !sessionStorage.getItem(cp)) {
+      sessionStorage.setItem(cp, 'true');
+      postStat(uid, 'completed');
+    }
+  };
+
+  const getViewCount = (uid: number) => analytics[uid]?.views || 0;
+
+  // Toute transaction se fait sur le réseau de l'œuvre : on bascule le wallet si besoin.
+  const ensureChain = async (chainId: number) => {
+    if (walletChainId !== chainId) await switchChainAsync({ chainId });
+  };
+
+  const handleTip = async (uid: number) => {
+    const work = findWork(uid);
+    if (!work) return;
+    try {
+      await ensureChain(work.chainId);
+      await writeContractAsync({
+        chainId: work.chainId,
+        address: CONTRACT_ADDRESSES[work.chainId],
+        abi: BeamUpABI,
+        functionName: 'tipArtist',
+        args: [BigInt(work.workId)],
+        value: parseEther('0.001'),
+      });
+    } catch (error) {
+      console.error('Pourboire annulé ou échoué :', error);
+    }
   };
 
   // Achat de l'accès (NFT) : en monnaie native, ou en WBTC/BTCB après autorisation du jeton.
-  const handleBuy = async (id: number) => {
-    const work = works.find((w) => w.id === id);
+  const handleBuy = async (uid: number) => {
+    const work = findWork(uid);
     if (!work || !address) return;
+    const chainId = work.chainId;
+    const contract = CONTRACT_ADDRESSES[chainId];
     try {
+      await ensureChain(chainId);
       const pay = getPaymentInfo(chainId, work.paymentToken);
       if (pay.isNative) {
-        const hash = await writeContractAsync({ address: CONTRACT_ADDRESS, abi: BeamUpABI, functionName: 'buyAccess', args: [BigInt(id)], value: work.price });
-        await waitForTransactionReceipt(config, { hash });
+        const hash = await writeContractAsync({ chainId, address: contract, abi: BeamUpABI, functionName: 'buyAccess', args: [BigInt(work.workId)], value: work.price });
+        await waitForTransactionReceipt(config, { chainId, hash });
       } else {
-        const allowance = await readContract(config, { chainId, address: work.paymentToken, abi: erc20Abi, functionName: 'allowance', args: [address, CONTRACT_ADDRESS] });
+        const allowance = await readContract(config, { chainId, address: work.paymentToken, abi: erc20Abi, functionName: 'allowance', args: [address, contract] });
         if (allowance < work.price) {
-          const approveHash = await writeContractAsync({ address: work.paymentToken, abi: erc20Abi, functionName: 'approve', args: [CONTRACT_ADDRESS, work.price] });
-          await waitForTransactionReceipt(config, { hash: approveHash });
+          const approveHash = await writeContractAsync({ chainId, address: work.paymentToken, abi: erc20Abi, functionName: 'approve', args: [contract, work.price] });
+          await waitForTransactionReceipt(config, { chainId, hash: approveHash });
         }
-        const hash = await writeContractAsync({ address: CONTRACT_ADDRESS, abi: BeamUpABI, functionName: 'buyAccess', args: [BigInt(id)] });
-        await waitForTransactionReceipt(config, { hash });
+        const hash = await writeContractAsync({ chainId, address: contract, abi: BeamUpABI, functionName: 'buyAccess', args: [BigInt(work.workId)] });
+        await waitForTransactionReceipt(config, { chainId, hash });
       }
       refetch();
     } catch (error) {
@@ -130,18 +122,25 @@ export default function Home() {
     }
   };
 
-  const handleLike = (id: number) => {
-    writeContract({
-      address: CONTRACT_ADDRESS,
-      abi: BeamUpABI,
-      functionName: 'toggleLike',
-      args: [BigInt(id)],
-    });
+  const handleLike = async (uid: number) => {
+    const work = findWork(uid);
+    if (!work) return;
+    try {
+      await ensureChain(work.chainId);
+      await writeContractAsync({
+        chainId: work.chainId,
+        address: CONTRACT_ADDRESSES[work.chainId],
+        abi: BeamUpABI,
+        functionName: 'toggleLike',
+        args: [BigInt(work.workId)],
+      });
+    } catch (error) {
+      console.error('Like annulé ou échoué :', error);
+    }
   };
 
-  const handleComment = (id: number) => {
-    // This is handled via CommentDrawer now
-    console.log("Comment work ID:", id);
+  const handleComment = (_uid: number) => {
+    // Géré par CommentDrawer.
   };
 
   const BeamEnergyBall = () => (
@@ -152,10 +151,11 @@ export default function Home() {
     </div>
   );
 
-  const processedWorks = [...works].reverse();
+  const processedWorks = works;
 
   // Bibliothèque : œuvres achetées (NFT d'accès), ses propres œuvres, et celles ajoutées avec le signet.
-  const library = useLibrary(chainId, address);
+  // (Clé de stockage « 56 » conservée : les identifiants BNB Chain n'ont pas changé.)
+  const library = useLibrary(56, address);
   const libraryAll = processedWorks.filter(
     (w) => (w.isPremium && w.hasPaid) || w.creator.toLowerCase() === address?.toLowerCase() || library.isSaved(w.id)
   );

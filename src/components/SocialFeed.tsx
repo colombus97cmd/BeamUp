@@ -45,12 +45,13 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
   const [openingStep, setOpeningStep] = useState<MediaStep>('sign');
 
   const openPremium = async (id: number) => {
+    const work = works.find((w: any) => w.id === id);
     if (!address) return;
     setOpeningId(id);
     setMediaError(null);
     try {
       setOpeningStep('sign');
-      const url = await requestPremiumMedia(chainId, id, address, signMessageAsync, setOpeningStep);
+      const url = await requestPremiumMedia(work?.chainId ?? chainId, work?.workId ?? id, address, signMessageAsync, setOpeningStep);
       setPremiumUrls((prev) => ({ ...prev, [id]: url }));
     } catch (e: any) {
       setMediaError(e?.shortMessage || e?.message || "Impossible d'ouvrir l'œuvre");
@@ -330,7 +331,7 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                         <AudioPlayer
                           src={mediaSrc(work)}
                           title={work.title}
-                          artist={`@${work.creator.slice(0, 6)}…${work.creator.slice(-4)} · ${getViewCount(work.id)} vues`}
+                          artist={`@${work.creator.slice(0, 6)}…${work.creator.slice(-4)} · ${getViewCount(work.id)} vues${work.chainName ? ` · ${work.chainName}` : ''}`}
                           color={getFormat(work.category).hex}
                           audioRef={(el) => { audioRefs.current[i] = el; }}
                           onPlay={() => handleMediaPlay(work.id)}
@@ -354,6 +355,9 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#00f2ff] drop-shadow-[0_0_10px_rgba(0,242,255,0.5)]">
                             @{work.creator.slice(0,6)}...{work.creator.slice(-4)}
                           </p>
+                          {work.chainName && (
+                            <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 border border-white/15 text-gray-200">{work.chainName}</span>
+                          )}
                           <div className="flex items-center gap-1.5 text-gray-400">
                             <Eye className="w-3.5 h-3.5" />
                             <span className="text-[10px] font-mono font-bold">{getViewCount(work.id)}</span>
@@ -441,7 +445,8 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
 
       {commentWorkId !== null && (
         <CommentDrawer 
-          workId={commentWorkId as number} 
+          workId={works.find((w: any) => w.id === commentWorkId)?.workId ?? (commentWorkId as number)}
+          chainId={works.find((w: any) => w.id === commentWorkId)?.chainId}
           isOpen={commentWorkId !== null} 
           onClose={() => setCommentWorkId(null)} 
         />

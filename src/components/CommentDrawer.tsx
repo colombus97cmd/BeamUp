@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
 import { useActiveChainId } from '../hooks/useActiveChainId';
 import { X, Send, MessageSquare, User, Loader2, Sparkles, Zap, ShieldCheck } from 'lucide-react';
 import BeamUpABI from '../contracts/BeamUpV3.json';
@@ -9,13 +9,17 @@ import { getContractAddress } from '../config/contracts';
 
 interface CommentDrawerProps {
   workId: number;
+  /** Réseau de l'œuvre (par défaut : celui du wallet). */
+  chainId?: number;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function CommentDrawer({ workId, isOpen, onClose }: CommentDrawerProps) {
-  const { address } = useAccount();
-  const chainId = useActiveChainId();
+export default function CommentDrawer({ workId, isOpen, onClose, chainId: workChainId }: CommentDrawerProps) {
+  const { address, chainId: walletChainId } = useAccount();
+  const activeChainId = useActiveChainId();
+  const chainId = workChainId ?? activeChainId;
+  const { switchChainAsync } = useSwitchChain();
   const CONTRACT_ADDRESS = getContractAddress(chainId);
   const [commentText, setCommentText] = useState('');
   
@@ -37,9 +41,14 @@ export default function CommentDrawer({ workId, isOpen, onClose }: CommentDrawer
     }
   }, [isConfirmed, refetch]);
 
-  const handleSendComment = () => {
+  const handleSendComment = async () => {
     if (!commentText.trim()) return;
+    // Le commentaire est enregistré sur le réseau de l'œuvre : bascule du wallet si besoin.
+    if (walletChainId !== chainId) {
+      try { await switchChainAsync({ chainId }); } catch { return; }
+    }
     writeContract({
+      chainId,
       address: CONTRACT_ADDRESS as `0x${string}`,
       abi: BeamUpABI,
       functionName: 'addComment',
