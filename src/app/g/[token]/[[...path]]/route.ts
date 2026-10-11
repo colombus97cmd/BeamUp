@@ -1,6 +1,6 @@
 import { redis, hasRedis } from '../../../../lib/redis';
 import { readGameToken, gamesOrigin, mainOrigin } from '../../../../lib/games/token';
-import { getManifest, isApproved, Manifest } from '../../../../lib/games/store';
+import { getManifest, isApproved, innerName, Manifest } from '../../../../lib/games/store';
 import { privateLink } from '../../../../lib/games/pinata';
 
 // Passerelle des jeux, servie UNIQUEMENT sur le domaine des jeux (GAMES_ORIGIN, voir src/middleware.ts).
@@ -47,11 +47,16 @@ async function serve(req: Request, params: Promise<{ token: string; path?: strin
   if (!manifest) return notFound();
 
   const wanted = path.map((p) => decodeURIComponent(p)).filter((p) => p && p !== '.' && p !== '..').join('/') || manifest.entry;
-  const file = manifest.files[wanted] ?? manifest.files[`${wanted}/index.html`];
+  const key = manifest.files[wanted] ? wanted : `${wanted}/index.html`;
+  const file = manifest.files[key];
   if (!file) return notFound();
 
   const range = req.headers.get('range');
-  const upstream = await fetch(await linkFor(file.cid), { headers: range ? { Range: range } : {}, signal: AbortSignal.timeout(280_000) });
+  // Manifestes version 1 : le fichier se trouve dans le dossier créé par Pinata ; le lien signé du dossier vaut pour son contenu.
+  const target = new URL(await linkFor(file.cid));
+  const inner = innerName(manifest, key);
+  if (inner) target.pathname += '/' + encodeURIComponent(inner);
+  const upstream = await fetch(target, { headers: range ? { Range: range } : {}, signal: AbortSignal.timeout(280_000) });
   if (!upstream.ok && upstream.status !== 206) return notFound(502);
 
   const headers = new Headers({

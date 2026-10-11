@@ -5,7 +5,13 @@ import type { Finding } from './inspect';
 // Le CID enregistré sur la blockchain pour une œuvre « Jeu » est celui du manifeste.
 
 export interface ManifestFile { cid: string; type: string; size: number; encoding?: 'gzip' | 'br' }
-export interface Manifest { version: 1; entry: string; files: Record<string, ManifestFile> }
+// Version 1 (premiers dépôts) : Pinata a rangé chaque fichier d'un sous-dossier dans un dossier portant son chemin ;
+// le CID enregistré est celui de ce dossier, le fichier se lit à l'intérieur (voir innerName). Version 2 : CID du fichier.
+export interface Manifest { version: 1 | 2; entry: string; files: Record<string, ManifestFile> }
+
+/** Nom du fichier à lire à l'intérieur du CID (manifestes version 1, fichiers de sous-dossier), sinon undefined. */
+export const innerName = (manifest: Manifest, path: string) =>
+  manifest.version === 1 && path.includes('/') ? path.split('/').pop() : undefined;
 
 export type GameStatus = 'refusé' | 'en_attente' | 'approuvé' | 'rejeté';
 

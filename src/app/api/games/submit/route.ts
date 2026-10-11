@@ -61,7 +61,7 @@ export async function POST(req: Request) {
   }
 
   // 2. Fichiers privés + manifeste.
-  const manifest: Manifest = { version: 1, entry: inspection.entry, files: {} };
+  const manifest: Manifest = { version: 2, entry: inspection.entry, files: {} };
   const queue = [...inspection.files];
   await Promise.all(Array.from({ length: PARALLEL_UPLOADS }, async () => {
     for (let f = queue.shift(); f; f = queue.shift()) {

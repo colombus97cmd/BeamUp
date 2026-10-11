@@ -10,7 +10,9 @@ const jwt = () => {
 const gateway = () => process.env.PINATA_GATEWAY || 'coffee-tremendous-crayfish-424.mypinata.cloud';
 
 /** Envoie un fichier sur le réseau privé. Renvoie son CID. */
-export async function uploadPrivate(bytes: Uint8Array, name: string, keyvalues: Record<string, string> = {}): Promise<string> {
+export async function uploadPrivate(bytes: Uint8Array, rawName: string, keyvalues: Record<string, string> = {}): Promise<string> {
+  // Une barre oblique dans le nom ferait créer un dossier par Pinata (le CID serait celui du dossier) : on la remplace.
+  const name = rawName.replace(/[\/]/g, '__');
   const form = new FormData();
   form.append('file', new Blob([bytes as BlobPart]), name);
   form.append('network', 'private');
