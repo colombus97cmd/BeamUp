@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { api, type Data } from './AdminConsole';
-import { Card, ActionButton } from './ui';
+import { Card, ActionButton, fmtDate } from './ui';
 
 const AGENTS = [
   { key: 'promotionAgent', path: '/api/agents/promotion', name: 'Agent promotionnel', text: 'Chaque mardi : recherche de créateurs et d\'événements, posts, newsletter, cibles de démarchage, décisions à prendre. Tout passe par l\'onglet Promotion.' },
@@ -25,6 +25,11 @@ export default function Overview({ data, reload }: { data: Data; reload: () => v
   const r = data.readiness || {};
 
   const toggle = async (key: string, value: boolean) => { await api('/api/admin/settings', 'POST', { key, value }); reload(); };
+
+  // Œuvres de membres de la Sacem : une autorisation de la Sacem est nécessaire pour les diffuser.
+  const [declarations, setDeclarations] = useState<any[] | null>(null);
+  useEffect(() => { api('/api/works/declare').then((d) => setDeclarations(d.declarations)).catch(() => setDeclarations([])); }, []);
+  const sacemWorks = (declarations || []).filter((d) => d.sacem);
 
   return (
     <div className="grid md:grid-cols-2 gap-4">
@@ -63,6 +68,21 @@ export default function Overview({ data, reload }: { data: Data; reload: () => v
           </ActionButton>
           {results.test && <span className="text-[11px] text-gray-400">{results.test}</span>}
         </div>
+      </Card>
+
+      <Card title="Droits d'auteur (Sacem)">
+        {declarations === null ? <p className="text-sm text-gray-500">Chargement…</p> : (
+          <>
+            <p className="text-xs text-gray-500 leading-relaxed mb-3">
+              {declarations.length} œuvre(s) déclarée(s) depuis la mise en place des conditions des créateurs, dont {sacemWorks.length} d&apos;un membre de la Sacem (ou d&apos;une autre société de gestion). Pour celles-ci, une autorisation de la Sacem est nécessaire : à demander dès que le catalogue le justifie.
+            </p>
+            {sacemWorks.length > 0 && (
+              <ul className="text-xs text-gray-300 space-y-1">
+                {sacemWorks.slice(0, 20).map((d) => <li key={d.cid}>{d.title} · {d.format} · {d.creator.slice(0, 8)}… · {fmtDate(d.at)}</li>)}
+              </ul>
+            )}
+          </>
+        )}
       </Card>
 
       {AGENTS.map((a) => {

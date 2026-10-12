@@ -9,6 +9,8 @@ import { useAccount, useSignMessage } from 'wagmi';
 import { useActiveChainId } from '../hooks/useActiveChainId';
 import { requestPremiumMedia, type MediaStep } from '../services/mediaAccess';
 import CommentDrawer from './CommentDrawer';
+import WorkLinks from './WorkLinks';
+import type { WorkLink } from '../lib/workInfo';
 
 interface SocialFeedProps {
   works: (any & { id: number, isPremium: boolean, price: bigint, hasPaid: boolean, priceLabel: string, soldOut: boolean })[];
@@ -36,6 +38,14 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
   const lastPlayedWorkId = useRef<number | null>(null);
 
   const getMediaUrl = (ipfsCid: string) => `https://gateway.pinata.cloud/ipfs/${ipfsCid}`;
+
+  // Liens externes des œuvres (DistroKid, Spotify, Steam…), chargés en une fois pour les œuvres affichées.
+  const [workLinks, setWorkLinks] = useState<Record<string, WorkLink[]>>({});
+  const cidList = Array.from(new Set(works.map((w: any) => w.ipfsCID).filter(Boolean))).slice(0, 100).join(',');
+  useEffect(() => {
+    if (!cidList) return;
+    fetch(`/api/works/links?cids=${cidList}`).then((r) => r.json()).then((d) => setWorkLinks(d.links || {})).catch(() => {});
+  }, [cidList]);
 
   // Œuvres premium : fichier privé, lien temporaire obtenu après vérification on-chain du NFT.
   const chainId = useActiveChainId();
@@ -452,6 +462,15 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
                     </div>
                     <span className="hidden md:block text-[9px] font-black uppercase tracking-widest text-gray-500">{isSaved?.(work.id) ? 'Ajouté' : 'Biblio'}</span>
                   </button>
+                )}
+
+                {work.ipfsCID && (
+                  <WorkLinks
+                    work={{ ipfsCID: work.ipfsCID, creator: work.creator, chainId: work.chainId ?? chainId, workId: work.workId ?? work.id }}
+                    links={workLinks[work.ipfsCID] || []}
+                    address={address}
+                    onSaved={(cid, l) => setWorkLinks((prev) => ({ ...prev, [cid]: l }))}
+                  />
                 )}
 
                 <button className="flex flex-col items-center gap-2 group">

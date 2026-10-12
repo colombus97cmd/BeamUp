@@ -37,6 +37,8 @@ export default function Publish() {
   const [payWith, setPayWith] = useState<'native' | 'btc' | 'eur' | 'usd'>('native');
   const [royalty, setRoyalty] = useState('5');
   const [maxSupply, setMaxSupply] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [sacem, setSacem] = useState<'' | 'oui' | 'non'>('');
   const btcToken = BTC_TOKENS[chainId];
   // Stablecoins (prix fixe) : proposés seulement une fois le jeton autorisé dans le contrat par le Safe.
   const eurCandidate = EUR_TOKENS[chainId];
@@ -64,7 +66,7 @@ export default function Publish() {
 
   const handlePublish = async () => {
     const isGame = getFormat(category).kind === 'game';
-    if ((!file && (!manualCid || isGame)) || !title) return;
+    if ((!file && (!manualCid || isGame)) || !title || !termsAccepted || (asksSacem && !sacem)) return;
     setStatus('uploading');
     setUploadProgress(0);
     try {
@@ -81,6 +83,12 @@ export default function Publish() {
         finalCid = await uploadToIPFS(file, address, signMessageAsync, (percent) => setUploadProgress(percent), { private: isPremium, chainId });
         setCid(finalCid);
       }
+
+      // Déclaration du créateur (conditions acceptées, adhésion Sacem) : enregistrée avant la transaction, sans bloquer en cas d'échec.
+      await fetch('/api/works/declare', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cid: finalCid, title, format: category, address, sacem: sacem === 'oui', terms: true }),
+      }).catch(() => {});
 
       setStatus('blockchain');
       const token = isPremium ? payToken : undefined;
@@ -108,6 +116,9 @@ export default function Publish() {
       setStatus('error');
     }
   };
+
+  // Musique et vidéo : la Sacem gère les droits de ses membres, y compris sur BeamUp.
+  const asksSacem = ['audio', 'video'].includes(getFormat(category).kind);
 
   const BeamEnergyBall = () => (
     <div className="relative w-24 h-48 flex items-center justify-center scale-75">
@@ -313,7 +324,24 @@ export default function Publish() {
                   </p>
                 </div>
 
-                <button onClick={handlePublish} disabled={(!file && (!manualCid || getFormat(category).kind === 'game')) || !title || status === 'uploading' || status === 'verifying'} className='w-full py-5 md:py-6 bg-gradient-to-r from-[#00f2ff] to-[#bc13fe] text-black font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-2xl md:rounded-[24px] hover:shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4'>
+                {asksSacem && (
+                  <div className='space-y-2'>
+                    <p className='text-[9px] md:text-[10px] uppercase font-black text-gray-500 tracking-widest'>Êtes-vous membre de la Sacem (ou d&apos;une autre société de gestion collective) ?</p>
+                    <div className='grid grid-cols-2 gap-2'>
+                      {(['non', 'oui'] as const).map((v) => (
+                        <button key={v} type='button' onClick={() => setSacem(v)} className={`py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-wider ${sacem === v ? 'bg-white text-black border-white' : 'bg-white/5 border-white/10 text-gray-400'}`}>{v === 'oui' ? 'Oui' : 'Non'}</button>
+                      ))}
+                    </div>
+                    {sacem === 'oui' && <p className='text-[10px] text-gray-400 leading-relaxed'>La Sacem gère vos droits d&apos;auteur, y compris sur BeamUp : nous faisons la démarche auprès d&apos;elle. Vos droits d&apos;auteur vous sont versés par la Sacem ; vos ventes et pourboires, par BeamUp.</p>}
+                  </div>
+                )}
+
+                <label className='flex items-start gap-3 text-[10px] text-gray-400 leading-relaxed'>
+                  <input type='checkbox' checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} className='mt-0.5' />
+                  <span>Je détiens tous les droits sur cette œuvre et j&apos;accepte les <Link href='/conditions' target='_blank' className='underline hover:text-white'>conditions des créateurs</Link> et la <Link href='/charte' target='_blank' className='underline hover:text-white'>charte</Link>.</span>
+                </label>
+
+                <button onClick={handlePublish} disabled={(!file && (!manualCid || getFormat(category).kind === 'game')) || !title || !termsAccepted || (asksSacem && !sacem) || status === 'uploading' || status === 'verifying'} className='w-full py-5 md:py-6 bg-gradient-to-r from-[#00f2ff] to-[#bc13fe] text-black font-black uppercase tracking-[0.2em] text-[10px] md:text-xs rounded-2xl md:rounded-[24px] hover:shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 mt-4'>
                   <Rocket className='w-4 h-4 md:w-5 md:h-5' /> Diffuser ({feeLabel} {currencySymbol})
                 </button>
               </div>
