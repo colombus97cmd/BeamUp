@@ -3,13 +3,13 @@ import { isAddress, verifyMessage } from 'viem';
 import { clientIp } from '../../../../lib/security';
 import { hasPurchased } from '../../../../lib/games';
 import { redis, rateLimited, hasRedis } from '../../../../lib/redis';
-import { privateLink } from '../../../../lib/games/pinata';
+import { createGameToken } from '../../../../lib/games/token';
 import { issueLicence, licenceMessage, licencePublicKey, LICENCE_DAYS, WINDOWS_KEY } from '../../../../lib/licence';
 
 // Version Windows de Chains & Crowns, réservée aux acheteurs (achat vérifié sur la blockchain, wallet prouvé par signature).
 //  GET                                   → { available, version, size, publicKey } (public) ;
 //  POST { action: 'licence', address, issuedAt, signature } → licence signée (45 jours) pour l'application ;
-//  POST { action: 'download', ... }      → lien de téléchargement temporaire de l'installateur (fichier privé chez Pinata).
+//  POST { action: 'download', ... }      → lien de téléchargement temporaire (6 h) servi par BeamUp avec le vrai nom du fichier (voir ./download).
 
 export async function GET() {
   const [raw] = hasRedis() ? await redis([['GET', WINDOWS_KEY]]) : [null];
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     const [raw] = await redis([['GET', WINDOWS_KEY]]);
     if (!raw) return NextResponse.json({ error: 'La version Windows n’est pas encore disponible.' }, { status: 404 });
     const info = JSON.parse(raw);
-    return NextResponse.json({ url: await privateLink(info.cid, 3600), version: info.version, fileName: info.fileName });
+    return NextResponse.json({ url: `/api/games/licence/download?t=${encodeURIComponent(createGameToken(`windows:${info.cid}`))}`, version: info.version, fileName: info.fileName });
   }
   return NextResponse.json({ error: 'Action inconnue' }, { status: 400 });
 }
