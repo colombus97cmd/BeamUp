@@ -132,6 +132,32 @@ function MetaCard({ onState }: { onState: (connected: boolean) => void }) {
   );
 }
 
+/** Créateurs qui refusent d'être mis en avant (demande reçue par mail). */
+function OptOutCard() {
+  const [list, setList] = useState<string[] | null>(null);
+  const [addr, setAddr] = useState('');
+  const load = () => api('/api/admin/promo-optout').then((d) => setList(d.optout)).catch(() => setList([]));
+  useEffect(() => { load(); }, []);
+  return (
+    <Card title="Créateurs exclus de la promotion">
+      <p className="text-xs text-gray-500 mb-3 leading-relaxed">L&apos;agent met en avant les œuvres de tous les créateurs, à tour de rôle. Ajoutez ici le wallet d&apos;un créateur qui a demandé à ne pas être mis en avant.</p>
+      <div className="flex gap-2 mb-3">
+        <input value={addr} onChange={(e) => setAddr(e.target.value)} placeholder="0x…" className="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono outline-none focus:border-[#00f2ff]" />
+        <ActionButton onClick={async () => { await api('/api/admin/promo-optout', 'POST', { address: addr, refuse: true }); setAddr(''); await load(); }}>Exclure</ActionButton>
+      </div>
+      {list && list.length > 0 && (
+        <ul className="space-y-1 text-xs font-mono text-gray-400">
+          {list.map((a) => (
+            <li key={a} className="flex items-center justify-between gap-2">{a}
+              <button className="text-[10px] font-sans uppercase font-black text-gray-500 hover:text-white" onClick={() => api('/api/admin/promo-optout', 'POST', { address: a, refuse: false }).then(load)}>Retirer</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
 export default function PromotionPanel({ data, reload }: { data: Data; reload: () => void }) {
   const [meta, setMeta] = useState(false);
   const [filter, setFilter] = useState<'ouvert' | 'tout'>('ouvert');
@@ -142,6 +168,7 @@ export default function PromotionPanel({ data, reload }: { data: Data; reload: (
   return (
     <div className="space-y-4">
       <MetaCard onState={setMeta} />
+      <OptOutCard />
       <Card title="Dernière analyse de l'agent promotionnel">
         {report ? (
           <>

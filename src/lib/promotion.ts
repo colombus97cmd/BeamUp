@@ -1,6 +1,10 @@
 import { randomUUID } from 'crypto';
 import { redis, hashToObject } from './redis';
 import { askJSON, research } from './claude';
+import { getServerClient } from './rpc';
+import BeamUpABI from '../contracts/BeamUpV3.json';
+import { CONTRACT_ADDRESSES, SUPPORTED_CHAIN_IDS, getChainName } from '../config/contracts';
+import { getFormat } from '../config/formats';
 
 // Agent promotionnel de BeamUp : faire connaître la DApp, attirer des créateurs indépendants
 // (en priorité artistes et créateurs de jeux vidéo des Antilles, puis du monde entier) et augmenter vues et revenus.
@@ -15,6 +19,53 @@ import { askJSON, research } from './claude';
 export const PROMO_ITEMS_KEY = 'beam:v1:promo:items';
 export const PROMO_REPORTS_KEY = 'beam:v1:promo:reports';
 export const PROMO_TARGETS_KEY = 'beam:v1:promo:targets';   // cibles déjà proposées, pour éviter les doublons
+export const PROMO_OPTOUT_KEY = 'beam:v1:promo:optout';     // créateurs (wallets) qui refusent d'être mis en avant
+export const PROMO_FEATURED_KEY = 'beam:v1:promo:featured'; // créateurs déjà mis en avant récemment (rotation)
+
+export interface RecentWork { title: string; format: string; creator: string; creatorName: string; chain: string; premium: boolean; likes: number; publishedAt: string }
+
+/**
+ * Œuvres récentes de TOUS les créateurs (pas seulement du fondateur), lues sur la blockchain :
+ * sans les œuvres masquées ni les créateurs qui ont refusé la promotion ; une œuvre publiée en plusieurs éditions compte une fois.
+ */
+export async function recentWorks(perChain = 20): Promise<RecentWork[]> {
+  const [optout] = await redis([['SMEMBERS', PROMO_OPTOUT_KEY]]);
+  const refused = new Set((optout || []).map((a: string) => a.toLowerCase()));
+  const seen = new Set<string>();
+  const out: (RecentWork & { ts: number })[] = [];
+  for (const chainId of SUPPORTED_CHAIN_IDS) {
+    try {
+      const client = getServerClient(chainId);
+      const contract = { address: CONTRACT_ADDRESSES[chainId], abi: BeamUpABI as any };
+      const count = Number(await client.readContract({ ...contract, functionName: 'worksCount' }));
+      if (!count) continue;
+      const offset = Math.max(0, count - perChain);
+      const page = (await client.readContract({ ...contract, functionName: 'getWorksPage', args: [BigInt(offset), BigInt(count - offset)] })) as any[];
+      for (const w of page) {
+        const creator = String(w.creator).toLowerCase();
+        if (w.hidden || refused.has(creator) || seen.has(w.ipfsCID)) continue;
+        seen.add(w.ipfsCID);
+        out.push({ title: String(w.title).slice(0, 120), format: getFormat(w.category).label, creator, creatorName: '', chain: getChainName(chainId), premium: Boolean(w.isPremium), likes: Number(w.likesCount), publishedAt: new Date(Number(w.timestamp) * 1000).toISOString().slice(0, 10), ts: Number(w.timestamp) });
+      }
+    } catch { /* réseau indisponible : chaîne suivante */ }
+  }
+  out.sort((a, b) => b.ts - a.ts);
+  const recent = out.slice(0, 30);
+  // Nom public du créateur (profil BeamUp), sinon adresse abrégée.
+  const names = new Map<string, string>();
+  for (const w of recent) {
+    if (names.has(w.creator)) continue;
+    let name = '';
+    for (const chainId of SUPPORTED_CHAIN_IDS) {
+      try {
+        const prof: any = await getServerClient(chainId).readContract({ address: CONTRACT_ADDRESSES[chainId], abi: BeamUpABI as any, functionName: 'getProfile', args: [w.creator] });
+        if (prof?.exists && prof.username) { name = String(prof.username).slice(0, 40); break; }
+      } catch { /* chaîne suivante */ }
+    }
+    names.set(w.creator, name || w.creator.slice(0, 6) + '…' + w.creator.slice(-4));
+  }
+  return recent.map(({ ts, ...w }) => ({ ...w, creatorName: names.get(w.creator)! }));
+}
 
 export type PromoKind = 'post' | 'newsletter' | 'outreach' | 'event' | 'decision' | 'video';
 export type PromoStatus = 'proposé' | 'approuvé' | 'publié' | 'envoyé' | 'rejeté';
@@ -92,6 +143,7 @@ export async function pruneItems() {
 interface Plan {
   analysis: string;
   posts: { channel: string; title: string; text: string; rationale: string }[];
+  featuredCreators: string[];
   newsletter: { include: boolean; subject: string; text: string; rationale: string };
   outreach: { name: string; type: string; region: string; url: string; message: string; rationale: string }[];
   events: { name: string; date: string; url: string; idea: string }[];
@@ -103,12 +155,13 @@ const PLAN_SCHEMA = {
   properties: {
     analysis: { type: 'string' },
     posts: { type: 'array', items: { type: 'object', properties: { channel: { type: 'string', enum: ['discord', 'facebook', 'x', 'linkedin'] }, title: { type: 'string' }, text: { type: 'string' }, rationale: { type: 'string' } }, required: ['channel', 'title', 'text', 'rationale'], additionalProperties: false } },
+    featuredCreators: { type: 'array', items: { type: 'string' } },
     newsletter: { type: 'object', properties: { include: { type: 'boolean' }, subject: { type: 'string' }, text: { type: 'string' }, rationale: { type: 'string' } }, required: ['include', 'subject', 'text', 'rationale'], additionalProperties: false },
     outreach: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, type: { type: 'string' }, region: { type: 'string' }, url: { type: 'string' }, message: { type: 'string' }, rationale: { type: 'string' } }, required: ['name', 'type', 'region', 'url', 'message', 'rationale'], additionalProperties: false } },
     events: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, date: { type: 'string' }, url: { type: 'string' }, idea: { type: 'string' } }, required: ['name', 'date', 'url', 'idea'], additionalProperties: false } },
     decisions: { type: 'array', items: { type: 'object', properties: { question: { type: 'string' }, options: { type: 'array', items: { type: 'string' } }, recommendation: { type: 'string' } }, required: ['question', 'options', 'recommendation'], additionalProperties: false } },
   },
-  required: ['analysis', 'posts', 'newsletter', 'outreach', 'events', 'decisions'],
+  required: ['analysis', 'posts', 'featuredCreators', 'newsletter', 'outreach', 'events', 'decisions'],
   additionalProperties: false,
 };
 
@@ -117,6 +170,9 @@ const isHttps = (u: string) => /^https:\/\/[^\s]+$/.test(u);
 /** Une semaine de travail de l'agent : recherche, plan, propositions. */
 export async function runPromotionAgent(kpis: Record<string, unknown>): Promise<{ analysis: string; items: PromoItem[] }> {
   const known = await knownTargets();
+  const works = await recentWorks().catch(() => [] as RecentWork[]);
+  const [featuredRaw] = await redis([['LRANGE', PROMO_FEATURED_KEY, 0, 29]]);
+  const recentlyFeatured: string[] = featuredRaw || [];
   const today = new Date().toISOString().slice(0, 10);
 
   const findings = await research({
@@ -134,11 +190,15 @@ export async function runPromotionAgent(kpis: Record<string, unknown>): Promise<
     system: `Tu es l'agent promotionnel de BeamUp.\n\n${BEAMUP_FACTS}\n\n${RULES}`,
     prompt:
       `Indicateurs de la semaine :\n<indicateurs>\n${JSON.stringify(kpis, null, 2)}\n</indicateurs>\n\n` +
+      `Œuvres récentes publiées sur BeamUp par l'ensemble des créateurs (données de la blockchain) :\n<oeuvres>\n${JSON.stringify(works, null, 1)}\n</oeuvres>\n` +
+      `Créateurs déjà mis en avant ces dernières semaines (à faire tourner) : ${recentlyFeatured.join(', ') || '(aucun)'}.\n\n` +
       `Résultats de recherche :\n<recherche>\n${findings.slice(0, 30000)}\n</recherche>\n\n` +
       `Prépare le plan de la semaine :\n` +
       `- analysis : analyse courte des indicateurs et de ce qui marche, pour les dirigeants.\n` +
       `- posts : 3 à 6 posts pour les canaux de BeamUp (au moins un pour Discord et un pour Facebook), chacun adapté à son réseau. Discord et Facebook se publient en un clic depuis la page de pilotage ; pour Facebook, un texte complet et naturel, sans lien raccourci (le lien de la page concernée est ajouté à part). Instagram et TikTok ne reçoivent que des vidéos (la vidéo de la semaine est tournée automatiquement) : ne propose jamais de post texte pour eux.\n` +
-      `- newsletter : une newsletter pour les abonnés ; include = false si l'actualité ne la justifie pas.\n` +
+      `  Mets en avant les œuvres de toute la communauté, pas seulement celles du fondateur : quand il y a des œuvres récentes d'autres créateurs, au moins un post les présente, en citant le créateur par son nom public, le titre et le format. Fais tourner les créateurs (évite ceux déjà mis en avant récemment), sans classement ni jugement de valeur entre les œuvres, et n'invente rien sur une œuvre au-delà des données fournies.\n` +
+      `- featuredCreators : les adresses de wallet des créateurs mis en avant cette semaine (tirées des données des œuvres).\n` +
+      `- newsletter : une newsletter pour les abonnés, qui présente aussi les nouvelles œuvres de la communauté ; include = false si l'actualité ne la justifie pas.\n` +
       `- outreach : 3 à 8 organisations de la recherche, avec un message personnalisé (présentation honnête, invitation à publier sur BeamUp ou à échanger), uniquement si l'URL vient des résultats.\n` +
       `- events : les événements pertinents trouvés, avec une idée d'action.\n` +
       `- decisions : 0 à 3 décisions importantes à soumettre aux dirigeants (budget, partenariat, priorité), avec options et recommandation.`,
@@ -157,6 +217,10 @@ export async function runPromotionAgent(kpis: Record<string, unknown>): Promise<
   ];
 
   const commands: (string | number)[][] = items.map((i) => ['HSET', PROMO_ITEMS_KEY, i.id, JSON.stringify(i)]);
+  // Rotation : on retient les créateurs mis en avant (seulement des adresses présentes dans les données des œuvres).
+  const valid = new Set(works.map((w) => w.creator));
+  const featured = (plan.featuredCreators || []).map((a) => String(a).toLowerCase()).filter((a) => valid.has(a));
+  if (featured.length) commands.push(['LPUSH', PROMO_FEATURED_KEY, ...featured], ['LTRIM', PROMO_FEATURED_KEY, 0, 29]);
   const names = plan.outreach.map((o) => o.name).filter(Boolean);
   if (names.length) commands.push(['SADD', PROMO_TARGETS_KEY, ...names]);
   commands.push(['LPUSH', PROMO_REPORTS_KEY, JSON.stringify({ at: now, kpis, analysis: plan.analysis, items: items.length })], ['LTRIM', PROMO_REPORTS_KEY, 0, 51]);
