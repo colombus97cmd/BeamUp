@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Gamepad2, Download, Play, Monitor, Smartphone, Coins, Trophy, Award, Palette, ShieldCheck, Swords } from 'lucide-react';
 import Navigation from '../../components/Navigation';
 import TournamentPanel from '../../components/TournamentPanel';
+import LegalFooter from '../../components/LegalFooter';
 import GameNewsSignup from '../../components/GameNewsSignup';
 
 export const metadata: Metadata = {
@@ -140,6 +141,7 @@ export default function Jeux() {
           <GameNewsSignup />
         </section>
       </main>
+      <LegalFooter />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Navigation from '../../components/Navigation';
+import LegalFooter from '../../components/LegalFooter';
 import { CREATOR_TERMS_VERSION } from '../../lib/workInfo';
 
 export const metadata: Metadata = {
@@ -80,6 +81,7 @@ export default function Conditions() {
         ))}
         <p className="text-sm text-gray-400">Questions, retrait d&apos;une œuvre, refus de la promotion : <a className="underline hover:text-white" href="mailto:Beam-up.beautifullearthcorp@outlook.fr">Beam-up.beautifullearthcorp@outlook.fr</a></p>
       </main>
+      <LegalFooter />
     </div>
   );
 }

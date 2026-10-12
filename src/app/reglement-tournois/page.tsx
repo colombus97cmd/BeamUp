@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Navigation from '../../components/Navigation';
+import LegalFooter from '../../components/LegalFooter';
 
 export const metadata: Metadata = {
   title: 'Règlement des tournois | BeamUp',
@@ -101,6 +102,7 @@ export default function ReglementTournois() {
           </section>
         ))}
       </main>
+      <LegalFooter />
     </div>
   );
 }

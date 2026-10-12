@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { CheckCircle2, PenLine, EyeOff, Scale } from 'lucide-react';
 import Navigation from '../../components/Navigation';
+import LegalFooter from '../../components/LegalFooter';
 import { CHARTER } from '../../lib/moderation';
 
 export const metadata: Metadata = {
@@ -43,6 +44,7 @@ export default function Charte() {
           <p className="text-gray-300 text-sm leading-relaxed">{CHARTER.process}</p>
         </section>
       </main>
+      <LegalFooter />
     </div>
   );
 }

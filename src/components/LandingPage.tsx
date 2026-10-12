@@ -6,6 +6,7 @@ import { ArrowRight, Sparkles, Upload, Heart, Wallet, ShieldCheck, Layers, Exter
 import { FORMATS } from '../config/formats';
 import { CONTRACT_ADDRESSES, getChainName, getExplorer } from '../config/contracts';
 import CometField from './CometField';
+import LegalFooter from './LegalFooter';
 
 const CREATOR_SHARE = 0.95;
 
@@ -213,6 +214,7 @@ export default function LandingPage() {
           Commencer <ArrowRight className="w-4 h-4" />
         </Link>
       </section>
+      <LegalFooter />
     </div>
   );
 }
