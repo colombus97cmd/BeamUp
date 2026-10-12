@@ -100,6 +100,9 @@ export const BEAMUP_FACTS = `BeamUp (https://beamup.beautifull-earthcorp.tech) e
   - Démo GRATUITE : uniquement sur le portfolio de David Colombo (portfolio-2026-colombod.vercel.app/chains-and-crowns), installable sur PC et mobile ; niveau Recrue et plateau Édition 1802.
   - Édition COMPLÈTE (tous les niveaux, tous les plateaux) : sur BeamUp, payante, prix fixe 4,99 € (EURI) ou 5 $ (USDC). Il n'y a PAS de démo gratuite sur BeamUp.
   - Tournois gratuits (sans droit d'inscription), réservés aux joueurs de l'édition complète ; système suisse, inscription sur la page Jeux de BeamUp.
+  - École de la Résistance : 8 chapitres interactifs pour apprendre les échecs (des déplacements aux finales), avec un mentor pendant les parties et des rangs, de Rebelle à Maître des rébellions. Les 2 premiers chapitres sont dans la démo gratuite ; tout le reste dans l'édition complète.
+  - Tournoi hors ligne contre 7 IA (Recrues dans la démo ; Officiers et Généraux dans l'édition complète).
+  - Version Windows installable, réservée aux acheteurs de l'édition complète (téléchargement sur la page Jeux de BeamUp).
 - Fondateur : David Colombo (colombus97), créateur multimédia guadeloupéen. BeamUp fait partie de l'écosystème Beautiful Earth Corp (Trois-Rivières, Guadeloupe).
 - Mission : revaloriser les artistes et créateurs indépendants, en commençant par les Antilles.
 - Comptes officiels : page Facebook « Beautiful Earth Corp · BeamUp », Instagram @beamup.beautifullearthcorp, serveur Discord (salon d'annonces).
