@@ -129,7 +129,7 @@ export default function Jeux() {
             <div>
               <h3 className="font-black uppercase text-sm mb-2">Tournois gratuits</h3>
               <p className="text-gray-400 text-sm leading-relaxed">
-                Inscription gratuite et ouverte à tous, sans achat. Les lots éventuels sont offerts par des partenaires, jamais financés par les joueurs.
+                Inclus dans l&apos;édition complète : inscription gratuite, sans droit d&apos;inscription. Les lots éventuels sont offerts par des partenaires, jamais financés par les joueurs.
               </p>
             </div>
           </div>

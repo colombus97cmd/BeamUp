@@ -1,8 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useAccount, useSignMessage } from 'wagmi';
+import { ConnectKitButton } from 'connectkit';
+import { walletMessage } from '../lib/walletMessage';
 import { Swords, Loader2, CheckCircle2, CalendarDays, Users, Gift, Trophy, Copy } from 'lucide-react';
 
-// Tournoi en cours, organisé par l'agent des tournois. Inscription gratuite et ouverte à tous.
+// Tournoi en cours. Inscription gratuite, réservée aux possesseurs de l'édition complète (ou d'un pass saison) :
+// le joueur signe un message avec le wallet de l'achat (aucune transaction, aucun frais), BeamUp vérifie l'achat sur la blockchain.
 
 interface Tournament {
   id: string; name: string; startsAt: string; format: 'suisse' | 'elimination'; rounds: number;
@@ -15,6 +19,8 @@ const fmt = (iso: string) =>
   new Date(iso).toLocaleString('fr-FR', { timeZone: 'America/Guadeloupe', dateStyle: 'full', timeStyle: 'short' }) + ' (heure de Guadeloupe)';
 
 export default function TournamentPanel() {
+  const { address, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const [t, setT] = useState<Tournament | null | undefined>(undefined);
   const [legal, setLegal] = useState('');
   const [form, setForm] = useState({ pseudo: '', email: '', discord: '', news: false, rules: false });
@@ -32,14 +38,16 @@ export default function TournamentPanel() {
     setBusy(true);
     setStatus(null);
     try {
-      const res = await fetch('/api/tournaments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const issuedAt = Date.now();
+      const signature = await signMessageAsync({ message: walletMessage(address!, issuedAt) });
+      const res = await fetch('/api/tournaments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, address, issuedAt, signature }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur');
-      setStatus({ ok: true, text: data.already ? 'Vous êtes déjà inscrit : utilisez le lien reçu à l\'inscription.' : 'Inscription confirmée !' });
+      setStatus({ ok: true, text: data.already ? 'Vous êtes déjà inscrit. Voici à nouveau votre lien.' : 'Inscription confirmée !' });
       if (data.link) setLink(data.link);
       if (!data.already) setT((x) => (x ? { ...x, registered: x.registered + 1 } : x));
     } catch (err: any) {
-      setStatus({ ok: false, text: err.message });
+      setStatus({ ok: false, text: err?.shortMessage || err?.message || 'Signature refusée.' });
     } finally {
       setBusy(false);
     }
@@ -85,13 +93,19 @@ export default function TournamentPanel() {
               {t.live.status === 'running' && <p className="text-[11px] text-gray-500">Joueurs inscrits : ouvrez votre lien personnel pour jouer votre partie.</p>}
             </div>
           ) : (
+          !isConnected ? (
+            <div className="space-y-2">
+              <p className="text-xs text-gray-400 leading-relaxed">Tournois gratuits, réservés aux joueurs de l&apos;édition complète. Connectez le wallet utilisé pour l&apos;achat.</p>
+              <ConnectKitButton />
+            </div>
+          ) : (
           <form className="space-y-3" onSubmit={submit}>
             <input className={input} placeholder="Pseudo de joueur" value={form.pseudo} onChange={(e) => setForm({ ...form, pseudo: e.target.value })} maxLength={20} required />
             <input className={input} type="email" placeholder="Adresse mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} autoComplete="email" />
             <input className={input} placeholder="ou pseudo Discord" value={form.discord} onChange={(e) => setForm({ ...form, discord: e.target.value.toLowerCase() })} />
             <label className="flex items-start gap-2 text-xs text-gray-400 leading-relaxed">
               <input type="checkbox" checked={form.rules} onChange={(e) => setForm({ ...form, rules: e.target.checked })} className="mt-0.5" required />
-              J&apos;accepte le règlement : jeu loyal (aucune aide d&apos;un moteur d&apos;échecs ni d&apos;une autre personne), coordonnées utilisées uniquement pour ce tournoi et effacées sous 90 jours.
+              J&apos;accepte le règlement : jeu loyal (aucune aide d&apos;un moteur d&apos;échecs ni d&apos;une autre personne), coordonnées utilisées uniquement pour ce tournoi et effacées sous 90 jours (sauf abonnement aux news).
             </label>
             <label className="flex items-start gap-2 text-xs text-gray-400 leading-relaxed">
               <input type="checkbox" checked={form.news} onChange={(e) => setForm({ ...form, news: e.target.checked })} className="mt-0.5" />
@@ -101,7 +115,7 @@ export default function TournamentPanel() {
               {busy && <Loader2 className="w-3.5 h-3.5 animate-spin" />} {t.registered >= t.capacity ? 'Complet' : 'M\'inscrire gratuitement'}
             </button>
           </form>
-          )}
+          ))}
           {legal && <p className="text-[11px] text-gray-500 mt-3">{legal}</p>}
         </>
       )}

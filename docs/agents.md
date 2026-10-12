@@ -39,7 +39,7 @@ Générer un secret : `node -e "console.log(require('crypto').randomBytes(32).to
 
 ## Garde-fous légaux et RGPD codés en dur
 
-- Tournois : inscription gratuite et ouverte à tous, aucun achat requis ; lots uniquement ceux déclarés dans `/pilotage` (offerts par des partenaires) ; mentions légales ajoutées par le code à chaque annonce ; une annonce par semaine au maximum ; dates, places et cadence bornées.
+- Tournois : inscription gratuite (aucun droit d'inscription), réservée aux possesseurs de l'édition complète ou d'un pass saison (achat vérifié par signature du wallet) ; lots uniquement ceux déclarés dans `/pilotage` (offerts par des partenaires) ; mentions légales ajoutées par le code à chaque annonce ; une annonce par semaine au maximum ; dates, places et cadence bornées.
 - Contacts : consentement explicite, finalité unique (news et tournois), désinscription en un clic dans chaque mail, effacement sur demande, coordonnées des simples inscrits à un tournoi effacées après 90 jours.
 - Promotion : jamais de NFT présenté comme placement ni de promesse de revenus ; démarchage limité aux organisations et pages professionnelles publiques, envoyé par un humain.
 - Modération : rien n'est effacé (les commentaires sont sur la blockchain), seulement masqué sur BeamUp avec la raison ; signalement possible par tous ; dernier mot aux signataires.
@@ -54,7 +54,7 @@ Générer un secret : `node -e "console.log(require('crypto').randomBytes(32).to
 
 Code : `src/lib/tournamentPlay.ts` (moteur), `src/app/api/tournaments/play` (API du jeu), `js/tournament.js` dans le jeu (portfolio).
 
-1. **Inscription** sur `/jeux#tournoi` (gratuite, sans achat) : le joueur reçoit son **lien personnel** (affiché une fois, et envoyé par mail) vers la démo gratuite du jeu : `…/chains-and-crowns/index.html?tournoi=<jeton>`.
+1. **Inscription** sur `/jeux#tournoi` : gratuite, réservée aux possesseurs de l'édition complète (le joueur connecte le wallet de l'achat et signe un message, sans transaction ni frais ; un wallet = un joueur). Il reçoit son **lien personnel** (affiché, et envoyé par mail) vers la version web du jeu : `…/chains-and-crowns/index.html?tournoi=<jeton>`. Sans ce lien, la démo n'a pas accès aux tournois.
 2. **Début** : à l'heure prévue, la première consultation (un joueur, la page Jeux ou `/pilotage`) apparie les inscrits en système suisse. Aucune tâche planifiée n'est nécessaire.
 3. **Ronde** : chaque joueur ouvre son lien ; le jeu signale sa présence, affiche son adversaire et sa couleur, puis « Jouer ma partie » ouvre une salle pair-à-pair privée (identifiant secret connu des deux joueurs seulement), avec une pendule par joueur (cadence du tournoi).
 4. **Résultat** : déclaré automatiquement par le jeu des deux joueurs, avec la liste des coups. Concordance → validé ; désaccord → **litige** (nulle provisoire, mail à l'administrateur, à trancher dans `/pilotage` → Tournois → « Arbitrer »).

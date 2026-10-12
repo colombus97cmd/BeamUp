@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server';
-import { createHash } from 'crypto';
 import { redis, hasRedis, rateLimited } from '../../../lib/redis';
-import { clientIp } from '../../../lib/security';
+import { clientIp, verifyWallet } from '../../../lib/security';
+import { hasPurchased } from '../../../lib/games';
 import { contactKey, NEWS_SET, EMAIL_RE, DISCORD_RE } from '../../../lib/contacts';
 import { currentTournament, playersKey, formatDate, LEGAL_FOOTER } from '../../../lib/tournaments';
 import { sendMails } from '../../../lib/notify';
 import { moderateText } from '../../../lib/moderation';
 import { advance, standings, playLink } from '../../../lib/tournamentPlay';
 
-// Tournoi en cours : consultation publique et inscription GRATUITE ouverte à tous (aucun achat requis).
+// Tournoi en cours : consultation publique ; inscription gratuite RÉSERVÉE aux possesseurs de l'édition complète
+// (jeu ou pass saison, achat vérifié sur la blockchain par une signature du wallet, sans transaction ni frais).
+// Le prix du jeu n'est pas un « sacrifice financier » pour une compétition en ligne : aucun droit d'inscription n'est demandé.
 // Les coordonnées d'un inscrit sans abonnement aux news sont effacées 90 jours après l'inscription.
 
 const PSEUDO = /^[\p{L}\p{N} _.-]{2,20}$/u;
@@ -36,6 +38,13 @@ export async function POST(req: Request) {
   if (!t || new Date(t.startsAt).getTime() < Date.now()) return NextResponse.json({ error: 'Aucun tournoi ouvert aux inscriptions.' }, { status: 404 });
 
   const body = await req.json().catch(() => null);
+  const address = String(body?.address || '').toLowerCase();
+  if (!(await verifyWallet(address, Number(body?.issuedAt), String(body?.signature || '')))) {
+    return NextResponse.json({ error: 'Signature du wallet invalide ou expirée.' }, { status: 401 });
+  }
+  if (!(await hasPurchased(address))) {
+    return NextResponse.json({ error: 'Les tournois sont réservés aux possesseurs de l’édition complète de Chains & Crowns (ou d’un pass saison). Connectez le wallet utilisé pour l’achat.' }, { status: 403 });
+  }
   const pseudo = String(body?.pseudo || '').trim();
   const email = String(body?.email || '').trim().toLowerCase();
   const discord = String(body?.discord || '').trim().toLowerCase();
@@ -48,14 +57,15 @@ export async function POST(req: Request) {
   const verdict = await moderateText(pseudo, 'pseudo de tournoi').catch(() => null);
   if (verdict?.decision === 'masquer') return NextResponse.json({ error: 'Ce pseudo ne respecte pas la charte de la communauté. Choisissez-en un autre.' }, { status: 400 });
 
-  const id = 't:' + createHash('sha256').update(email || `discord:${discord}`).digest('hex').slice(0, 20);
+  const id = address; // un wallet = un joueur (même identifiant que les contacts des acheteurs)
   const [count, already, subscribed] = await redis([['SCARD', playersKey(t.id)], ['SISMEMBER', playersKey(t.id), id], ['SISMEMBER', NEWS_SET, id]]);
   if (!already && Number(count) >= t.capacity) return NextResponse.json({ error: 'Le tournoi est complet.' }, { status: 409 });
 
   // Un contact déjà abonné aux news le reste : ses coordonnées ne sont pas soumises à l'effacement automatique.
   const news = body?.news === true || Boolean(subscribed);
   const commands: (string | number)[][] = [
-    ['HSET', contactKey(id), 'pseudo', pseudo, 'email', email, 'discord', discord, 'consentAt', new Date().toISOString(), 'source', 'tournoi'],
+    // Les coordonnées laissées vides ne remplacent pas celles déjà données par l'acheteur.
+    ['HSET', contactKey(id), 'pseudo', pseudo, ...(email ? ['email', email] : []), ...(discord ? ['discord', discord] : []), 'consentAt', new Date().toISOString()],
     ['SADD', playersKey(t.id), id],
   ];
   if (news) commands.push(['SADD', NEWS_SET, id], ['PERSIST', contactKey(id)]);
@@ -71,6 +81,6 @@ export async function POST(req: Request) {
       unsubscribeId: id,
     }]).catch(() => { /* inscription valable même sans mail */ });
   }
-  // Le lien n'est affiché qu'à la première inscription : le redemander avec les mêmes coordonnées ne le révèle pas.
-  return NextResponse.json({ ok: true, already: Boolean(already), link: already ? null : link });
+  // La signature prouve que le wallet appartient au joueur : le lien peut lui être redonné.
+  return NextResponse.json({ ok: true, already: Boolean(already), link });
 }

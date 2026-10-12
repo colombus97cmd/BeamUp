@@ -64,7 +64,7 @@ export function readPlayerToken(token: string): { tid: string; pid: string } | n
 /** Identifiant de salle pair-à-pair, connu seulement des deux joueurs de la table. */
 const roomId = (tid: string, round: number, board: number) => mac(`salle:${tid}:${round}:${board}`).replace(/[^A-Za-z0-9]/g, '').slice(0, 24);
 
-/** Démo gratuite du jeu (aucun achat requis pour jouer un tournoi). */
+/** Version web du jeu ; le lien n'est délivré qu'aux inscrits, eux-mêmes possesseurs de l'édition complète. */
 export const GAME_URL = process.env.TOURNAMENT_GAME_URL || 'https://portfolio-2026-colombod.vercel.app/chains-and-crowns/index.html';
 export const playLink = (tid: string, pid: string) => `${GAME_URL}?tournoi=${playerToken(tid, pid)}`;
 

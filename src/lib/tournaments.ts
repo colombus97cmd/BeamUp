@@ -2,7 +2,8 @@ import { redis } from './redis';
 
 // Tournois des jeux BeamUp.
 // Règles légales codées en dur (compétitions de jeux vidéo, art. L321-8 et suivants du Code de la sécurité intérieure) :
-//  - inscription GRATUITE et ouverte à tous, achat du jeu jamais requis ;
+//  - inscription GRATUITE (aucun droit d'inscription), réservée aux possesseurs de l'édition complète ou d'un pass saison ;
+//    le prix d'acquisition du jeu n'est pas un « sacrifice financier » pour une compétition en ligne ;
 //  - lots uniquement offerts par des partenaires et déclarés par l'administrateur (PRIZES_KEY), jamais financés par les joueurs ;
 //  - aucun lot en cauris, en crypto ou en NFT revendable gagné en jouant.
 
@@ -32,7 +33,7 @@ export const REPORTS_KEY = 'beam:v1:agent:tournament:reports';
 export const playersKey = (id: string) => `beam:v1:tournament:${id}:players`;
 
 export const LEGAL_FOOTER =
-  'Inscription gratuite et ouverte à tous, sans achat. Les lots éventuels sont offerts par nos partenaires. Aucune mise, aucun argent réel.';
+  'Inscription gratuite, réservée aux joueurs de l’édition complète. Les lots éventuels sont offerts par nos partenaires. Aucune mise, aucun argent réel.';
 
 export async function currentTournament(): Promise<Tournament | null> {
   const [raw] = await redis([['GET', CURRENT_KEY]]);
