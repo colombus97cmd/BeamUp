@@ -14,7 +14,7 @@ const SECTIONS: { title: string; items: string[] }[] = [
     title: 'Éditeur du site',
     items: [
       'BeamUp est édité par David Colombo, en nom propre, fondateur de BeamUp (la société Beautiful Earth Corp est en cours de création).',
-      'Guadeloupe, France.',
+      'Adresse : Route de Dolé, Bains des Amours, Guadeloupe (France).',
       'Contact : Beam-up.beautifullearthcorp@outlook.fr',
     ],
   },
