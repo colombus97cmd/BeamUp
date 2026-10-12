@@ -1,4 +1,4 @@
-import { createHmac, createPrivateKey, createPublicKey, sign } from 'crypto';
+import { createHmac, createPrivateKey, createPublicKey, sign, verify } from 'crypto';
 
 // Licences de la version Windows de Chains & Crowns (édition complète).
 // Une licence est délivrée à un wallet qui a acheté le jeu (vérifié sur la blockchain) ; elle est signée en Ed25519 :
@@ -29,4 +29,17 @@ export function issueLicence(wallet: string) {
   const payload = Buffer.from(JSON.stringify({ v: 1, p: LICENCE_PRODUCT, w: wallet.toLowerCase(), iat: now, exp: now + LICENCE_DAYS * 86400 })).toString('base64url');
   const sig = sign(null, Buffer.from(payload), privateKey()).toString('base64url');
   return `${payload}.${sig}`;
+}
+
+/** Licence valide (signature BeamUp, bon produit, non expirée) → wallet, sinon null. */
+export function licenceWallet(licence: string): string | null {
+  try {
+    const [payload, sig] = String(licence || '').split('.');
+    if (!payload || !sig) return null;
+    if (!verify(null, Buffer.from(payload), createPublicKey(privateKey()), Buffer.from(sig, 'base64url'))) return null;
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    return data.p === LICENCE_PRODUCT && data.exp * 1000 > Date.now() && /^0x[0-9a-f]{40}$/.test(data.w) ? data.w : null;
+  } catch {
+    return null;
+  }
 }
