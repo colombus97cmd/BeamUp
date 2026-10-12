@@ -3,6 +3,8 @@ import type { Finding } from './inspect';
 
 // Jeux soumis : manifestes (chemin → fichier privé), dossiers de vérification et liste des jeux approuvés.
 // Le CID enregistré sur la blockchain pour une œuvre « Jeu » est celui du manifeste.
+// Mises à jour : le créateur soumet un nouveau zip pour un jeu approuvé ; une fois la mise à jour approuvée,
+// BeamUp sert ce nouveau manifeste à la place de l'original (le CID sur la blockchain, donc les achats, ne changent pas).
 
 export interface ManifestFile { cid: string; type: string; size: number; encoding?: 'gzip' | 'br' }
 // Version 1 (premiers dépôts) : Pinata a rangé chaque fichier d'un sous-dossier dans un dossier portant son chemin ;
@@ -33,12 +35,20 @@ export interface Submission {
   files: number;
   totalBytes: number;
   review?: Review;             // avis de l'agent vérificateur
+  updateOf?: string;           // mise à jour : CID du manifeste original (celui de la blockchain)
 }
 
 export const manifestKey = (cid: string) => `beam:v1:game:manifest:${cid}`;
 export const submissionKey = (id: string) => `beam:v1:game:sub:${id}`;
 export const SUBMISSIONS_KEY = 'beam:v1:game:subs';     // liste des identifiants, plus récents d'abord
 export const APPROVED_KEY = 'beam:v1:game:approved';    // CID de manifeste approuvés
+export const currentKey = (originalCid: string) => `beam:v1:game:current:${originalCid}`; // version servie
+
+/** Manifeste à servir pour un jeu : la dernière mise à jour approuvée, sinon l'original. */
+export async function currentVersion(originalCid: string): Promise<string> {
+  const [cur] = await redis([['GET', currentKey(originalCid)]]);
+  return cur && (await isApproved(cur)) ? cur : originalCid;
+}
 
 export async function getManifest(cid: string): Promise<Manifest | null> {
   const [raw] = await redis([['GET', manifestKey(cid)]]);

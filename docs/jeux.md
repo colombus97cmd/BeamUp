@@ -76,3 +76,14 @@ Les contrats BeamUp n'acceptent un jeton qu'après `setAllowedToken`. Les transa
 4. L'option « Euro (prix fixe) » ou « Dollar (prix fixe) » apparaît alors dans `/publish`.
 
 `polygon-autoriser-USDC.json` est fourni si l'on veut aussi accepter l'USDC sur Polygon.
+
+## Mettre à jour un jeu publié
+
+Le CID enregistré sur la blockchain ne change jamais. Republier le zip créerait donc une autre œuvre, et les achats existants ne s'appliqueraient pas à la nouvelle version. Pour mettre à jour un jeu, il faut passer par `/pilotage` :
+
+1. Ouvrir `/pilotage` → **Jeux** → **Historique**. Sur la carte du jeu approuvé, cliquer **Mettre à jour (nouveau zip)** et choisir le zip. Le wallet signe deux fois : une fois pour l'envoi, une fois pour la soumission. Ces signatures ne déclenchent aucune transaction.
+2. La mise à jour passe par la même vérification qu'un nouveau jeu : inspection, puis relecture par l'agent. Elle apparaît ensuite dans **À valider** avec le badge « mise à jour ».
+3. Une fois **approuvée**, elle devient la version servie, pour toutes les éditions qui partagent ce manifeste (euro et dollar). Les acheteurs y ont accès immédiatement.
+4. Si la mise à jour est **retirée**, la version précédente revient.
+
+Seuls le créateur du jeu et les signataires du Safe peuvent soumettre une mise à jour. La correspondance entre le manifeste original et la version servie est stockée dans Redis : `beam:v1:game:current:<cid original>`.

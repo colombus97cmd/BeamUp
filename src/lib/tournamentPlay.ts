@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import { redis, hashToObject } from './redis';
 import { contactKey } from './contacts';
 import { sendMails, postDiscord, mailAdmin, SITE_URL } from './notify';
-import { type Tournament, playerIds, LEGAL_FOOTER } from './tournaments';
+import { type Tournament, playerIds, LEGAL_FOOTER, currentTournament, playersKey } from './tournaments';
 
 // Déroulement des tournois Chains & Crowns (système suisse), sans tâche planifiée :
 // chaque consultation (joueurs, page Jeux, pilotage) fait avancer le tournoi s'il le faut (fonction advance, sous verrou Redis).
@@ -67,6 +67,21 @@ const roomId = (tid: string, round: number, board: number) => mac(`salle:${tid}:
 /** Version web du jeu ; le lien n'est délivré qu'aux inscrits, eux-mêmes possesseurs de l'édition complète. */
 export const GAME_URL = process.env.TOURNAMENT_GAME_URL || 'https://portfolio-2026-colombod.vercel.app/chains-and-crowns/index.html';
 export const playLink = (tid: string, pid: string) => `${GAME_URL}?tournoi=${playerToken(tid, pid)}`;
+
+/**
+ * Paramètre ?tournoi=<jeton> à ajouter au jeu ouvert sur BeamUp si ce wallet est inscrit au tournoi en cours
+ * (de 2 heures avant le début jusqu'à la fin du tournoi).
+ */
+export async function tournamentQueryFor(address: string): Promise<Record<string, string> | undefined> {
+  const t = await currentTournament();
+  if (!t || Date.now() < new Date(t.startsAt).getTime() - 2 * 3600 * 1000) return undefined;
+  const pid = address.toLowerCase();
+  const [member] = await redis([['SISMEMBER', playersKey(t.id), pid]]);
+  if (!member) return undefined;
+  const s = await loadPlay(t.id);
+  if (s && (s.status === 'finished' || s.status === 'cancelled')) return undefined;
+  return { tournoi: playerToken(t.id, pid) };
+}
 
 // ---------------- Lecture et calculs ----------------
 

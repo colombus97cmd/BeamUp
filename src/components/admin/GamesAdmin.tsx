@@ -1,11 +1,17 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { Loader2, ShieldAlert, ShieldCheck, ShieldQuestion } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useAccount, useSignMessage } from 'wagmi';
+import { Loader2, ShieldAlert, ShieldCheck, ShieldQuestion, Upload } from 'lucide-react';
+import { uploadToIPFS } from '../../services/pinata';
+import { submitGame } from '../../services/gameSubmit';
+import { useActiveChainId } from '../../hooks/useActiveChainId';
 import { api } from './AdminConsole';
 import { Card, ActionButton, Badge, fmtDate } from './ui';
 
 // Validation des jeux soumis : rapport de la vérification automatique + avis de l'agent vérificateur.
 // Seul un jeu approuvé ici peut être joué sur BeamUp.
+// « Mettre à jour » : nouveau zip pour un jeu déjà publié (même œuvre sur la blockchain, achats conservés) ;
+// la mise à jour passe par la même vérification et ne remplace la version servie qu'une fois approuvée.
 
 const STATUS_TONE: Record<string, 'gray' | 'green' | 'yellow' | 'red'> = { en_attente: 'yellow', approuvé: 'green', rejeté: 'red', refusé: 'red' };
 const VERDICT = {
@@ -18,6 +24,32 @@ export default function GamesAdmin() {
   const [subs, setSubs] = useState<any[] | null>(null);
   const [filter, setFilter] = useState<'en_attente' | 'tout'>('en_attente');
   const [error, setError] = useState('');
+  const { address } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+  const chainId = useActiveChainId();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [updating, setUpdating] = useState<string | null>(null);
+  const [progress, setProgress] = useState('');
+
+  const sendUpdate = async (originalCid: string, file: File) => {
+    setUpdating(originalCid);
+    setError('');
+    try {
+      if (!address) throw new Error('Connectez votre wallet.');
+      setProgress('Envoi du zip…');
+      const zipCid = await uploadToIPFS(file, address, signMessageAsync, (p) => setProgress(`Envoi du zip… ${p} %`), { private: true, chainId });
+      setProgress('Vérification…');
+      await submitGame(zipCid, '', address, signMessageAsync, chainId, originalCid);
+      setProgress('Mise à jour soumise : elle apparaît dans « À valider ».');
+      setFilter('en_attente');
+      await load();
+    } catch (e: any) {
+      setProgress('');
+      setError(e?.shortMessage || e?.message || 'Échec de la mise à jour');
+    } finally {
+      setUpdating(null);
+    }
+  };
 
   const load = () => api('/api/games/admin').then((d) => setSubs(d.submissions)).catch((e) => setError(e.message));
   useEffect(() => { load(); }, []);
@@ -31,7 +63,7 @@ export default function GamesAdmin() {
     await load();
   };
 
-  if (error) return <p className="text-red-400 text-sm">{error}</p>;
+  if (error && !subs) return <p className="text-red-400 text-sm">{error}</p>;
   if (!subs) return <Loader2 className="w-5 h-5 animate-spin text-gray-500" />;
   const shown = subs.filter((s) => filter === 'tout' || s.status === 'en_attente');
 
@@ -41,6 +73,14 @@ export default function GamesAdmin() {
         Chaque jeu est inspecté automatiquement (types de fichiers, contenu réel, bombes zip, chemins piégés), puis relu par l&apos;agent vérificateur.
         Approuvé, il tourne isolé sur le domaine des jeux, sans accès à BeamUp ni au wallet des joueurs.
       </p>
+      {error && <p className="text-red-400 text-sm whitespace-pre-wrap">{error}</p>}
+      {progress && <p className="text-sm text-[#7ff8ff]">{progress}</p>}
+      <input ref={fileInput} type="file" accept=".zip,application/zip" className="hidden" onChange={(e) => {
+        const f = e.target.files?.[0];
+        const target = fileInput.current?.dataset.target;
+        e.target.value = '';
+        if (f && target) sendUpdate(target, f);
+      }} />
       <div className="flex gap-2">
         {(['en_attente', 'tout'] as const).map((f) => (
           <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${filter === f ? 'bg-white text-black' : 'bg-white/5 text-gray-400'}`}>
@@ -54,7 +94,7 @@ export default function GamesAdmin() {
         const VIcon = v?.icon;
         const risky = s.review?.verdict !== 'sûr' || s.findings?.some((f: any) => f.severity === 'élevée');
         return (
-          <Card key={s.id} title={<span className="flex flex-wrap items-center gap-2">{s.title} <Badge tone={STATUS_TONE[s.status]}>{s.status.replace('_', ' ')}</Badge></span>}>
+          <Card key={s.id} title={<span className="flex flex-wrap items-center gap-2">{s.title} <Badge tone={STATUS_TONE[s.status]}>{s.status.replace('_', ' ')}</Badge>{s.updateOf && <Badge tone="cyan">mise à jour</Badge>}</span>}>
             <p className="text-[11px] text-gray-500 font-mono break-all mb-3">
               {fmtDate(s.createdAt)} · créateur {s.creator} · {s.files} fichiers · {Math.round(s.totalBytes / 1024)} Ko{s.cid ? ` · ${s.cid}` : ''}
             </p>
@@ -95,6 +135,11 @@ export default function GamesAdmin() {
               <div className="flex flex-wrap gap-2">
                 {s.status !== 'approuvé' && <ActionButton variant="primary" onClick={() => decide(s.cid, 'approve', risky)}>Approuver</ActionButton>}
                 {s.status !== 'rejeté' && <ActionButton variant="danger" onClick={() => decide(s.cid, 'reject', false)}>{s.status === 'approuvé' ? 'Retirer' : 'Rejeter'}</ActionButton>}
+                {s.status === 'approuvé' && !s.updateOf && (
+                  <ActionButton onClick={async () => { if (fileInput.current) { fileInput.current.dataset.target = s.cid; fileInput.current.click(); } }}>
+                    {updating === s.cid ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />} Mettre à jour (nouveau zip)
+                  </ActionButton>
+                )}
               </div>
             )}
           </Card>

@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { isAddress } from 'viem';
 import { redis, hasRedis, rateLimited } from '../../../../lib/redis';
-import { clientIp } from '../../../../lib/security';
+import { clientIp, adminIdentity } from '../../../../lib/security';
 import { getServerClient } from '../../../../lib/rpc';
 import { SUPPORTED_CHAIN_IDS, DEFAULT_CHAIN } from '../../../../config/contracts';
 import { buildGameSubmitMessage } from '../../../../services/gameSubmitMessage';
 import { inspectZip, LIMITS } from '../../../../lib/games/inspect';
 import { reviewGame } from '../../../../lib/games/review';
 import { uploadPrivate, downloadPrivate, deletePrivateByCid } from '../../../../lib/games/pinata';
-import { Manifest, Submission, manifestKey, saveSubmission, isApproved, SUBMISSIONS_KEY } from '../../../../lib/games/store';
+import { Manifest, Submission, manifestKey, saveSubmission, getSubmission, isApproved, SUBMISSIONS_KEY } from '../../../../lib/games/store';
 import { mailAdmin, SITE_URL } from '../../../../lib/notify';
 
 // Soumission d'un jeu (zip déjà déposé sur le réseau privé de Pinata par le créateur) :
@@ -16,6 +16,8 @@ import { mailAdmin, SITE_URL } from '../../../../lib/notify';
 //  2. si conforme : chaque fichier est stocké en privé, un manifeste privé les relie ; son CID identifie le jeu ;
 //  3. l'agent vérificateur relit le code ; 4. le jeu attend la validation d'un signataire du Safe (/pilotage).
 // Le zip déposé est supprimé dans tous les cas.
+// Mise à jour (updateOf = CID du manifeste original, approuvé) : réservée au créateur du jeu ou à un signataire du Safe ;
+// elle suit exactement le même parcours et ne remplace l'original qu'une fois approuvée.
 
 export const maxDuration = 300;
 
@@ -26,7 +28,8 @@ export async function POST(req: Request) {
   if (!hasRedis()) return NextResponse.json({ error: 'Stockage indisponible' }, { status: 503 });
   const body = await req.json().catch(() => null);
   const { zipCid, address, timestamp, signature } = body || {};
-  const title = String(body?.title || '').trim().slice(0, 120) || 'Jeu sans titre';
+  let title = String(body?.title || '').trim().slice(0, 120) || 'Jeu sans titre';
+  const updateOf = typeof body?.updateOf === 'string' && body.updateOf ? body.updateOf : undefined;
   const chainId = SUPPORTED_CHAIN_IDS.includes(Number(body?.chainId)) ? Number(body.chainId) : DEFAULT_CHAIN;
 
   if (typeof zipCid !== 'string' || !/^[a-zA-Z0-9]{20,100}$/.test(zipCid)) return NextResponse.json({ error: 'Fichier invalide' }, { status: 400 });
@@ -42,7 +45,14 @@ export async function POST(req: Request) {
   }).catch(() => false);
   if (!valid) return NextResponse.json({ error: 'Signature invalide' }, { status: 401 });
 
-  const base = { zipCid, title, creator: address.toLowerCase(), createdAt: new Date().toISOString() };
+  if (updateOf) {
+    const original = await getSubmission(updateOf);
+    if (!original || original.updateOf || !(await isApproved(updateOf))) return NextResponse.json({ error: 'Jeu à mettre à jour introuvable ou non approuvé.' }, { status: 404 });
+    if (original.creator !== address.toLowerCase() && !adminIdentity(req)) return NextResponse.json({ error: 'Seul le créateur du jeu peut le mettre à jour.' }, { status: 403 });
+    title = original.title;
+  }
+
+  const base = { zipCid, title, creator: address.toLowerCase(), createdAt: new Date().toISOString(), ...(updateOf ? { updateOf } : {}) };
   let zip: Uint8Array;
   try {
     zip = await downloadPrivate(zipCid, LIMITS.zipBytes);
@@ -77,7 +87,7 @@ export async function POST(req: Request) {
   // 3. Avis de l'agent vérificateur (n'empêche pas la soumission s'il échoue : un humain décide).
   const review = await reviewGame(inspection, title).catch((e) => ({ verdict: 'à_surveiller' as const, summary: `L'agent vérificateur n'a pas pu relire le code (${e?.message || 'erreur'}). Examen humain nécessaire.`, concerns: [] }));
 
-  const already = await isApproved(cid);
+  const already = !updateOf && (await isApproved(cid));
   const submission: Submission = {
     ...base, cid, status: already ? 'approuvé' : 'en_attente', errors: [],
     findings: inspection.findings, externalDomains: inspection.externalDomains,
@@ -89,7 +99,7 @@ export async function POST(req: Request) {
 
   if (!already) {
     await mailAdmin(
-      `[BeamUp] Jeu à valider : ${title}`,
+      `[BeamUp] ${updateOf ? 'Mise à jour' : 'Jeu'} à valider : ${title}`,
       `Créateur : ${base.creator}\nFichiers : ${inspection.files.length} (${Math.round(inspection.totalBytes / 1024)} Ko)\nAvis de l'agent : ${review?.verdict ?? 'non disponible'} — ${review?.summary ?? ''}\n\nÀ valider sur ${SITE_URL}/pilotage (onglet Jeux).`,
     ).catch(() => {});
   }
