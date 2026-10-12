@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   if (body.consent !== true) return NextResponse.json({ error: 'Le consentement est nécessaire pour recevoir les news.' }, { status: 400 });
 
   if (!(await hasPurchased(address))) {
-    return NextResponse.json({ error: 'Ce wallet n\'a pas encore acheté le jeu ni de pass saison. Les tournois restent ouverts à tous, gratuitement.' }, { status: 403 });
+    return NextResponse.json({ error: 'Ce wallet n\'a pas encore acheté le jeu ni de pass saison. Les tournois, gratuits, sont réservés aux joueurs de l’édition complète.' }, { status: 403 });
   }
 
   const [existed] = await redis([
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     await sendMails([{
       to: email,
       subject: 'Bienvenue dans les news BeamUp',
-      text: 'Merci pour votre achat ! Vous recevrez ici les news des jeux BeamUp et les annonces de tournois.\n\nLes tournois sont toujours gratuits et ouverts à tous.',
+      text: 'Merci pour votre achat ! Vous recevrez ici les news des jeux BeamUp et les annonces de tournois.\n\nLes tournois sont toujours gratuits pour les joueurs de l’édition complète.',
       unsubscribeId: address,
     }]).catch(() => { /* l'inscription reste valable même si le mail de bienvenue échoue */ });
   }

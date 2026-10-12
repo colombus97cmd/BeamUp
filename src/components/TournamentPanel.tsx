@@ -64,7 +64,7 @@ export default function TournamentPanel() {
         <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
       ) : t === null ? (
         <p className="text-gray-400 text-sm leading-relaxed">
-          Aucun tournoi ouvert pour le moment. Le prochain sera annoncé ici, sur Discord et par mail aux abonnés des news. Les tournois sont toujours gratuits et ouverts à tous.
+          Aucun tournoi ouvert pour le moment. Le prochain sera annoncé ici, sur Discord et par mail aux abonnés des news. Les tournois sont gratuits, réservés aux joueurs de l’édition complète.
         </p>
       ) : (
         <>
