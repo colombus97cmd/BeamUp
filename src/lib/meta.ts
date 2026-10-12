@@ -8,7 +8,7 @@ import { SITE_URL } from './notify';
 // (sans expiration lorsqu'ils dérivent d'un jeton utilisateur longue durée). Aucun jeton n'est affiché ni copié.
 // Variables : META_APP_ID (public), META_APP_SECRET (secret, Vercel « Sensitive »).
 
-export const GRAPH = 'https://graph.facebook.com/v23.0';
+export const GRAPH = 'https://graph.facebook.com/v26.0';
 export const META_SCOPES = ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts', 'instagram_basic', 'instagram_content_publish', 'business_management'];
 export const redirectUri = () => `${SITE_URL.replace(/\/$/, '')}/api/admin/meta/callback`;
 export const hasMeta = () => Boolean(process.env.META_APP_ID && process.env.META_APP_SECRET);
@@ -71,7 +71,7 @@ export async function consumeState(state: string): Promise<string | null> {
   return admin || null;
 }
 
-export const dialogUrl = (state: string) => `https://www.facebook.com/v23.0/dialog/oauth?${new URLSearchParams({
+export const dialogUrl = (state: string) => `https://www.facebook.com/v26.0/dialog/oauth?${new URLSearchParams({
   client_id: process.env.META_APP_ID!, redirect_uri: redirectUri(), state, response_type: 'code', scope: META_SCOPES.join(','),
 })}`;
 
