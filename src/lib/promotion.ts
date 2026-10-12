@@ -26,7 +26,7 @@ export interface PromoItem {
   createdAt: string;
   updatedAt?: string;
   updatedBy?: string;
-  channel?: string;        // discord, x, instagram, tiktok, linkedin, facebook (post)
+  channel?: string;        // discord, facebook, x, linkedin (post) ; anciens posts : instagram, tiktok
   title: string;
   text: string;            // contenu du post, de la newsletter ou du message de démarchage
   rationale: string;       // pourquoi l'agent le propose
@@ -48,9 +48,11 @@ export const BEAMUP_FACTS = `BeamUp (https://beamup.beautifull-earthcorp.tech) e
 - Premier jeu : « Chains & Crowns », jeu d'échecs 2D inspiré de la résistance guadeloupéenne de 1802 (la Résistance contre l'Empire), contre l'IA ou en duel en ligne.
   - Démo GRATUITE : uniquement sur le portfolio de David Colombo (portfolio-2026-colombod.vercel.app/chains-and-crowns), installable sur PC et mobile ; niveau Recrue et plateau Édition 1802.
   - Édition COMPLÈTE (tous les niveaux, tous les plateaux) : sur BeamUp, payante, prix fixe 4,99 € (EURI) ou 5 $ (USDC). Il n'y a PAS de démo gratuite sur BeamUp.
-  - Tournois gratuits et ouverts à tous (à venir).
+  - Tournois gratuits (sans droit d'inscription), réservés aux joueurs de l'édition complète ; système suisse, inscription sur la page Jeux de BeamUp.
 - Fondateur : David Colombo (colombus97), créateur multimédia guadeloupéen. BeamUp fait partie de l'écosystème Beautiful Earth Corp (Trois-Rivières, Guadeloupe).
-- Mission : revaloriser les artistes et créateurs indépendants, en commençant par les Antilles.`;
+- Mission : revaloriser les artistes et créateurs indépendants, en commençant par les Antilles.
+- Comptes officiels : page Facebook « Beautiful Earth Corp · BeamUp », Instagram @beamup.beautifullearthcorp, serveur Discord (salon d'annonces).
+- Les créateurs peuvent ajouter sous chaque œuvre leurs liens d'écoute ailleurs (Spotify, Apple Music, Deezer, YouTube, Bandcamp, Steam, itch.io…).`;
 
 const RULES = `Règles impératives :
 - Honnêteté : n'utilise que les faits fournis sur BeamUp. Ne dis jamais que le site est terminé ; n'invente ni chiffre, ni partenaire, ni témoignage, ni artiste inscrit.
@@ -100,7 +102,7 @@ const PLAN_SCHEMA = {
   type: 'object',
   properties: {
     analysis: { type: 'string' },
-    posts: { type: 'array', items: { type: 'object', properties: { channel: { type: 'string', enum: ['discord', 'x', 'instagram', 'tiktok', 'linkedin', 'facebook'] }, title: { type: 'string' }, text: { type: 'string' }, rationale: { type: 'string' } }, required: ['channel', 'title', 'text', 'rationale'], additionalProperties: false } },
+    posts: { type: 'array', items: { type: 'object', properties: { channel: { type: 'string', enum: ['discord', 'facebook', 'x', 'linkedin'] }, title: { type: 'string' }, text: { type: 'string' }, rationale: { type: 'string' } }, required: ['channel', 'title', 'text', 'rationale'], additionalProperties: false } },
     newsletter: { type: 'object', properties: { include: { type: 'boolean' }, subject: { type: 'string' }, text: { type: 'string' }, rationale: { type: 'string' } }, required: ['include', 'subject', 'text', 'rationale'], additionalProperties: false },
     outreach: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, type: { type: 'string' }, region: { type: 'string' }, url: { type: 'string' }, message: { type: 'string' }, rationale: { type: 'string' } }, required: ['name', 'type', 'region', 'url', 'message', 'rationale'], additionalProperties: false } },
     events: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, date: { type: 'string' }, url: { type: 'string' }, idea: { type: 'string' } }, required: ['name', 'date', 'url', 'idea'], additionalProperties: false } },
@@ -135,7 +137,7 @@ export async function runPromotionAgent(kpis: Record<string, unknown>): Promise<
       `Résultats de recherche :\n<recherche>\n${findings.slice(0, 30000)}\n</recherche>\n\n` +
       `Prépare le plan de la semaine :\n` +
       `- analysis : analyse courte des indicateurs et de ce qui marche, pour les dirigeants.\n` +
-      `- posts : 3 à 6 posts pour les canaux de BeamUp (au moins un pour Discord), chacun adapté à son réseau.\n` +
+      `- posts : 3 à 6 posts pour les canaux de BeamUp (au moins un pour Discord et un pour Facebook), chacun adapté à son réseau. Discord et Facebook se publient en un clic depuis la page de pilotage ; pour Facebook, un texte complet et naturel, sans lien raccourci (le lien de la page concernée est ajouté à part). Instagram et TikTok ne reçoivent que des vidéos (la vidéo de la semaine est tournée automatiquement) : ne propose jamais de post texte pour eux.\n` +
       `- newsletter : une newsletter pour les abonnés ; include = false si l'actualité ne la justifie pas.\n` +
       `- outreach : 3 à 8 organisations de la recherche, avec un message personnalisé (présentation honnête, invitation à publier sur BeamUp ou à échanger), uniquement si l'URL vient des résultats.\n` +
       `- events : les événements pertinents trouvés, avec une idée d'action.\n` +
