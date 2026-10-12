@@ -93,6 +93,7 @@ function Item({ item, reload, subscribers, meta }: { item: any; reload: () => vo
 /** Connexion à la page Facebook et au compte Instagram professionnel de BeamUp (jetons conservés chiffrés côté serveur). */
 function MetaCard({ onState }: { onState: (connected: boolean) => void }) {
   const [state, setState] = useState<any>(null);
+  const [token, setToken] = useState('');
   const load = () => api('/api/admin/meta').then((d) => { setState(d); onState(Boolean(d.connection)); }).catch(() => setState({ error: true }));
   useEffect(() => { load(); }, []);
   if (!state) return null;
@@ -111,14 +112,20 @@ function MetaCard({ onState }: { onState: (connected: boolean) => void }) {
             </select>
           )}
           <div className="flex flex-wrap gap-2">
-            <a href="/api/admin/meta/connect" className="inline-flex items-center px-3 py-1.5 rounded-full border border-white/15 text-[10px] font-black uppercase tracking-wider">Reconnecter</a>
             <ActionButton variant="danger" confirm="Effacer l'accès à Facebook et Instagram ?" onClick={() => api('/api/admin/meta', 'POST', { action: 'disconnect' }).then(load)}>Déconnecter</ActionButton>
           </div>
         </div>
       ) : (
         <div className="space-y-3 text-sm text-gray-400">
-          <p>Autorisez BeamUp à publier sur votre page Facebook et votre Instagram professionnel. Rien n&apos;est publié sans votre clic.</p>
-          <a href="/api/admin/meta/connect" className="inline-flex items-center px-4 py-2 rounded-full bg-[#00f2ff] text-black text-[10px] font-black uppercase tracking-wider">Connecter Facebook et Instagram</a>
+          <p>Autorisez BeamUp à publier sur votre page Facebook et votre Instagram professionnel, une seule fois. Rien n&apos;est publié sans votre clic.</p>
+          <ol className="list-decimal pl-5 space-y-1 text-xs leading-relaxed">
+            <li>Ouvrez l&apos;<a className="text-[#00f2ff] underline" href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer">explorateur de l&apos;API Graph</a> et choisissez l&apos;app « BeamUp Publication ».</li>
+            <li>« Utilisateur ou Page » : jeton d&apos;accès utilisateur. Ajoutez les autorisations pages_show_list, pages_read_engagement, pages_manage_posts, instagram_basic, instagram_content_publish, business_management.</li>
+            <li>« Generate Access Token », autorisez votre page et votre Instagram, puis copiez le jeton et collez-le ici.</li>
+          </ol>
+          <input type="password" autoComplete="off" value={token} onChange={(e) => setToken(e.target.value)} placeholder="Jeton d'accès (EAA…)" className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#00f2ff]" />
+          <ActionButton variant="primary" onClick={async () => { await api('/api/admin/meta', 'POST', { action: 'token', userToken: token }); setToken(''); await load(); }}>Connecter</ActionButton>
+          <p className="text-[11px] text-gray-500">Le jeton collé est échangé aussitôt contre un accès permanent à la page, conservé chiffré ; il n&apos;est ni affiché ni enregistré tel quel.</p>
         </div>
       )}
     </Card>

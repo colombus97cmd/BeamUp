@@ -89,9 +89,17 @@ async function graph(path: string, params: Record<string, string>, method: 'GET'
 
 /** Code OAuth → jeton utilisateur longue durée → pages gérées (avec leurs jetons et leur compte Instagram). */
 export async function connectWithCode(code: string, admin: string): Promise<MetaConnection> {
+  const short = await graph('/oauth/access_token', { client_id: process.env.META_APP_ID!, client_secret: process.env.META_APP_SECRET!, redirect_uri: redirectUri(), code });
+  return connectWithUserToken(short.access_token, admin);
+}
+
+/**
+ * Jeton utilisateur de courte durée (généré dans l'explorateur de l'API Graph pour l'app BeamUp Publication,
+ * puis collé dans /pilotage) → jeton longue durée → jetons des pages, sans expiration. Le jeton collé n'est pas conservé.
+ */
+export async function connectWithUserToken(userToken: string, admin: string): Promise<MetaConnection> {
   const id = process.env.META_APP_ID!, secret = process.env.META_APP_SECRET!;
-  const short = await graph('/oauth/access_token', { client_id: id, client_secret: secret, redirect_uri: redirectUri(), code });
-  const long = await graph('/oauth/access_token', { grant_type: 'fb_exchange_token', client_id: id, client_secret: secret, fb_exchange_token: short.access_token });
+  const long = await graph('/oauth/access_token', { grant_type: 'fb_exchange_token', client_id: id, client_secret: secret, fb_exchange_token: userToken });
   const accounts = await graph('/me/accounts', { access_token: long.access_token, fields: 'id,name,access_token,instagram_business_account{id,username}', limit: '50' });
   const pages: MetaPage[] = (accounts.data || []).map((p: any) => ({
     id: p.id, name: p.name, token: p.access_token,

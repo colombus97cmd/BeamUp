@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminIdentity } from '../../../../lib/security';
 import { logDecision } from '../../../../lib/moderationStore';
-import { getConnection, saveConnection, deleteConnection, publicView, hasMeta, redirectUri } from '../../../../lib/meta';
+import { getConnection, saveConnection, deleteConnection, publicView, hasMeta, redirectUri, connectWithUserToken } from '../../../../lib/meta';
 
 // État de la connexion Facebook / Instagram (sans jetons) et réglages :
 //  GET  → { configured, redirectUri, connection } ;
@@ -20,6 +20,19 @@ export async function POST(req: Request) {
     await deleteConnection();
     await logDecision({ type: 'meta', action: 'déconnexion', by: admin });
     return NextResponse.json({ ok: true });
+  }
+  if (body?.action === 'token') {
+    // Jeton généré dans l'explorateur de l'API Graph : échangé aussitôt, jamais conservé ni journalisé.
+    const token = String(body.userToken || '').trim();
+    if (!/^[A-Za-z0-9_-]{50,600}$/.test(token)) return NextResponse.json({ error: 'Jeton invalide : copiez le jeton d’accès affiché dans l’explorateur.' }, { status: 400 });
+    if (!hasMeta()) return NextResponse.json({ error: 'META_APP_SECRET manquant dans Vercel' }, { status: 503 });
+    try {
+      const c = await connectWithUserToken(token, admin);
+      await logDecision({ type: 'meta', action: 'connexion', pages: c.pages.map((p) => p.name), by: admin });
+      return NextResponse.json({ ok: true, connection: publicView(c) });
+    } catch (e) {
+      return NextResponse.json({ error: (e as Error).message.slice(0, 300) }, { status: 502 });
+    }
   }
   if (body?.action === 'select') {
     const c = await getConnection();
