@@ -6,6 +6,7 @@
 //
 // Lancement : node tools/video/tournage.mjs        (depuis le dossier frontend)
 //             node tools/video/tournage.mjs --sans-envoi   (tourne et monte, sans envoyer)
+//             node tools/video/tournage.mjs --envoyer=chemin.mp4   (envoie une vidéo déjà tournée)
 // Configuration : tools/video/.env.local (voir .env.example) — jamais commité : musique et secret restent sur ce PC.
 
 import { readFileSync, existsSync, mkdirSync, copyFileSync, writeFileSync, statSync } from 'node:fs';
@@ -19,6 +20,8 @@ const FRONTEND = join(ICI, '..', '..');
 const CACHE = join(ICI, 'cache');
 const SORTIE = join(ICI, 'sortie');
 const SANS_ENVOI = process.argv.includes('--sans-envoi');
+// --envoyer=chemin.mp4 : envoie une vidéo déjà tournée (avec les textes de post de la semaine).
+const A_ENVOYER = process.argv.find((a) => a.startsWith('--envoyer='))?.slice('--envoyer='.length);
 const MAX_OCTETS = 4 * 1024 * 1024;
 
 const journal = (...m) => console.log(new Date().toLocaleTimeString('fr-FR'), '·', ...m);
@@ -68,20 +71,28 @@ if (config.CRON_SECRET) {
   } catch (e) { journal('Textes par défaut (BeamUp injoignable).'); }
 }
 
-// --- 2. Tournage ------------------------------------------------------------------------------------
+// --- 2 et 3. Tournage et montage (une nouvelle tentative en cas d'erreur passagère) -----------------
 const date = new Date().toISOString().slice(0, 10);
-const brut = join(CACHE, 'partie.mp4');
-journal('Tournage de la partie…');
-await filmerPartie({ navigateur: config.NAVIGATEUR, url: config.JEU_URL, secondes: 46, sortie: brut, travail: CACHE });
-
-// --- 3. Montage -------------------------------------------------------------------------------------
-const debutMusique = meilleurPassage(config.MUSIQUE, 45);
-journal(`Montage (musique à partir de ${debutMusique} s)…`);
-let finale = join(SORTIE, `chains-crowns-${date}.mp4`);
-monter({ dossier: CACHE, partie: 'partie.mp4', musique: config.MUSIQUE, debutMusique, sousTitres: script.captions, sortie: finale, crf: 21 });
-if (statSync(finale).size > MAX_OCTETS) {
-  journal('Vidéo trop lourde pour l\'envoi : nouvel encodage plus compressé…');
-  monter({ dossier: CACHE, partie: 'partie.mp4', musique: config.MUSIQUE, debutMusique, sousTitres: script.captions, sortie: finale, crf: 26 });
+const horodatage = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+const finale = A_ENVOYER || join(SORTIE, `chains-crowns-${horodatage}.mp4`);
+if (!A_ENVOYER) {
+  for (let essai = 1; essai <= 2; essai++) {
+    try {
+      journal(`Tournage de la partie${essai > 1 ? ' (nouvelle tentative)' : ''}…`);
+      await filmerPartie({ navigateur: config.NAVIGATEUR, url: config.JEU_URL, secondes: 46, sortie: join(CACHE, 'partie.mp4'), travail: CACHE });
+      const debutMusique = meilleurPassage(config.MUSIQUE, 45);
+      journal(`Montage (musique à partir de ${debutMusique} s)…`);
+      monter({ dossier: CACHE, partie: 'partie.mp4', musique: config.MUSIQUE, debutMusique, sousTitres: script.captions, sortie: finale, crf: 21 });
+      if (statSync(finale).size > MAX_OCTETS) {
+        journal('Vidéo trop lourde pour l\'envoi : nouvel encodage plus compressé…');
+        monter({ dossier: CACHE, partie: 'partie.mp4', musique: config.MUSIQUE, debutMusique, sousTitres: script.captions, sortie: finale, crf: 26 });
+      }
+      break;
+    } catch (e) {
+      journal(`Échec (essai ${essai}) : ${String(e.message).split('\n')[0]}`);
+      if (essai === 2) throw e;
+    }
+  }
 }
 journal(`Vidéo prête : ${finale} (${(statSync(finale).size / 1024 / 1024).toFixed(1)} Mo)`);
 
