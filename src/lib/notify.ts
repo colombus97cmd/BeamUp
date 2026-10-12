@@ -1,8 +1,8 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 
 // Envoi des news et annonces : mail (Resend) et salon Discord (webhook).
-// Variables : RESEND_API_KEY, NEWS_FROM_EMAIL (ex. « BeamUp <news@beamup.beautifull-earthcorp.tech> », domaine vérifié chez Resend),
-// DISCORD_WEBHOOK_URL (salon d'annonces), ADMIN_EMAIL (rapports des agents), UNSUBSCRIBE_SECRET.
+// Variables : RESEND_API_KEY, NEWS_FROM_EMAIL (ex. « BeamUp <news@beautifull-earthcorp.tech> », domaine vérifié chez Resend),
+// NEWS_REPLY_TO (facultatif : boîte qui reçoit les réponses des abonnés), DISCORD_WEBHOOK_URL (salon d'annonces), ADMIN_EMAIL (rapports des agents), UNSUBSCRIBE_SECRET.
 
 export const SITE_URL = process.env.SITE_URL || 'https://beamup.beautifull-earthcorp.tech';
 
@@ -34,6 +34,7 @@ function toResend(m: Mail) {
   const text = m.text + footer;
   return {
     from: process.env.NEWS_FROM_EMAIL,
+    ...(process.env.NEWS_REPLY_TO ? { reply_to: process.env.NEWS_REPLY_TO } : {}),
     to: [m.to],
     subject: m.subject,
     text,
