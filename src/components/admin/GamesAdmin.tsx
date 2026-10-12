@@ -20,6 +20,42 @@ const VERDICT = {
   dangereux: { icon: ShieldAlert, color: 'text-red-400' },
 } as const;
 
+/** Installateur Windows de Chains & Crowns : fichier privé chez Pinata, téléchargeable seulement par les acheteurs. */
+function WindowsCard() {
+  const { address } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+  const chainId = useActiveChainId();
+  const [info, setInfo] = useState<any>(null);
+  const [version, setVersion] = useState('1.0.0');
+  const [file, setFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState('');
+  const load = () => fetch('/api/games/licence').then((r) => r.json()).then(setInfo).catch(() => {});
+  useEffect(() => { load(); }, []);
+  const send = async () => {
+    if (!file || !address) throw new Error('Choisissez l’installateur (.exe) et connectez votre wallet.');
+    setProgress('Envoi… 0 %');
+    const cid = await uploadToIPFS(file, address, signMessageAsync, (p) => setProgress(`Envoi… ${p} %`), { private: true, chainId });
+    await api('/api/games/admin', 'POST', { action: 'setWindows', cid, version, size: file.size, fileName: file.name });
+    setProgress('Version Windows publiée pour les acheteurs.');
+    setFile(null);
+    await load();
+  };
+  return (
+    <Card title="Chains & Crowns pour Windows">
+      <p className="text-xs text-gray-500 mb-3 leading-relaxed">
+        {info?.available ? `En ligne : version ${info.version}${info.size ? ` (${Math.round(info.size / 1048576)} Mo)` : ''}, mise à jour le ${fmtDate(info.updatedAt)}.` : 'Aucune version Windows publiée pour l’instant.'}
+        {' '}Le fichier est stocké en privé ; seuls les acheteurs (vérifiés sur la blockchain) obtiennent un lien de téléchargement, et l’application exige une licence liée à leur wallet.
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <input type="file" accept=".exe" onChange={(e) => setFile(e.target.files?.[0] || null)} className="text-xs text-gray-400" />
+        <input value={version} onChange={(e) => setVersion(e.target.value)} placeholder="1.0.0" className="w-24 bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none" />
+        <ActionButton variant="primary" onClick={send}>Publier pour les acheteurs</ActionButton>
+      </div>
+      {progress && <p className="text-xs text-[#7ff8ff] mt-2">{progress}</p>}
+    </Card>
+  );
+}
+
 export default function GamesAdmin() {
   const [subs, setSubs] = useState<any[] | null>(null);
   const [filter, setFilter] = useState<'en_attente' | 'tout'>('en_attente');
@@ -69,6 +105,7 @@ export default function GamesAdmin() {
 
   return (
     <div className="space-y-4">
+      <WindowsCard />
       <p className="text-xs text-gray-500 leading-relaxed max-w-3xl">
         Chaque jeu est inspecté automatiquement (types de fichiers, contenu réel, bombes zip, chemins piégés), puis relu par l&apos;agent vérificateur.
         Approuvé, il tourne isolé sur le domaine des jeux, sans accès à BeamUp ni au wallet des joueurs.

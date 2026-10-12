@@ -4,6 +4,7 @@ import Navigation from '../../components/Navigation';
 import TournamentPanel from '../../components/TournamentPanel';
 import LegalFooter from '../../components/LegalFooter';
 import GameNewsSignup from '../../components/GameNewsSignup';
+import WindowsAccess from '../../components/WindowsAccess';
 
 export const metadata: Metadata = {
   title: 'Jeux | BeamUp',
@@ -139,6 +140,7 @@ export default function Jeux() {
         <section className="grid md:grid-cols-2 gap-4 items-start">
           <TournamentPanel />
           <GameNewsSignup />
+          <WindowsAccess mode="download" />
         </section>
       </main>
       <LegalFooter />

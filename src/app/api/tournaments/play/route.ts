@@ -11,7 +11,7 @@ import { gamesOrigin } from '../../../../lib/games/token';
 //  POST { p, action: 'report', result: 'win'|'loss'|'draw', reason, moves } → résultat de sa partie ;
 //  POST { p, action: 'forfeit' }        → réclame la victoire si l'adversaire n'est pas venu 10 minutes après le début.
 
-const ALLOWED = ['https://portfolio-2026-colombod.vercel.app', 'http://localhost:8080', 'http://127.0.0.1:8080'];
+const ALLOWED = ['https://portfolio-2026-colombod.vercel.app', 'app://chains-and-crowns', 'http://localhost:8080', 'http://127.0.0.1:8080']; // app:// = version Windows
 
 function cors(req: Request): Record<string, string> {
   const origin = req.headers.get('origin') || '';
