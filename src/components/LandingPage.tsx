@@ -5,6 +5,7 @@ import { ConnectKitButton } from 'connectkit';
 import { ArrowRight, Sparkles, Upload, Heart, Wallet, ShieldCheck, Layers, ExternalLink, Play } from 'lucide-react';
 import { FORMATS } from '../config/formats';
 import { CONTRACT_ADDRESSES, getChainName, getExplorer } from '../config/contracts';
+import CometField from './CometField';
 
 const CREATOR_SHARE = 0.95;
 
@@ -19,6 +20,7 @@ export default function LandingPage() {
       {/* Background Effects */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] max-w-full h-[400px] bg-[#bc13fe] rounded-full blur-[150px] opacity-10 pointer-events-none" />
       <div className="absolute top-[20%] right-0 w-[400px] max-w-full h-[400px] bg-[#00f2ff] rounded-full blur-[150px] opacity-10 pointer-events-none" />
+      <CometField className="fixed inset-0 w-full h-full opacity-70" />
 
       {/* HERO */}
       <section className="relative flex flex-col items-center justify-center pt-24 md:pt-32 pb-16 px-4 text-center z-10">

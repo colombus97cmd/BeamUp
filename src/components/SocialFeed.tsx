@@ -10,6 +10,7 @@ import { useActiveChainId } from '../hooks/useActiveChainId';
 import { requestPremiumMedia, type MediaStep } from '../services/mediaAccess';
 import CommentDrawer from './CommentDrawer';
 import WorkLinks from './WorkLinks';
+import CometField from './CometField';
 import type { WorkLink } from '../lib/workInfo';
 
 interface SocialFeedProps {
@@ -222,6 +223,8 @@ export default function SocialFeed({ works, onTip, onLike, onComment, onBuy, get
             filter: 'blur(100px)'
           }} 
         />
+        {/* Comètes de lumière : leurs ailerons prennent la couleur du format de l'œuvre affichée. */}
+        <CometField tint={getFormat(works[activeIndex]?.category).hex} className="absolute inset-0 w-full h-full opacity-80" />
         
         {[...Array(20)].map((_, i) => (
           <div 
