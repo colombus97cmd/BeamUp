@@ -6,7 +6,7 @@ import { SITE_URL } from './notify';
 // Connexion : un signataire du Safe autorise l'app Meta « BeamUp Publication » depuis /pilotage ;
 // BeamUp échange le code contre un jeton longue durée et conserve, CHIFFRÉS dans Redis, les jetons des pages
 // (sans expiration lorsqu'ils dérivent d'un jeton utilisateur longue durée). Aucun jeton n'est affiché ni copié.
-// Variables : META_APP_ID (public), META_APP_SECRET (secret, Vercel « Sensitive »).
+// Variables : META_APP_ID et META_CONFIG_ID (publics), META_APP_SECRET (secret, Vercel « Sensitive »).
 
 export const GRAPH = 'https://graph.facebook.com/v26.0';
 export const META_SCOPES = ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts', 'instagram_basic', 'instagram_content_publish', 'business_management'];
@@ -71,8 +71,10 @@ export async function consumeState(state: string): Promise<string | null> {
   return admin || null;
 }
 
+/** Facebook Login for Business : les autorisations sont définies par une « configuration » (META_CONFIG_ID) ; sinon, liste classique. */
 export const dialogUrl = (state: string) => `https://www.facebook.com/v26.0/dialog/oauth?${new URLSearchParams({
-  client_id: process.env.META_APP_ID!, redirect_uri: redirectUri(), state, response_type: 'code', scope: META_SCOPES.join(','),
+  client_id: process.env.META_APP_ID!, redirect_uri: redirectUri(), state, response_type: 'code',
+  ...(process.env.META_CONFIG_ID ? { config_id: process.env.META_CONFIG_ID } : { scope: META_SCOPES.join(',') }),
 })}`;
 
 async function graph(path: string, params: Record<string, string>, method: 'GET' | 'POST' = 'GET') {
