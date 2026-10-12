@@ -4,7 +4,7 @@ import { ExternalLink, Copy } from 'lucide-react';
 import { api, type Data } from './AdminConsole';
 import { Card, ActionButton, Badge, fmtDate } from './ui';
 
-const KIND_LABEL: Record<string, string> = { post: 'Post', newsletter: 'Newsletter', outreach: 'Démarchage', event: 'Événement', decision: 'Décision' };
+const KIND_LABEL: Record<string, string> = { post: 'Post', newsletter: 'Newsletter', outreach: 'Démarchage', event: 'Événement', decision: 'Décision', video: 'Vidéo' };
 const STATUS_TONE: Record<string, 'gray' | 'green' | 'yellow' | 'red' | 'cyan'> = { proposé: 'yellow', approuvé: 'cyan', publié: 'green', envoyé: 'green', rejeté: 'red' };
 
 function Item({ item, reload, subscribers }: { item: any; reload: () => void; subscribers: number }) {
@@ -28,6 +28,14 @@ function Item({ item, reload, subscribers }: { item: any; reload: () => void; su
           <ExternalLink className="w-3 h-3 shrink-0" /> {item.url}
         </a>
       )}
+      {item.videoUrl && (
+        <div className="flex flex-wrap items-start gap-3">
+          <video src={item.videoUrl} controls playsInline preload="metadata" className="w-40 aspect-[9/16] rounded-lg bg-black border border-white/10" />
+          <a href={item.videoUrl} download target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-[#00f2ff] hover:underline">
+            <ExternalLink className="w-3 h-3" /> Télécharger la vidéo (TikTok, Reels, Shorts)
+          </a>
+        </div>
+      )}
       {item.kind === 'decision' ? (
         <div className="text-sm text-gray-300 space-y-2">
           <p>Recommandation de l&apos;agent : <strong>{item.recommendation}</strong></p>
@@ -50,7 +58,7 @@ function Item({ item, reload, subscribers }: { item: any; reload: () => void; su
           {!edited && item.kind === 'newsletter' && (
             <ActionButton variant="primary" confirm={`Envoyer cette newsletter à ${subscribers} abonné(s) ?`} onClick={() => act('publish')}>Envoyer aux abonnés</ActionButton>
           )}
-          {(item.kind === 'outreach' || (item.kind === 'post' && item.channel !== 'discord')) && (
+          {(item.kind === 'outreach' || item.kind === 'video' || (item.kind === 'post' && item.channel !== 'discord')) && (
             <>
               <ActionButton onClick={() => navigator.clipboard.writeText(text)}><Copy className="w-3 h-3" /> Copier</ActionButton>
               <ActionButton onClick={() => act('sent')}>{item.kind === 'outreach' ? 'Marquer comme envoyé' : 'Marquer comme publié'}</ActionButton>

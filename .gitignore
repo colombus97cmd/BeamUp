@@ -42,3 +42,8 @@ next-env.d.ts
 
 # données locales de l API de vues
 /src/data/
+
+# robot de tournage : configuration locale (secret, musique), cache et vidéos produites
+/tools/video/.env.local
+/tools/video/cache/
+/tools/video/sortie/

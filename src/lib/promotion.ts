@@ -16,7 +16,7 @@ export const PROMO_ITEMS_KEY = 'beam:v1:promo:items';
 export const PROMO_REPORTS_KEY = 'beam:v1:promo:reports';
 export const PROMO_TARGETS_KEY = 'beam:v1:promo:targets';   // cibles déjà proposées, pour éviter les doublons
 
-export type PromoKind = 'post' | 'newsletter' | 'outreach' | 'event' | 'decision';
+export type PromoKind = 'post' | 'newsletter' | 'outreach' | 'event' | 'decision' | 'video';
 export type PromoStatus = 'proposé' | 'approuvé' | 'publié' | 'envoyé' | 'rejeté';
 
 export interface PromoItem {
@@ -35,6 +35,7 @@ export interface PromoItem {
   date?: string;
   options?: string[];      // décision : options possibles
   recommendation?: string; // décision : option recommandée
+  videoUrl?: string;       // vidéo : fichier MP4 vertical (1080 × 1920), tourné par le robot de tournage
 }
 
 /** Ce que l'agent sait de BeamUp (faits vérifiés, à tenir à jour). */
