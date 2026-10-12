@@ -60,5 +60,5 @@ export const formatDate = (iso: string) =>
 /** Texte d'annonce complet : message rédigé par l'agent + informations pratiques et mentions légales ajoutées par le code. */
 export function announcement(t: Tournament, body: string, siteUrl: string) {
   const prizes = t.prizes.length ? `\nLots : ${t.prizes.map((p) => `${p.label} (offert par ${p.sponsor})`).join(', ')}.` : '';
-  return `${body.trim()}\n\n${t.name} — ${formatDate(t.startsAt)}\nFormat : ${t.format === 'suisse' ? `système suisse, ${t.rounds} rondes` : 'élimination directe'}, ${t.timeControlMinutes} min par joueur. Places : ${t.capacity}.${prizes}\nInscription : ${siteUrl}/jeux#tournoi\n\n${LEGAL_FOOTER}`;
+  return `${body.trim()}\n\n${t.name} — ${formatDate(t.startsAt)}\nFormat : ${t.format === 'suisse' ? `système suisse, ${t.rounds} rondes` : 'élimination directe'}, ${t.timeControlMinutes} min par joueur. Places : ${t.capacity}.${prizes}\nInscription : ${siteUrl}/jeux#tournoi\nRèglement : ${siteUrl}/reglement-tournois\n\n${LEGAL_FOOTER}`;
 }

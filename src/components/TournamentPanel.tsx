@@ -105,7 +105,7 @@ export default function TournamentPanel() {
             <input className={input} placeholder="ou pseudo Discord" value={form.discord} onChange={(e) => setForm({ ...form, discord: e.target.value.toLowerCase() })} />
             <label className="flex items-start gap-2 text-xs text-gray-400 leading-relaxed">
               <input type="checkbox" checked={form.rules} onChange={(e) => setForm({ ...form, rules: e.target.checked })} className="mt-0.5" required />
-              J&apos;accepte le règlement : jeu loyal (aucune aide d&apos;un moteur d&apos;échecs ni d&apos;une autre personne), coordonnées utilisées uniquement pour ce tournoi et effacées sous 90 jours (sauf abonnement aux news).
+              J&apos;accepte le <a href="/reglement-tournois" target="_blank" className="underline hover:text-white">règlement</a> : jeu loyal (aucune aide d&apos;un moteur d&apos;échecs ni d&apos;une autre personne), coordonnées utilisées uniquement pour ce tournoi et effacées sous 90 jours (sauf abonnement aux news).
             </label>
             <label className="flex items-start gap-2 text-xs text-gray-400 leading-relaxed">
               <input type="checkbox" checked={form.news} onChange={(e) => setForm({ ...form, news: e.target.checked })} className="mt-0.5" />
