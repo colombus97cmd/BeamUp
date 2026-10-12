@@ -57,6 +57,12 @@ export default function Overview({ data, reload }: { data: Data; reload: () => v
             Produits du jeu (GAME_PRODUCTS) : {r.gameProducts || 0}
           </li>
         </ul>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <ActionButton onClick={async () => { const d = await api('/api/admin/test-notify', 'POST'); setResults((x) => ({ ...x, test: `Mail : ${d.mail ?? d.error} · Discord : ${d.discord ?? '—'}` })); }}>
+            Tester les envois
+          </ActionButton>
+          {results.test && <span className="text-[11px] text-gray-400">{results.test}</span>}
+        </div>
       </Card>
 
       {AGENTS.map((a) => {
