@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ExternalLink, Copy } from 'lucide-react';
 import { api, type Data } from './AdminConsole';
 import { Card, ActionButton, Badge, fmtDate } from './ui';
@@ -7,7 +7,7 @@ import { Card, ActionButton, Badge, fmtDate } from './ui';
 const KIND_LABEL: Record<string, string> = { post: 'Post', newsletter: 'Newsletter', outreach: 'Démarchage', event: 'Événement', decision: 'Décision', video: 'Vidéo' };
 const STATUS_TONE: Record<string, 'gray' | 'green' | 'yellow' | 'red' | 'cyan'> = { proposé: 'yellow', approuvé: 'cyan', publié: 'green', envoyé: 'green', rejeté: 'red' };
 
-function Item({ item, reload, subscribers }: { item: any; reload: () => void; subscribers: number }) {
+function Item({ item, reload, subscribers, meta }: { item: any; reload: () => void; subscribers: number; meta: boolean }) {
   const [text, setText] = useState(item.text);
   const act = (action: string, extra: object = {}) => api('/api/admin/promo', 'POST', { id: item.id, action, ...extra }).then(reload);
   const open = item.status === 'proposé' || item.status === 'approuvé';
@@ -51,6 +51,24 @@ function Item({ item, reload, subscribers }: { item: any; reload: () => void; su
       )}
       {item.rationale && <p className="text-[11px] text-gray-500 italic">Pourquoi : {item.rationale}</p>}
 
+      {item.social && (
+        <div className="flex flex-wrap gap-3 text-xs">
+          {Object.entries(item.social).map(([net, link]) => (
+            <a key={net} href={link as string} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-green-300 hover:underline"><ExternalLink className="w-3 h-3" /> Publié sur {net === 'facebook' ? 'Facebook' : 'Instagram'}</a>
+          ))}
+        </div>
+      )}
+      {meta && item.status !== 'rejeté' && !edited && (item.kind === 'video' || (item.kind === 'post' && ['facebook', 'instagram'].includes(item.channel))) && (
+        <div className="flex flex-wrap gap-2">
+          {!item.social?.facebook && (item.kind === 'video' || item.channel === 'facebook') && (
+            <ActionButton variant="primary" confirm="Publier sur la page Facebook de BeamUp ?" onClick={() => api('/api/admin/meta/publish', 'POST', { id: item.id, target: 'facebook' }).then(reload)}>Publier sur Facebook</ActionButton>
+          )}
+          {!item.social?.instagram && item.videoUrl && (
+            <ActionButton variant="primary" confirm="Publier en Reel sur l'Instagram de BeamUp ? (jusqu'à 4 minutes de traitement)" onClick={() => api('/api/admin/meta/publish', 'POST', { id: item.id, target: 'instagram' }).then(reload)}>Publier sur Instagram</ActionButton>
+          )}
+        </div>
+      )}
+
       {open && (
         <div className="flex flex-wrap gap-2">
           {edited && <ActionButton variant="primary" onClick={() => act('edit', { text })}>Enregistrer le texte</ActionButton>}
@@ -72,7 +90,43 @@ function Item({ item, reload, subscribers }: { item: any; reload: () => void; su
   );
 }
 
+/** Connexion à la page Facebook et au compte Instagram professionnel de BeamUp (jetons conservés chiffrés côté serveur). */
+function MetaCard({ onState }: { onState: (connected: boolean) => void }) {
+  const [state, setState] = useState<any>(null);
+  const load = () => api('/api/admin/meta').then((d) => { setState(d); onState(Boolean(d.connection)); }).catch(() => setState({ error: true }));
+  useEffect(() => { load(); }, []);
+  if (!state) return null;
+  const c = state.connection;
+  const page = c?.pages.find((p: any) => p.id === c.selected);
+  return (
+    <Card title="Facebook et Instagram">
+      {!state.configured ? (
+        <p className="text-sm text-gray-400">Ajoutez META_APP_ID et META_APP_SECRET dans Vercel, puis redéployez.</p>
+      ) : c ? (
+        <div className="space-y-3 text-sm text-gray-300">
+          <p>Connecté : page <strong>{page?.name}</strong>{page?.instagram ? <> · Instagram <strong>@{page.instagram}</strong></> : ' · aucun compte Instagram relié à cette page'}</p>
+          {c.pages.length > 1 && (
+            <select className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm" value={c.selected} onChange={(e) => api('/api/admin/meta', 'POST', { action: 'select', pageId: e.target.value }).then(load)}>
+              {c.pages.map((p: any) => <option key={p.id} value={p.id}>{p.name}{p.instagram ? ` (@${p.instagram})` : ''}</option>)}
+            </select>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <a href="/api/admin/meta/connect" className="inline-flex items-center px-3 py-1.5 rounded-full border border-white/15 text-[10px] font-black uppercase tracking-wider">Reconnecter</a>
+            <ActionButton variant="danger" confirm="Effacer l'accès à Facebook et Instagram ?" onClick={() => api('/api/admin/meta', 'POST', { action: 'disconnect' }).then(load)}>Déconnecter</ActionButton>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3 text-sm text-gray-400">
+          <p>Autorisez BeamUp à publier sur votre page Facebook et votre Instagram professionnel. Rien n&apos;est publié sans votre clic.</p>
+          <a href="/api/admin/meta/connect" className="inline-flex items-center px-4 py-2 rounded-full bg-[#00f2ff] text-black text-[10px] font-black uppercase tracking-wider">Connecter Facebook et Instagram</a>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export default function PromotionPanel({ data, reload }: { data: Data; reload: () => void }) {
+  const [meta, setMeta] = useState(false);
   const [filter, setFilter] = useState<'ouvert' | 'tout'>('ouvert');
   const items: any[] = (data.promoItems || []).filter((i: any) => filter === 'tout' || i.status === 'proposé' || i.status === 'approuvé');
   const report = data.promoReports?.[0];
@@ -80,6 +134,7 @@ export default function PromotionPanel({ data, reload }: { data: Data; reload: (
 
   return (
     <div className="space-y-4">
+      <MetaCard onState={setMeta} />
       <Card title="Dernière analyse de l'agent promotionnel">
         {report ? (
           <>
@@ -102,7 +157,7 @@ export default function PromotionPanel({ data, reload }: { data: Data; reload: (
 
       {items.length === 0 ? <p className="text-sm text-gray-500">Aucune proposition.</p> : (
         <div className="grid lg:grid-cols-2 gap-3">
-          {items.map((i) => <Item key={`${i.id}-${i.status}-${i.text.length}`} item={i} reload={reload} subscribers={subscribers} />)}
+          {items.map((i) => <Item key={`${i.id}-${i.status}-${i.text.length}`} item={i} reload={reload} subscribers={subscribers} meta={meta} />)}
         </div>
       )}
     </div>

@@ -36,6 +36,7 @@ export interface PromoItem {
   options?: string[];      // décision : options possibles
   recommendation?: string; // décision : option recommandée
   videoUrl?: string;       // vidéo : fichier MP4 vertical (1080 × 1920), tourné par le robot de tournage
+  social?: Record<string, string>; // réseaux où la proposition a été publiée depuis /pilotage → lien de la publication
 }
 
 /** Ce que l'agent sait de BeamUp (faits vérifiés, à tenir à jour). */
