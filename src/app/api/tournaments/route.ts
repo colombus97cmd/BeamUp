@@ -6,6 +6,7 @@ import { contactKey, NEWS_SET, EMAIL_RE, DISCORD_RE } from '../../../lib/contact
 import { currentTournament, playersKey, formatDate, LEGAL_FOOTER } from '../../../lib/tournaments';
 import { sendMails } from '../../../lib/notify';
 import { moderateText } from '../../../lib/moderation';
+import { advance, standings, playLink } from '../../../lib/tournamentPlay';
 
 // Tournoi en cours : consultation publique et inscription GRATUITE ouverte à tous (aucun achat requis).
 // Les coordonnées d'un inscrit sans abonnement aux news sont effacées 90 jours après l'inscription.
@@ -18,7 +19,13 @@ export async function GET() {
   const t = await currentTournament();
   if (!t) return NextResponse.json({ tournament: null });
   const [count] = await redis([['SCARD', playersKey(t.id)]]);
-  return NextResponse.json({ tournament: { ...t, registered: Number(count) || 0 }, legal: LEGAL_FOOTER });
+  // Le tournoi avance aussi quand on consulte la page Jeux (pas de tâche planifiée pendant les rondes).
+  const s = await advance(t).catch(() => null);
+  const live = s && s.status !== 'registration' ? {
+    status: s.status, note: s.note || null, round: s.rounds.length, totalRounds: s.totalRounds,
+    standings: standings(s).slice(0, 10).map(({ pseudo, score, rank }) => ({ pseudo, score, rank })),
+  } : null;
+  return NextResponse.json({ tournament: { ...t, registered: Number(count) || 0, live }, legal: LEGAL_FOOTER });
 }
 
 export async function POST(req: Request) {
@@ -55,13 +62,15 @@ export async function POST(req: Request) {
   else commands.push(['EXPIRE', contactKey(id), KEEP_SECONDS]);
   await redis(commands);
 
+  const link = playLink(t.id, id);
   if (email && !already) {
     await sendMails([{
       to: email,
       subject: `Inscription confirmée : ${t.name}`,
-      text: `Bonjour ${pseudo},\n\nVotre inscription au tournoi « ${t.name} » est confirmée.\nDébut : ${formatDate(t.startsAt)}.\nVous recevrez vos appariements avant le début.\n\n${LEGAL_FOOTER}`,
+      text: `Bonjour ${pseudo},\n\nVotre inscription au tournoi « ${t.name} » est confirmée.\nDébut : ${formatDate(t.startsAt)}.\n\nVotre lien personnel pour jouer (gardez-le, ne le partagez pas) :\n${link}\n\nOuvrez-le à l'heure du début : le jeu vous indiquera votre adversaire à chaque ronde. Le jeu est gratuit, aucun achat n'est nécessaire.\n\n${LEGAL_FOOTER}`,
       unsubscribeId: id,
     }]).catch(() => { /* inscription valable même sans mail */ });
   }
-  return NextResponse.json({ ok: true, already: Boolean(already) });
+  // Le lien n'est affiché qu'à la première inscription : le redemander avec les mêmes coordonnées ne le révèle pas.
+  return NextResponse.json({ ok: true, already: Boolean(already), link: already ? null : link });
 }

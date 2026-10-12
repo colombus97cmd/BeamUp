@@ -35,7 +35,7 @@ Générer un secret : `node -e "console.log(require('crypto').randomBytes(32).to
 2. Créer les variables ci-dessus, redéployer.
 3. Se connecter à `/pilotage` avec un wallet signataire du Safe, vérifier que la configuration est au vert.
 4. Activer l'agent modérateur, puis lancer l'agent promotionnel une fois à la main et relire ses propositions.
-5. Activer l'agent des tournois **seulement quand le mode tournoi du jeu sera prêt** (voir « Reste à faire »).
+5. Agent des tournois : le mode tournoi du jeu est prêt (voir « Déroulement d'un tournoi ») ; l'activer quand l'audience le permet, ou créer un tournoi à la main dans `/pilotage` → Tournois.
 
 ## Garde-fous légaux et RGPD codés en dur
 
@@ -50,7 +50,20 @@ Générer un secret : `node -e "console.log(require('crypto').randomBytes(32).to
 - Resend : gratuit jusqu'à 3 000 mails par mois.
 - Vercel : l'agent promotionnel peut durer plusieurs minutes (`maxDuration = 300`), ce qui demande le « Fluid compute » activé (par défaut sur les nouveaux projets).
 
+## Déroulement d'un tournoi
+
+Code : `src/lib/tournamentPlay.ts` (moteur), `src/app/api/tournaments/play` (API du jeu), `js/tournament.js` dans le jeu (portfolio).
+
+1. **Inscription** sur `/jeux#tournoi` (gratuite, sans achat) : le joueur reçoit son **lien personnel** (affiché une fois, et envoyé par mail) vers la démo gratuite du jeu : `…/chains-and-crowns/index.html?tournoi=<jeton>`.
+2. **Début** : à l'heure prévue, la première consultation (un joueur, la page Jeux ou `/pilotage`) apparie les inscrits en système suisse. Aucune tâche planifiée n'est nécessaire.
+3. **Ronde** : chaque joueur ouvre son lien ; le jeu signale sa présence, affiche son adversaire et sa couleur, puis « Jouer ma partie » ouvre une salle pair-à-pair privée (identifiant secret connu des deux joueurs seulement), avec une pendule par joueur (cadence du tournoi).
+4. **Résultat** : déclaré automatiquement par le jeu des deux joueurs, avec la liste des coups. Concordance → validé ; désaccord → **litige** (nulle provisoire, mail à l'administrateur, à trancher dans `/pilotage` → Tournois → « Arbitrer »).
+5. **Forfait** : 10 minutes après le début de la ronde, un joueur présent dont l'adversaire n'est pas venu peut réclamer la victoire.
+6. **Fin de ronde** : toutes les tables réglées, ou délai dépassé (2 × cadence + 20 min). Au délai, une déclaration unique est retenue ; un joueur absent perd par forfait et est retiré des rondes suivantes.
+7. **Fin** : classement (points, puis départage Buchholz), annonce Discord, mail aux joueurs, mail à l'administrateur avec les gagnants et les lots à remettre. L'agent archive le tournoi le lundi suivant (ou bouton « Archiver »).
+
+Nombre de joueurs impair : un joueur exempté par ronde (1 point, jamais deux fois le même). Le nombre de rondes est réduit si les inscrits sont trop peu nombreux pour éviter les revanches.
+
 ## Reste à faire
 
-- **Mode tournoi dans le jeu** : salles privées par appariement, saisie et contrôle des résultats, appariements suisses par ronde. Tant qu'il n'existe pas, l'agent peut annoncer un tournoi mais rien ne permet de le jouer : laisser l'agent des tournois arrêté.
 - Comptes officiels BeamUp sur les réseaux sociaux (l'agent rédige des posts X, Instagram, TikTok, LinkedIn et Facebook, publiés à la main).
