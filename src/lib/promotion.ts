@@ -44,7 +44,10 @@ export const BEAMUP_FACTS = `BeamUp (https://beamup.beautifull-earthcorp.tech) e
 - Les fans soutiennent les créateurs par pourboire ou en achetant l'accès à une œuvre premium. 95 % vont au créateur dans la même transaction, 5 % de commission financent la plateforme. Frais de publication : 0,0001 BNB, POL ou ETH.
 - Contrats vérifiés, propriété d'un multisig Safe, commission plafonnée à 10 %.
 - Le site est encore en construction.
-- Premier jeu : « Chains & Crowns », jeu d'échecs 2D inspiré de la résistance guadeloupéenne de 1802, jouable gratuitement dans le navigateur, installable sur PC et mobile. Tournois gratuits.
+- Premier jeu : « Chains & Crowns », jeu d'échecs 2D inspiré de la résistance guadeloupéenne de 1802 (la Résistance contre l'Empire), contre l'IA ou en duel en ligne.
+  - Démo GRATUITE : uniquement sur le portfolio de David Colombo (portfolio-2026-colombod.vercel.app/chains-and-crowns), installable sur PC et mobile ; niveau Recrue et plateau Édition 1802.
+  - Édition COMPLÈTE (tous les niveaux, tous les plateaux) : sur BeamUp, payante, prix fixe 4,99 € (EURI) ou 5 $ (USDC). Il n'y a PAS de démo gratuite sur BeamUp.
+  - Tournois gratuits et ouverts à tous (à venir).
 - Fondateur : David Colombo (colombus97), créateur multimédia guadeloupéen. BeamUp fait partie de l'écosystème Beautiful Earth Corp (Trois-Rivières, Guadeloupe).
 - Mission : revaloriser les artistes et créateurs indépendants, en commençant par les Antilles.`;
 

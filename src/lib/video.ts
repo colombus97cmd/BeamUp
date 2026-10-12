@@ -17,7 +17,7 @@ export const DEFAULT_SCRIPT: VideoScript = {
   captions: [
     ['La Résistance de 1802', 'contre l’Empire'],
     ['Affronte l’IA impériale', 'ou un joueur en ligne'],
-    ['Démo gratuite en ligne', 'Édition complète sur BeamUp'],
+    ['Édition complète', 'sur BeamUp'],
     ['Prix fixe : 4,99 € ou 5 $', 'Installable sur PC et mobile'],
   ],
   postText: "Chains & Crowns : un jeu d'échecs inspiré de la résistance guadeloupéenne de 1802. Démo gratuite, édition complète sur BeamUp.",
@@ -45,7 +45,8 @@ export async function weeklyVideoScript(previous: string[]): Promise<{ script: V
       system: `Tu es l'agent promotionnel de BeamUp. Tu écris les textes d'une courte vidéo verticale (45 s) montrant une partie de Chains & Crowns.\n\n${BEAMUP_FACTS}\n\nRègles : honnêteté stricte (seulement les faits fournis), aucun NFT présenté comme un placement, aucune promesse de gain, ton fier et chaleureux, français simple. Les prix de l'édition complète sont fixes : 4,99 € (EURI) ou 5 $ (USDC).`,
       prompt:
         `Écris exactement 4 sous-titres de deux lignes (chaque ligne : ${MAX_LINE} caractères au maximum, espaces compris), affichés l'un après l'autre pendant la partie : ` +
-        `1) l'histoire (1802, Résistance contre Empire), 2) ce que l'on fait dans le jeu, 3) démo gratuite et édition complète sur BeamUp, 4) un appel à l'action. ` +
+        `1) l'histoire (1802, Résistance contre Empire), 2) ce que l'on fait dans le jeu, 3) l'édition complète sur BeamUp (prix fixe), 4) un appel à l'action vers BeamUp. ` +
+        `Attention : la démo gratuite n'existe que sur le portfolio de David ; sur BeamUp, seule l'édition complète payante est proposée. N'écris jamais « démo gratuite sur BeamUp ». ` +
         `Puis le texte du post (2 phrases au plus) et 4 à 6 hashtags sans le signe #.\n` +
         `Varie par rapport aux vidéos précédentes :\n${previous.slice(0, 6).map((p) => `- ${p}`).join('\n') || '(aucune)'}`,
       schema: SCHEMA,

@@ -54,7 +54,7 @@ let script = {
   captions: [
     ['La Résistance de 1802', 'contre l’Empire'],
     ['Affronte l’IA impériale', 'ou un joueur en ligne'],
-    ['Démo gratuite en ligne', 'Édition complète sur BeamUp'],
+    ['Édition complète', 'sur BeamUp'],
     ['Prix fixe : 4,99 € ou 5 $', 'Installable sur PC et mobile'],
   ],
   postText: "Chains & Crowns : un jeu d'échecs inspiré de la résistance guadeloupéenne de 1802.",
