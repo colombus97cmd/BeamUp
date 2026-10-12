@@ -4,7 +4,8 @@ import { useEffect, useRef } from 'react';
 // Fusées de lumière en arrière-plan : la fusée du logo BeamUp (découpée dans /icon-512x512.png, fond rendu transparent),
 // en plusieurs tailles, orientée dans le sens de sa trajectoire, avec un halo qui respire et une traînée effervescente
 // qui part de l'orbe. Mouvement « vivant » : cap qui ondule (sinus superposés à phases aléatoires), légère curiosité
-// pour le pointeur, écart entre fusées. Canvas en mode additif, sans interaction ; pause quand l'onglet est caché ;
+// pour le pointeur, écart entre fusées. Profondeur simulée (« 2,5D ») : chaque fusée avance ou recule (z), avec
+// perspective (taille et vitesse apparente), raccourci quand elle plonge vers l'écran ou s'en éloigne, voile des lointaines. Canvas en mode additif, sans interaction ; pause quand l'onglet est caché ;
 // une seule image fixe si l'utilisateur préfère réduire les animations.
 
 interface Props {
@@ -16,8 +17,8 @@ interface Props {
 }
 
 interface Rocket {
-  x: number; y: number; heading: number; speed: number; size: number;
-  phase: number[]; freq: number[]; trail: { x: number; y: number }[]; life: number; pulse: number;
+  x: number; y: number; z: number; heading: number; pitch: number; speed: number; size: number;
+  phase: number[]; freq: number[]; trail: { x: number; y: number; s: number }[]; life: number; pulse: number;
 }
 interface Spark { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number }
 
@@ -107,7 +108,12 @@ export default function CometField({ tint, count, className = '' }: Props) {
     const rockets: Rocket[] = [];
     const sparks: Spark[] = [];
     const rand = (a: number, b: number) => a + Math.random() * (b - a);
-    const ROCKET_H = 92; // hauteur d'une fusée de taille 1, en pixels
+    const ROCKET_H = 92; // hauteur d'une fusée de taille 1 à la profondeur 1, en pixels
+    const Z_MIN = 0.4, Z_MAX = 2;
+    /** Échelle à l'écran : taille propre × profondeur (proche = grand). */
+    const scaleOf = (r: Rocket) => r.size * r.z;
+    /** Raccourci de perspective : une fusée qui plonge vers l'écran ou s'en éloigne paraît plus courte. */
+    const foreshorten = (r: Rocket) => 0.32 + 0.68 * Math.abs(Math.cos(r.pitch));
 
     const resize = () => {
       const r = canvas.getBoundingClientRect();
@@ -118,7 +124,9 @@ export default function CometField({ tint, count, className = '' }: Props) {
     };
 
     const spawn = (anywhere = false): Rocket => {
-      const size = rand(0.4, 1.35);
+      // Tailles variées, avec davantage de petites fusées que de grandes.
+      const size = 0.45 + Math.pow(Math.random(), 1.5) * 1.15;
+      const z = rand(Z_MIN + 0.1, Z_MAX - 0.3);
       let x: number, y: number, heading: number;
       if (anywhere) { x = rand(0, w); y = rand(0, h); heading = rand(0, Math.PI * 2); }
       else {
@@ -128,16 +136,19 @@ export default function CometField({ tint, count, className = '' }: Props) {
         heading = Math.atan2(h / 2 + rand(-h / 3, h / 3) - y, w / 2 + rand(-w / 3, w / 3) - x);
       }
       return {
-        x, y, heading, size, speed: rand(22, 48) * (0.55 + size * 0.45),
-        phase: [rand(0, 6.3), rand(0, 6.3), rand(0, 6.3)], freq: [rand(0.15, 0.35), rand(0.5, 0.9), rand(1.3, 2.1)],
+        x, y, z, heading, pitch: 0, size, speed: rand(22, 48) * (0.55 + size * 0.45),
+        phase: [rand(0, 6.3), rand(0, 6.3), rand(0, 6.3), rand(0, 6.3)], freq: [rand(0.15, 0.35), rand(0.5, 0.9), rand(1.3, 2.1), rand(0.08, 0.2)],
         trail: [], life: 0, pulse: rand(0, 6.3),
       };
     };
 
     /** Position de l'orbe (arrière de la fusée), d'où part la traînée. */
-    const tailOf = (r: Rocket) => ({ x: r.x - Math.cos(r.heading) * ROCKET_H * r.size * 0.42, y: r.y - Math.sin(r.heading) * ROCKET_H * r.size * 0.42 });
+    const tailOf = (r: Rocket) => {
+      const off = ROCKET_H * scaleOf(r) * foreshorten(r) * 0.42;
+      return { x: r.x - Math.cos(r.heading) * off, y: r.y - Math.sin(r.heading) * off, s: scaleOf(r) };
+    };
 
-    const n = count ?? Math.max(3, Math.min(7, Math.round((window.innerWidth * window.innerHeight) / 240000)));
+    const n = count ?? Math.max(5, Math.min(10, Math.round((window.innerWidth * window.innerHeight) / 150000)));
 
     const step = (dt: number) => {
       t += dt;
@@ -145,7 +156,12 @@ export default function CometField({ tint, count, className = '' }: Props) {
         r.life += dt;
         const turn = Math.sin(t * r.freq[0] + r.phase[0]) * 0.55 + Math.sin(t * r.freq[1] + r.phase[1]) * 0.3 + Math.sin(t * r.freq[2] + r.phase[2]) * 0.12;
         r.heading += turn * dt;
-        if (pointer.active) {
+        // Tangage lent : la fusée monte vers l'écran ou s'enfonce dans le fond ; rappel doux aux limites de profondeur.
+        r.pitch = Math.sin(t * r.freq[3] + r.phase[3]) * 0.95;
+        r.z += Math.sin(r.pitch) * dt * 0.16 * (0.6 + r.size * 0.4);
+        if (r.z > Z_MAX) r.z -= (r.z - Z_MAX) * dt * 2;
+        if (r.z < Z_MIN) r.z += (Z_MIN - r.z) * dt * 2;
+        if (pointer.active && r.z > 0.8) {
           const dx = pointer.x - r.x, dy = pointer.y - r.y, d = Math.hypot(dx, dy);
           if (d < 280 && d > 1) {
             const toward = Math.atan2(dy, dx);
@@ -155,25 +171,27 @@ export default function CometField({ tint, count, className = '' }: Props) {
         }
         for (const o of rockets) {
           if (o === r) continue;
+          if (Math.abs(r.z - o.z) > 0.35) continue; // à des profondeurs différentes, elles se croisent sans se gêner
           const dx = r.x - o.x, dy = r.y - o.y, d = Math.hypot(dx, dy);
-          if (d < 120 && d > 0.1) {
+          if (d < 110 * r.z && d > 0.1) {
             const away = Math.atan2(dy, dx);
             r.heading += Math.atan2(Math.sin(away - r.heading), Math.cos(away - r.heading)) * dt * 0.6;
           }
         }
-        const v = r.speed * (0.85 + 0.15 * Math.sin(t * 0.7 + r.pulse));
+        // Parallaxe : à vitesse égale, une fusée proche traverse l'écran plus vite qu'une lointaine.
+        const v = r.speed * r.z * Math.cos(r.pitch) * (0.85 + 0.15 * Math.sin(t * 0.7 + r.pulse));
         r.x += Math.cos(r.heading) * v * dt;
         r.y += Math.sin(r.heading) * v * dt;
         // Traîne échantillonnée à distance régulière depuis l'orbe : longueur stable quelle que soit la vitesse.
         const tail = tailOf(r);
         const lastPt = r.trail[0];
-        if (!lastPt || Math.hypot(tail.x - lastPt.x, tail.y - lastPt.y) > 4 * r.size + 2) r.trail.unshift(tail);
-        const maxLen = Math.round(22 + 22 * r.size);
+        if (!lastPt || Math.hypot(tail.x - lastPt.x, tail.y - lastPt.y) > 4 * scaleOf(r) + 1.5) r.trail.unshift(tail);
+        const maxLen = Math.round(22 + 20 * r.size);
         if (r.trail.length > maxLen) r.trail.length = maxLen;
         // Étincelles effervescentes qui se détachent de l'orbe.
-        if (Math.random() < dt * 6 * r.size) {
+        if (Math.random() < dt * 6 * Math.min(1.6, scaleOf(r))) {
           const back = r.heading + Math.PI + rand(-0.8, 0.8);
-          sparks.push({ x: tail.x, y: tail.y, vx: Math.cos(back) * rand(8, 28), vy: Math.sin(back) * rand(8, 28), life: 0, max: rand(0.6, 1.5), size: rand(2, 5) * r.size });
+          sparks.push({ x: tail.x, y: tail.y, vx: Math.cos(back) * rand(8, 28), vy: Math.sin(back) * rand(8, 28), life: 0, max: rand(0.6, 1.5), size: rand(2, 5) * scaleOf(r) });
         }
         if (r.x < -200 || r.x > w + 200 || r.y < -200 || r.y > h + 200) Object.assign(r, spawn());
       }
@@ -191,26 +209,37 @@ export default function CometField({ tint, count, className = '' }: Props) {
       const sp = spritesRef.current!;
       ctx.clearRect(0, 0, w, h);
       ctx.globalCompositeOperation = 'lighter';
-      for (const r of rockets) {
-        const fadeIn = Math.min(1, r.life / 1.5);
+      // Des plus lointaines aux plus proches, pour que les proches passent devant.
+      for (const r of [...rockets].sort((a, b) => a.z - b.z)) {
         const breath = 0.75 + 0.25 * Math.sin(t * 1.6 + r.pulse);
+        const sc = scaleOf(r);
+        // Voile de profondeur : les lointaines sont plus pâles, comme noyées dans la nébuleuse.
+        const depth = Math.min(1, Math.max(0, (r.z - Z_MIN) / (1.2 - Z_MIN)));
+        const fadeIn = Math.min(1, r.life / 1.5) * (0.45 + 0.55 * depth);
         // Traînée de halo derrière l'orbe.
         const L = r.trail.length;
         for (let i = L - 1; i >= 0; i--) {
           const p = r.trail[i];
           const k = 1 - i / L;
-          const rad = (3 + 16 * k) * r.size * (0.75 + 0.25 * breath);
+          const rad = (3 + 16 * k) * p.s * (0.75 + 0.25 * breath);
           ctx.globalAlpha = 0.28 * k * k * fadeIn;
           ctx.drawImage(sp.trail, p.x - rad, p.y - rad, rad * 2, rad * 2);
         }
         // Halo autour de la fusée, qui respire.
-        const gr = ROCKET_H * 0.75 * r.size * (0.9 + 0.2 * breath);
+        const gr = ROCKET_H * 0.75 * sc * (0.9 + 0.2 * breath);
         ctx.globalAlpha = 0.22 * fadeIn * breath;
         ctx.drawImage(sp.glow, r.x - gr, r.y - gr, gr * 2, gr * 2);
+        // Très proches : halo élargi et diffus, comme hors de la zone de netteté.
+        if (r.z > 1.35) {
+          const br = gr * 1.8;
+          ctx.globalAlpha = 0.1 * fadeIn * (r.z - 1.35) * 2;
+          ctx.drawImage(sp.glow, r.x - br, r.y - br, br * 2, br * 2);
+        }
         // La fusée du logo, pointe vers l'avant ; léger roulis vivant.
         if (sp.rocket) {
-          const hgt = ROCKET_H * r.size * (0.96 + 0.08 * breath);
-          const wid = hgt * (sp.rocket.width / sp.rocket.height);
+          const full = ROCKET_H * sc * (0.96 + 0.08 * breath);
+          const hgt = full * foreshorten(r);
+          const wid = full * (sp.rocket.width / sp.rocket.height);
           ctx.save();
           ctx.translate(r.x, r.y);
           ctx.rotate(r.heading + Math.PI / 2 + Math.sin(t * 2.3 + r.pulse) * 0.05);
@@ -219,7 +248,7 @@ export default function CometField({ tint, count, className = '' }: Props) {
           ctx.restore();
         } else {
           // Logo pas encore chargé : simple orbe.
-          const hr = 14 * r.size;
+          const hr = 14 * sc;
           ctx.globalAlpha = 0.8 * fadeIn;
           ctx.drawImage(sp.glow, r.x - hr, r.y - hr, hr * 2, hr * 2);
         }
