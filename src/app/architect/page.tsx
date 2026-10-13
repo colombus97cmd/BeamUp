@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAccount, useReadContract, useWriteContract, useBalance, useWaitForTransactionReceipt, useSignMessage } from 'wagmi';
 import { useActiveChainId } from '../../hooks/useActiveChainId';
-import { formatEther, parseAbi } from 'viem';
+import { formatEther, formatUnits, parseAbi, encodeFunctionData, concat, pad, isAddress } from 'viem';
 import { 
   LayoutGrid, User, Mail, Globe, ExternalLink, Zap, Shield, Sparkles, 
   Wallet, ArrowDownCircle, Loader2, Fingerprint, Disc, TrendingUp, 
@@ -14,10 +14,20 @@ import { uploadToIPFS } from '../../services/pinata';
 import BeamUpABI from '../../contracts/BeamUpV3.json';
 import { useWorks } from '../../hooks/useWorks';
 import { getFormat } from '../../config/formats';
-import { getContractAddress, getCurrencySymbol, SAFE_ADDRESS, getSafeUrl } from '../../config/contracts';
+import { getContractAddress, getCurrencySymbol, getChainName, getExplorer, SAFE_ADDRESS, getSafeUrl, NATIVE_TOKEN, BTC_TOKENS } from '../../config/contracts';
 
 
 const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
+
+const SAFE_ABI = parseAbi([
+  'function isOwner(address owner) view returns (bool)',
+  'function getThreshold() view returns (uint256)',
+  'function execTransaction(address to, uint256 value, bytes data, uint8 operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address refundReceiver, bytes signatures) payable returns (bool)',
+]);
+const FEES_ABI = parseAbi([
+  'function accruedFees(address token) view returns (uint256)',
+  'function withdrawFees(address token, address to)',
+]);
 
 export default function Architect() {
   const { address, isConnected } = useAccount();
@@ -73,20 +83,37 @@ export default function Architect() {
   const { data: isSafeSigner } = useReadContract({
     chainId,
     address: SAFE_ADDRESS as `0x${string}`,
-    abi: parseAbi(['function isOwner(address owner) view returns (bool)']),
+    abi: SAFE_ABI,
     functionName: 'isOwner',
     args: [address as `0x${string}`],
     query: { enabled: !!address },
   });
 
+  const { data: safeThreshold } = useReadContract({
+    chainId,
+    address: SAFE_ADDRESS as `0x${string}`,
+    abi: SAFE_ABI,
+    functionName: 'getThreshold',
+    query: { enabled: !!isSafeSigner },
+  });
+
   const { works: allWorks } = useWorks(address);
 
-  const { data: accruedFees } = useReadContract({
+  const btcToken = BTC_TOKENS[chainId];
+  const { data: accruedFees, refetch: refetchFees } = useReadContract({
     chainId,
     address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: BeamUpABI,
+    abi: FEES_ABI,
     functionName: 'accruedFees',
-    args: ['0x0000000000000000000000000000000000000000'],
+    args: [NATIVE_TOKEN],
+  });
+  const { data: accruedBtcFees, refetch: refetchBtcFees } = useReadContract({
+    chainId,
+    address: CONTRACT_ADDRESS as `0x${string}`,
+    abi: FEES_ABI,
+    functionName: 'accruedFees',
+    args: [btcToken?.address ?? NATIVE_TOKEN],
+    query: { enabled: !!btcToken },
   });
 
   const { writeContract, data: hash, isPending } = useWriteContract();
@@ -152,10 +179,48 @@ export default function Architect() {
     }
   };
 
-  // Les commissions se retirent depuis le Safe (withdrawFees est réservé au propriétaire).
-  const handleWithdraw = () => {
-    window.open(getSafeUrl(chainId), '_blank', 'noopener,noreferrer');
+  // Retrait des commissions : withdrawFees est réservé au propriétaire du contrat, c'est-à-dire le Safe.
+  // Avec un seuil de 1 signature, le signataire connecté fait exécuter l'appel par le Safe lui-même
+  // (execTransaction) : sa signature « pré-validée » (v = 1) suffit car c'est lui qui envoie la transaction.
+  // Au-delà d'une signature requise, il faut passer par l'interface du Safe pour réunir les cosignataires.
+  const [recipient, setRecipient] = useState('');
+  const [withdrawToken, setWithdrawToken] = useState<string | null>(null);
+  const { writeContract: writeWithdraw, data: withdrawHash, isPending: withdrawPending, error: withdrawError, reset: resetWithdraw } = useWriteContract();
+  const { isLoading: withdrawConfirming, isSuccess: withdrawDone } = useWaitForTransactionReceipt({ hash: withdrawHash });
+  const singleSigner = safeThreshold !== undefined && Number(safeThreshold) === 1;
+
+  useEffect(() => {
+    if (address && !recipient) setRecipient(address);
+  }, [address, recipient]);
+
+  useEffect(() => {
+    if (withdrawDone) { refetchFees(); refetchBtcFees(); }
+  }, [withdrawDone, refetchFees, refetchBtcFees]);
+
+  const handleWithdraw = (token: `0x${string}`) => {
+    if (!singleSigner) {
+      window.open(getSafeUrl(chainId), '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (!address || !isAddress(recipient)) return;
+    resetWithdraw();
+    setWithdrawToken(token);
+    const data = encodeFunctionData({ abi: FEES_ABI, functionName: 'withdrawFees', args: [token, recipient as `0x${string}`] });
+    const signatures = concat([pad(address, { size: 32 }), pad('0x00', { size: 32 }), '0x01']);
+    writeWithdraw({
+      chainId,
+      address: SAFE_ADDRESS as `0x${string}`,
+      abi: SAFE_ABI,
+      functionName: 'execTransaction',
+      args: [CONTRACT_ADDRESS as `0x${string}`, 0n, data, 0, 0n, 0n, 0n, NATIVE_TOKEN, NATIVE_TOKEN, signatures],
+    });
   };
+
+  const feeLines = [
+    { token: NATIVE_TOKEN as `0x${string}`, amount: (accruedFees as bigint | undefined) ?? 0n, label: currencySymbol, decimals: 18 },
+    ...(btcToken ? [{ token: btcToken.address, amount: (accruedBtcFees as bigint | undefined) ?? 0n, label: btcToken.symbol, decimals: btcToken.decimals }] : []),
+  ];
+  const withdrawBusy = withdrawPending || withdrawConfirming;
 
   return (
     <div className='min-h-screen bg-[#020202] text-white'>
@@ -166,15 +231,57 @@ export default function Architect() {
         {/* DASHBOARD ADMIN */}
         {isAdmin && (
           <section className='mb-12'>
-            <div className='bg-gradient-to-r from-[#00f2ff]/10 to-[#bc13fe]/10 border border-[#00f2ff]/20 p-8 rounded-[32px] flex flex-col md:flex-row justify-between items-center gap-6 backdrop-blur-3xl'>
+            <div className='bg-gradient-to-r from-[#00f2ff]/10 to-[#bc13fe]/10 border border-[#00f2ff]/20 p-8 rounded-[32px] backdrop-blur-3xl space-y-6'>
               <div className='flex items-center gap-4'>
                 <Fingerprint className='w-6 h-6 text-[#00f2ff]' />
                 <div>
-                  <p className='text-[8px] uppercase tracking-widest font-black text-[#00f2ff]'>Terminal Architecte</p>
-                  <h3 className='text-2xl font-black font-mono'>{accruedFees !== undefined ? formatEther(accruedFees as bigint) : '0'} {currencySymbol}</h3>
+                  <p className='text-[8px] uppercase tracking-widest font-black text-[#00f2ff]'>Terminal Architecte · commissions sur {getChainName(chainId)}</p>
+                  <p className='text-[10px] text-gray-400'>Pour un autre réseau, change le réseau de ton wallet.</p>
                 </div>
               </div>
-              <button onClick={handleWithdraw} className='px-8 py-3 bg-white text-black font-black uppercase text-[9px] rounded-xl hover:bg-[#00f2ff] transition-all'>Retirer via le Safe</button>
+
+              {singleSigner && (
+                <label className='block'>
+                  <span className='text-[9px] uppercase tracking-widest text-gray-400'>Adresse qui reçoit les fonds</span>
+                  <input
+                    value={recipient}
+                    onChange={(e) => setRecipient(e.target.value.trim())}
+                    className={`mt-1 w-full bg-black/40 border p-3 rounded-xl text-xs font-mono outline-none ${recipient && !isAddress(recipient) ? 'border-red-500' : 'border-white/10 focus:border-[#00f2ff]'}`}
+                  />
+                </label>
+              )}
+
+              <div className='grid gap-3 sm:grid-cols-2'>
+                {feeLines.map((f) => (
+                  <div key={f.token} className='flex items-center justify-between gap-4 bg-black/30 border border-white/10 rounded-2xl p-4'>
+                    <h3 className='text-xl font-black font-mono'>{formatUnits(f.amount, f.decimals)} {f.label}</h3>
+                    <button
+                      onClick={() => handleWithdraw(f.token)}
+                      disabled={f.amount === 0n || withdrawBusy || (singleSigner && !isAddress(recipient))}
+                      className='px-5 py-3 bg-white text-black font-black uppercase text-[9px] rounded-xl hover:bg-[#00f2ff] transition-all disabled:opacity-40 flex items-center gap-2'
+                    >
+                      {withdrawBusy && withdrawToken === f.token ? <Loader2 className='w-3 h-3 animate-spin' /> : <ArrowDownCircle className='w-3 h-3' />}
+                      {f.amount === 0n ? 'Rien à retirer' : singleSigner ? 'Retirer' : 'Retirer via le Safe'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {withdrawPending && <p className='text-xs text-[#00f2ff]'>Confirme la transaction dans ton wallet…</p>}
+              {withdrawConfirming && <p className='text-xs text-[#00f2ff]'>Transaction envoyée, confirmation en cours…</p>}
+              {withdrawDone && withdrawHash && (
+                <p className='text-xs text-emerald-400 flex items-center gap-2'>
+                  <CheckCircle2 className='w-4 h-4' /> Retrait effectué.
+                  <a href={`${getExplorer(chainId)}/tx/${withdrawHash}`} target='_blank' rel='noopener noreferrer' className='underline'>Voir la transaction</a>
+                </p>
+              )}
+              {withdrawError && <p className='text-xs text-red-400'>{(withdrawError as any).shortMessage || withdrawError.message}</p>}
+              {safeThreshold !== undefined && !singleSigner && (
+                <p className='text-[10px] text-gray-400'>Le Safe demande {String(safeThreshold)} signatures : le retrait se prépare dans l'interface du Safe pour réunir les cosignataires.</p>
+              )}
+              <a href={getSafeUrl(chainId)} target='_blank' rel='noopener noreferrer' className='inline-flex items-center gap-1 text-[9px] uppercase tracking-widest text-gray-400 hover:text-white'>
+                <Shield className='w-3 h-3' /> Ouvrir le Safe
+              </a>
             </div>
           </section>
         )}
