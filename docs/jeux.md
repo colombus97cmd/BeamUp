@@ -48,6 +48,22 @@ powershell -ExecutionPolicy Bypass -File C:\Users\david\Documents\portfolio-2026
 
 Puis `/publish` → « Jeu vidéo » → déposer `Documents\chains-and-crowns-builds\chains-and-crowns-edition-complete-AAAA-MM-JJ.zip` → activer Premium et fixer le prix → publier → valider dans `/pilotage` → Jeux → ajouter le numéro d'œuvre à `GAME_PRODUCTS`.
 
+## Salles de jeu : duels en ligne sur tous les réseaux
+
+Route `/api/games/room` (`src/app/api/games/room/route.ts`), utilisable par tout jeu publié sur BeamUp ; d'abord Chains & Crowns — Édition Umoja. Les duels passent de navigateur à navigateur (WebRTC) ; la route aide quand le réseau ne le permet pas (réseaux mobiles ou d'entreprise très fermés). Chaque appel porte le **jeton de partie** du jeu (`/g/<jeton>/…`) : seuls les joueurs qui ont le jeu peuvent s'en servir. Le domaine des jeux (`GAMES_ORIGIN`) est autorisé à l'appeler.
+
+- `{ action: 'ice', t }` : accès de 6 h au **relais TURN de Cloudflare**, qui fait passer WebRTC presque partout (y compris par le port 443). Cloudflare offre 1 000 Go par mois, puis 0,05 $ le Go ; un duel au tour par tour n'échange que quelques kilo-octets.
+- `{ action: 'send' | 'poll', t, room, … }` : **secours** si la liaison directe ne s'ouvre toujours pas au bout de 12 s : les messages passent par Redis (une boîte par joueur, relevée chaque seconde, effacée 2 h après la dernière activité). Une salle est liée au jeu du premier jeton qui l'utilise.
+
+**Mise en service du relais TURN** (par le titulaire du compte Cloudflare) :
+1. Cloudflare → Realtime (anciennement Calls) → TURN Server → **Create** : nommer la clé, par exemple « BeamUp jeux ».
+2. Copier le **Turn Token ID** et l'**API Token** affichés.
+3. Vercel → projet BeamUp → Settings → Environment Variables : `CLOUDFLARE_TURN_KEY_ID` et `CLOUDFLARE_TURN_API_TOKEN` (Production), puis redéployer.
+
+Sans ces deux variables, la route renvoie seulement le STUN public de Cloudflare : la liaison directe marche sur la plupart des réseaux, et le secours par Redis prend le relais sur les autres.
+
+Essai en local, sans rien mettre en ligne : `node tools/salle-locale.mjs` dans le dossier de l'édition Umoja (copie en mémoire de cette route), puis deux onglets sur `http://localhost:8766/jeu/index.html?salle=http://localhost:8767&t=essai` (ajouter `&relais=1` pour forcer le secours).
+
 ## Limites connues
 
 - Aucune vérification n'offre une garantie absolue : la protection principale reste l'isolement, la vérification et la validation humaine la complètent.
